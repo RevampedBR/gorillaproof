@@ -31,6 +31,39 @@
             "loginLink": "Sign in"
         }
     },
+    "dashboard": {
+        "sidebar": {
+            "search": "Search...",
+            "home": "Home",
+            "notifications": "Notifications",
+            "goals": "Goals",
+            "favorites": "Favorites",
+            "spaces": "SPACES",
+            "marketing": "Marketing",
+            "design": "Design",
+            "allSpaces": "View all..."
+        },
+        "header": {
+            "search": "Search projects and proofs... (Cmd+K)",
+            "newProject": "New Task",
+            "invite": "Invite",
+            "myAccount": "My Account",
+            "logout": "Log out"
+        },
+        "home": {
+            "welcome": "Good morning, Gorilla",
+            "overview": "Overview",
+            "assigned": "Assigned to me",
+            "recent": "Recent",
+            "activeProjects": "Active Projects",
+            "urgentProofs": "Urgent Proofs",
+            "pendingComments": "Pending Comments",
+            "myWork": "My Work",
+            "noWork": "All clear! No pending proofs for you right now.",
+            "createFirst": "Create New Proof",
+            "subtitle": "Visualize your review tasks with agility and clarity."
+        }
+    },
     "metadata": {
         "title": "GorillaProof | Seamless Creative Proofing",
         "description": "The ultimate online proofing platform for creative teams and agencies. Centralize, review, and approve effortlessly."

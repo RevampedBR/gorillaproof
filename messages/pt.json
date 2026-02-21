@@ -31,6 +31,39 @@
             "loginLink": "Fazer login"
         }
     },
+    "dashboard": {
+        "sidebar": {
+            "search": "Buscar...",
+            "home": "Início",
+            "notifications": "Notificações",
+            "goals": "Metas",
+            "favorites": "Favoritos",
+            "spaces": "ESPAÇOS",
+            "marketing": "Marketing",
+            "design": "Design",
+            "allSpaces": "Ver todos..."
+        },
+        "header": {
+            "search": "Buscar projetos e provas... (Cmd+K)",
+            "newProject": "Nova Tarefa",
+            "invite": "Convidar",
+            "myAccount": "Minha Conta",
+            "logout": "Sair"
+        },
+        "home": {
+            "welcome": "Bom dia, Gorilla",
+            "overview": "Visão Geral",
+            "assigned": "Atribuído a mim",
+            "recent": "Recentes",
+            "activeProjects": "Projetos Ativos",
+            "urgentProofs": "Provas Urgentes",
+            "pendingComments": "Comentários Pendentes",
+            "myWork": "Meu Trabalho",
+            "noWork": "Tudo limpo! Nenhuma prova pendente para você no momento.",
+            "createFirst": "Criar Nova Prova",
+            "subtitle": "Visualize suas demandas de revisão com agilidade e clareza."
+        }
+    },
     "metadata": {
         "title": "GorillaProof | Revisão Criativa Simplificada",
         "description": "A plataforma definitiva de revisão online para equipes criativas e agências. Centralize, revise e aprove sem esforço."
