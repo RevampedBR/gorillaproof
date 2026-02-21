@@ -8,6 +8,29 @@
         "ctaSecondary": "Book a Demo",
         "mockupLabel": "App Dashboard Interface Placeholder"
     },
+    "auth": {
+        "login": {
+            "title": "Welcome back",
+            "subtitle": "Enter your email to sign in to your workspace",
+            "email": "Email",
+            "password": "Password",
+            "forgotPassword": "Forgot password?",
+            "submitButton": "Sign In",
+            "noAccount": "Don't have an account?",
+            "signUpLink": "Sign up"
+        },
+        "register": {
+            "title": "Create an account",
+            "subtitle": "Enter your details below to create your workspace",
+            "fullName": "Full Name",
+            "agencyName": "Agency / Company Name",
+            "email": "Work Email",
+            "password": "Password",
+            "submitButton": "Create account",
+            "alreadyHaveAccount": "Already have an account?",
+            "loginLink": "Sign in"
+        }
+    },
     "metadata": {
         "title": "GorillaProof | Seamless Creative Proofing",
         "description": "The ultimate online proofing platform for creative teams and agencies. Centralize, review, and approve effortlessly."

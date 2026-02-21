@@ -8,6 +8,29 @@
         "ctaSecondary": "Agende uma Demo",
         "mockupLabel": "Interface do Painel — Em breve"
     },
+    "auth": {
+        "login": {
+            "title": "Bem-vindo de volta",
+            "subtitle": "Insira seu email para acessar seu espaço de trabalho",
+            "email": "Email",
+            "password": "Senha",
+            "forgotPassword": "Esqueceu a senha?",
+            "submitButton": "Entrar",
+            "noAccount": "Não tem uma conta?",
+            "signUpLink": "Cadastre-se"
+        },
+        "register": {
+            "title": "Crie sua conta",
+            "subtitle": "Preencha seus dados para criar seu espaço de trabalho",
+            "fullName": "Nome Completo",
+            "agencyName": "Nome da Agência / Empresa",
+            "email": "Email Corporativo",
+            "password": "Senha",
+            "submitButton": "Criar conta",
+            "alreadyHaveAccount": "Já tem uma conta?",
+            "loginLink": "Fazer login"
+        }
+    },
     "metadata": {
         "title": "GorillaProof | Revisão Criativa Simplificada",
         "description": "A plataforma definitiva de revisão online para equipes criativas e agências. Centralize, revise e aprove sem esforço."

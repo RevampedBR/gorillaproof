@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 
 export default function Home({
     params,
@@ -45,7 +46,7 @@ export default function Home({
 
                 {/* Action Buttons */}
                 <div className="mt-12 flex flex-col gap-4 sm:flex-row w-full sm:w-auto">
-                    <button className="group relative flex h-14 items-center justify-center gap-2 overflow-hidden rounded-full bg-white px-8 font-medium text-black transition-all hover:scale-[1.02] hover:bg-zinc-100 sm:w-auto shadow-[0_0_40px_rgba(255,255,255,0.1)]">
+                    <Link href="/register" className="group relative flex h-14 items-center justify-center gap-2 overflow-hidden rounded-full bg-white px-8 font-medium text-black transition-all hover:scale-[1.02] hover:bg-zinc-100 sm:w-auto shadow-[0_0_40px_rgba(255,255,255,0.1)]">
                         <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-150%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(150%)]">
                             <div className="relative h-full w-8 bg-black/10" />
                         </div>
@@ -59,11 +60,11 @@ export default function Home({
                         >
                             <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
-                    </button>
+                    </Link>
 
-                    <button className="flex h-14 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 font-medium text-white backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/20 sm:w-auto shadow-[0_0_20px_rgba(255,255,255,0.02)]">
+                    <Link href="/login" className="flex h-14 items-center justify-center rounded-full border border-white/10 bg-white/5 px-8 font-medium text-white backdrop-blur-md transition-all hover:bg-white/10 hover:border-white/20 sm:w-auto shadow-[0_0_20px_rgba(255,255,255,0.02)]">
                         {t("ctaSecondary")}
-                    </button>
+                    </Link>
                 </div>
 
                 {/* Mockup Placeholder with Glassmorphism */}
