@@ -68,9 +68,26 @@ export default function DashboardLayout({
                 </nav>
 
                 <div className="mt-auto flex flex-col items-center gap-4 w-full px-2">
-                    <button className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-zinc-300 ring-2 ring-transparent transition-all hover:ring-zinc-700">
-                        G
-                    </button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-zinc-300 ring-2 ring-transparent transition-all hover:ring-zinc-700">
+                                G
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-zinc-950 border-zinc-800 text-zinc-300">
+                            <DropdownMenuItem className="focus:bg-zinc-800 focus:text-zinc-100 cursor-pointer">
+                                {t("header.myAccount")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="bg-zinc-800" />
+                            <form action="/auth/logout" method="post">
+                                <button type="submit" className="w-full text-left">
+                                    <DropdownMenuItem className="text-red-400 focus:bg-red-400/10 focus:text-red-300 cursor-pointer">
+                                        {t("header.logout")}
+                                    </DropdownMenuItem>
+                                </button>
+                            </form>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </aside>
 

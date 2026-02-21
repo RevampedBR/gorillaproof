@@ -20,15 +20,27 @@
             "signUpLink": "Sign up"
         },
         "register": {
-            "title": "Create an account",
-            "subtitle": "Enter your details below to create your workspace",
+            "title": "Create your account",
+            "subtitle": "Start proofing like an evolved primate.",
             "fullName": "Full Name",
             "agencyName": "Agency / Company Name",
-            "email": "Work Email",
+            "email": "Email",
             "password": "Password",
-            "submitButton": "Create account",
-            "alreadyHaveAccount": "Already have an account?",
-            "loginLink": "Sign in"
+            "submit": "Create Account",
+            "haveAccount": "Already have an account? Back to Login"
+        },
+        "forgotPassword": {
+            "title": "Forgot password?",
+            "subtitle": "Enter your email and we'll send a recovery link.",
+            "email": "Email",
+            "submit": "Send Recovery Link",
+            "backToLogin": "Remembered? Back to Login"
+        },
+        "resetPassword": {
+            "title": "Reset Password",
+            "subtitle": "Enter your new password below to access the platform.",
+            "newPassword": "New Password",
+            "submit": "Update Password"
         }
     },
     "dashboard": {

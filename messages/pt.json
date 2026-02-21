@@ -21,14 +21,26 @@
         },
         "register": {
             "title": "Crie sua conta",
-            "subtitle": "Preencha seus dados para criar seu espaço de trabalho",
+            "subtitle": "Comece a revisar como um primata evoluído.",
             "fullName": "Nome Completo",
             "agencyName": "Nome da Agência / Empresa",
-            "email": "Email Corporativo",
+            "email": "E-mail",
             "password": "Senha",
-            "submitButton": "Criar conta",
-            "alreadyHaveAccount": "Já tem uma conta?",
-            "loginLink": "Fazer login"
+            "submit": "Criar Conta",
+            "haveAccount": "Já tem uma conta? Voltar ao Login"
+        },
+        "forgotPassword": {
+            "title": "Esqueceu a senha?",
+            "subtitle": "Digite seu e-mail e enviaremos um link de recuperação.",
+            "email": "E-mail",
+            "submit": "Enviar Link de Recuperação",
+            "backToLogin": "Lembrou? Volte ao Login"
+        },
+        "resetPassword": {
+            "title": "Redefinir Senha",
+            "subtitle": "Digite sua nova senha abaixo para acessar a plataforma.",
+            "newPassword": "Nova Senha",
+            "submit": "Atualizar Senha"
         }
     },
     "dashboard": {

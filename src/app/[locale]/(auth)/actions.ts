@@ -18,7 +18,7 @@ export async function login(formData: FormData) {
         return { error: error.message };
     }
 
-    redirect("/");
+    redirect("/dashboard");
 }
 
 export async function signup(formData: FormData) {
@@ -69,6 +69,36 @@ export async function signup(formData: FormData) {
         }
     }
 
-    // Redirect to a confirmation page or login
-    redirect("/login?message=Check your email to continue sign in process");
+    // Redirect to the dashboard immediately (assuming email confirmations are off, or they will be kicked out by middleware if not)
+    redirect("/dashboard");
+}
+
+export async function recoverPassword(formData: FormData) {
+    const email = formData.get("email") as string;
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3001"}/auth/callback?type=recovery`,
+    });
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    redirect("/login?message=Check your email for the password reset link");
+}
+
+export async function updatePassword(formData: FormData) {
+    const password = formData.get("password") as string;
+    const supabase = await createClient();
+
+    const { error } = await supabase.auth.updateUser({
+        password: password,
+    });
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    redirect("/dashboard");
 }
