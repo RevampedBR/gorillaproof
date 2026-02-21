@@ -104,6 +104,25 @@
             "rejected": "Rejected",
             "changesRequested": "Changes Requested",
             "versions": "versions"
+        },
+        "upload": {
+            "dragOrClick": "Drag files here or click to select",
+            "dropHere": "Drop to upload!",
+            "supportedFormats": "JPG, PNG, GIF, WEBP, SVG, TIFF, PSD, MP4, MOV, WEBM, PDF",
+            "maxSize": "Max 250MB per file",
+            "fileTooLarge": "File too large (max 250MB)",
+            "unsupportedFormat": "Unsupported format",
+            "waiting": "Waiting..."
+        },
+        "viewer": {
+            "versions": "Versions",
+            "compare": "Compare",
+            "uploadVersion": "New Version",
+            "noVersions": "No versions",
+            "uploadFirst": "Upload the first file",
+            "uploadFirstSub": "Drag an image, video or PDF to start the review.",
+            "previewUnavailable": "Preview unavailable for this format",
+            "downloadFile": "Download original file"
         }
     },
     "metadata": {

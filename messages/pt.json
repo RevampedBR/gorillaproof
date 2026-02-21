@@ -104,6 +104,25 @@
             "rejected": "Rejeitada",
             "changesRequested": "Ajustes Solicitados",
             "versions": "versões"
+        },
+        "upload": {
+            "dragOrClick": "Arraste arquivos aqui ou clique para selecionar",
+            "dropHere": "Solte para enviar!",
+            "supportedFormats": "JPG, PNG, GIF, WEBP, SVG, TIFF, PSD, MP4, MOV, WEBM, PDF",
+            "maxSize": "Máximo 250MB por arquivo",
+            "fileTooLarge": "Arquivo muito grande (máx 250MB)",
+            "unsupportedFormat": "Formato não suportado",
+            "waiting": "Aguardando..."
+        },
+        "viewer": {
+            "versions": "Versões",
+            "compare": "Comparar",
+            "uploadVersion": "Nova Versão",
+            "noVersions": "Sem versões",
+            "uploadFirst": "Envie o primeiro arquivo",
+            "uploadFirstSub": "Arraste uma imagem, vídeo ou PDF para começar a revisão.",
+            "previewUnavailable": "Prévia indisponível para este formato",
+            "downloadFile": "Baixar arquivo original"
         }
     },
     "metadata": {

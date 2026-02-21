@@ -99,8 +99,9 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                     ) : (
                         <div className="divide-y divide-zinc-800/50">
                             {proofs.map((proof: any) => (
-                                <div
+                                <Link
                                     key={proof.id}
+                                    href={`/proofs/${proof.id}`}
                                     className="flex items-center justify-between p-4 hover:bg-zinc-800/30 transition-colors group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-3 min-w-0">
@@ -122,13 +123,18 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                                             </p>
                                         </div>
                                     </div>
-                                    <Badge
-                                        variant="outline"
-                                        className={`text-[10px] px-2 py-0.5 ${PROOF_STATUS_COLORS[proof.status] || PROOF_STATUS_COLORS.draft}`}
-                                    >
-                                        {t(PROOF_STATUS_KEYS[proof.status] || "draft")}
-                                    </Badge>
-                                </div>
+                                    <div className="flex items-center gap-3">
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[10px] px-2 py-0.5 ${PROOF_STATUS_COLORS[proof.status] || PROOF_STATUS_COLORS.draft}`}
+                                        >
+                                            {t(PROOF_STATUS_KEYS[proof.status] || "draft")}
+                                        </Badge>
+                                        <svg className="h-4 w-4 text-zinc-600 group-hover:text-zinc-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </div>
+                                </Link>
                             ))}
                         </div>
                     )}
