@@ -73,7 +73,37 @@
             "myWork": "Meu Trabalho",
             "noWork": "Tudo limpo! Nenhuma prova pendente para você no momento.",
             "createFirst": "Criar Nova Prova",
-            "subtitle": "Visualize suas demandas de revisão com agilidade e clareza."
+            "subtitle": "Visualize suas demandas de revisão com agilidade e clareza.",
+            "approvedToday": "Aprovadas Hoje",
+            "proofs": "provas",
+            "noProjects": "Nenhum projeto por aqui. Crie o primeiro!",
+            "lastUpdated": "Atualizado",
+            "recentlyViewed": "Nenhum projeto visualizado recentemente."
+        },
+        "projects": {
+            "createTitle": "Novo Projeto",
+            "createSubtitle": "Dê um nome ao seu projeto para começar a organizar suas provas.",
+            "name": "Nome do Projeto",
+            "namePlaceholder": "Ex: Campanha de Verão 2026",
+            "description": "Descrição (opcional)",
+            "descriptionPlaceholder": "Descreva brevemente o objetivo deste projeto...",
+            "submit": "Criar Projeto",
+            "cancel": "Cancelar",
+            "statusActive": "Ativo",
+            "statusArchived": "Arquivado",
+            "statusCompleted": "Concluído",
+            "backToDashboard": "Voltar ao Dashboard",
+            "proofsTitle": "Provas",
+            "noProofs": "Nenhuma prova neste projeto ainda.",
+            "createProof": "Nova Prova",
+            "proofTitle": "Título da Prova",
+            "proofTitlePlaceholder": "Ex: Banner Principal - v1",
+            "draft": "Rascunho",
+            "inReview": "Em Revisão",
+            "approved": "Aprovada",
+            "rejected": "Rejeitada",
+            "changesRequested": "Ajustes Solicitados",
+            "versions": "versões"
         }
     },
     "metadata": {

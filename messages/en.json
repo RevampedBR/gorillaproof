@@ -73,7 +73,37 @@
             "myWork": "My Work",
             "noWork": "All clear! No pending proofs for you right now.",
             "createFirst": "Create New Proof",
-            "subtitle": "Visualize your review tasks with agility and clarity."
+            "subtitle": "Visualize your review tasks with agility and clarity.",
+            "approvedToday": "Approved Today",
+            "proofs": "proofs",
+            "noProjects": "No projects here yet. Create your first one!",
+            "lastUpdated": "Updated",
+            "recentlyViewed": "No recently viewed projects."
+        },
+        "projects": {
+            "createTitle": "New Project",
+            "createSubtitle": "Name your project to start organizing your proofs.",
+            "name": "Project Name",
+            "namePlaceholder": "e.g. Summer Campaign 2026",
+            "description": "Description (optional)",
+            "descriptionPlaceholder": "Briefly describe this project's goal...",
+            "submit": "Create Project",
+            "cancel": "Cancel",
+            "statusActive": "Active",
+            "statusArchived": "Archived",
+            "statusCompleted": "Completed",
+            "backToDashboard": "Back to Dashboard",
+            "proofsTitle": "Proofs",
+            "noProofs": "No proofs in this project yet.",
+            "createProof": "New Proof",
+            "proofTitle": "Proof Title",
+            "proofTitlePlaceholder": "e.g. Hero Banner - v1",
+            "draft": "Draft",
+            "inReview": "In Review",
+            "approved": "Approved",
+            "rejected": "Rejected",
+            "changesRequested": "Changes Requested",
+            "versions": "versions"
         }
     },
     "metadata": {
