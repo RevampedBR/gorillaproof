@@ -43,9 +43,15 @@ export async function signup(formData: FormData) {
     }
 
     // Self-Serve SaaS Logic: Automatically provision an Organization for the new user.
-    // We use supabaseAdmin to bypass RLS since the user might not be fully authenticated yet
-    // or RLS policies might block them from creating orgs directly on signup.
+    // We use supabaseAdmin to bypass RLS since the user is not fully authenticated yet.
     if (data.user) {
+        // 0. Create public.users record (required by FKs in organization_members, versions, comments)
+        await supabaseAdmin.from("users").upsert({
+            id: data.user.id,
+            email,
+            full_name: fullName,
+        }, { onConflict: "id" });
+
         // 1. Create Organization
         const { data: org, error: orgError } = await supabaseAdmin
             .from("organizations")
@@ -69,7 +75,7 @@ export async function signup(formData: FormData) {
         }
     }
 
-    // Redirect to the dashboard immediately (assuming email confirmations are off, or they will be kicked out by middleware if not)
+    // Redirect to dashboard
     redirect("/dashboard");
 }
 
