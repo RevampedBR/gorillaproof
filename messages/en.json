@@ -1,0 +1,15 @@
+{
+    "landing": {
+        "badge": "GorillaProof Platform v1.0",
+        "headline1": "Stop chasing feedback.",
+        "headline2": "Start approving faster.",
+        "description": "The ultimate online proofing workspace for creative agencies. Centralize files, manage versions, and collect precise feedback without the email chaos.",
+        "ctaPrimary": "Start Free Trial",
+        "ctaSecondary": "Book a Demo",
+        "mockupLabel": "App Dashboard Interface Placeholder"
+    },
+    "metadata": {
+        "title": "GorillaProof | Seamless Creative Proofing",
+        "description": "The ultimate online proofing platform for creative teams and agencies. Centralize, review, and approve effortlessly."
+    }
+}
