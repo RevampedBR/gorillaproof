@@ -5,6 +5,10 @@ const MAILTRAP_API_URL = "https://send.api.mailtrap.io/api/send";
 const FROM_EMAIL = "noreply@gorillaproof.com.br";
 const FROM_NAME = "GorillaProof";
 
+function escapeHtml(str: string): string {
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 interface SendEmailParams {
     to: { email: string; name?: string }[];
     subject: string;
@@ -75,7 +79,7 @@ export async function notifyNewComment(params: {
         subject: `💬 Novo comentário em "${params.proofTitle}"`,
         html: baseTemplate(`
 <h2 style="color:#fff;font-size:16px;margin:0 0 8px">Novo comentário</h2>
-<p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${params.authorName}</strong> comentou em <strong style="color:#fff">${params.proofTitle}</strong></p>
+<p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${escapeHtml(params.authorName)}</strong> comentou em <strong style="color:#fff">${escapeHtml(params.proofTitle)}</strong></p>
 <div style="background:#15152a;border-left:3px solid #34d399;padding:12px 16px;border-radius:0 8px 8px 0;margin:0 0 16px">
 <p style="color:#d4d4d8;font-size:13px;margin:0;line-height:1.5">${content}${params.commentText.length > 200 ? "..." : ""}</p>
 </div>
@@ -105,7 +109,7 @@ export async function notifyStatusChange(params: {
         subject: `${st.emoji} "${params.proofTitle}" — ${st.label}`,
         html: baseTemplate(`
 <h2 style="color:#fff;font-size:16px;margin:0 0 8px">Status atualizado</h2>
-<p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${params.changedBy}</strong> alterou o status de <strong style="color:#fff">${params.proofTitle}</strong></p>
+<p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${escapeHtml(params.changedBy)}</strong> alterou o status de <strong style="color:#fff">${escapeHtml(params.proofTitle)}</strong></p>
 <div style="text-align:center;margin:16px 0">
 <span style="display:inline-block;background:${st.color}20;color:${st.color};padding:8px 20px;border-radius:8px;font-weight:700;font-size:15px;border:1px solid ${st.color}40">${st.emoji} ${st.label}</span>
 </div>
@@ -131,7 +135,7 @@ export async function notifyMention(params: {
         subject: `🔔 ${params.mentionedBy} mencionou você em "${params.proofTitle}"`,
         html: baseTemplate(`
 <h2 style="color:#fff;font-size:16px;margin:0 0 8px">Você foi mencionado(a)</h2>
-<p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${params.mentionedBy}</strong> mencionou você em <strong style="color:#fff">${params.proofTitle}</strong></p>
+<p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${escapeHtml(params.mentionedBy)}</strong> mencionou você em <strong style="color:#fff">${escapeHtml(params.proofTitle)}</strong></p>
 <div style="background:#15152a;border-left:3px solid #a78bfa;padding:12px 16px;border-radius:0 8px 8px 0;margin:0 0 16px">
 <p style="color:#d4d4d8;font-size:13px;margin:0;line-height:1.5">${content}${params.commentText.length > 200 ? "..." : ""}</p>
 </div>

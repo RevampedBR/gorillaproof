@@ -53,12 +53,18 @@ export async function createVersion(
 
 export async function getVersions(proofId: string) {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "Not authenticated" };
 
-    const { data, error } = await supabase
-        .from("versions")
-        .select("id, version_number, file_url, file_type, uploaded_by, created_at")
-        .eq("proof_id", proofId)
-        .order("version_number", { ascending: false });
+    try {
+        const { data, error } = await supabase
+            .from("versions")
+            .select("id, version_number, file_url, file_type, uploaded_by, created_at")
+            .eq("proof_id", proofId)
+            .order("version_number", { ascending: false });
 
-    return { data: data ?? [], error: error?.message ?? null };
+        return { data: data ?? [], error: error?.message ?? null };
+    } catch (err) {
+        return { data: [], error: "Failed to fetch versions" };
+    }
 }

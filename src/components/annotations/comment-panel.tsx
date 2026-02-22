@@ -7,6 +7,7 @@ import { summarizeComments } from "@/lib/actions/ai";
 import { logActivity } from "@/lib/actions/activity";
 import { notifyMention } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
+import DOMPurify from "dompurify";
 
 interface Comment {
     id: string;
@@ -396,11 +397,11 @@ export function CommentPanel({
 
                     {/* Content — render HTML (with markdown fallback for old comments) */}
                     <div className="text-[13px] text-zinc-300 leading-relaxed whitespace-pre-wrap ml-8 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-blue-400 [&_a]:underline" dangerouslySetInnerHTML={{
-                        __html: comment.content.includes("<") ? comment.content : comment.content
+                        __html: DOMPurify.sanitize(comment.content.includes("<") ? comment.content : comment.content
                             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                             .replace(/\*(.+?)\*/g, '<em>$1</em>')
                             .replace(/__(.+?)__/g, '<u>$1</u>')
-                            .replace(/~~(.+?)~~/g, '<del>$1</del>')
+                            .replace(/~~(.+?)~~/g, '<del>$1</del>'))
                     }} />
 
                     {/* Actions */}
@@ -698,12 +699,12 @@ export function CommentPanel({
                     </div>
                     <div className="px-4 py-3 text-[12px] text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto"
                         dangerouslySetInnerHTML={{
-                            __html: aiSummary
+                            __html: DOMPurify.sanitize(aiSummary
                                 .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
                                 .replace(/^- /gm, '• ')
                                 .replace(/^### (.+)$/gm, '<span class="text-[#e91e8c] font-semibold block mt-2 mb-1">$1</span>')
                                 .replace(/^## (.+)$/gm, '<span class="text-[#e91e8c] font-bold block mt-2 mb-1">$1</span>')
-                                .replace(/\n/g, '<br/>')
+                                .replace(/\n/g, '<br/>'))
                         }}
                     />
                 </div>
