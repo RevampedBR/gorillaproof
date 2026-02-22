@@ -7,6 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { UploadDropzone } from "@/components/upload/dropzone";
 import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
+import { DrawingCanvas, DrawingCanvasHandle } from "@/components/annotations/drawing-canvas";
+import { ColorPicker } from "@/components/viewer/color-picker";
+import { ShareDialog } from "@/components/viewer/share-dialog";
 import { getSignedUrl, getFileCategory } from "@/lib/storage";
 import { getComments } from "@/lib/actions/comments";
 import { updateProofStatus } from "@/lib/actions/proofs";
@@ -54,6 +57,14 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const [pendingPin, setPendingPin] = useState<{ posX: number; posY: number } | null>(null);
     const [comments, setComments] = useState<any[]>(initialComments);
 
+    // Drawing state
+    const [annotColor, setAnnotColor] = useState("#ef4444");
+    const [showShareDialog, setShowShareDialog] = useState(false);
+    const [sidebarLayout, setSidebarLayout] = useState<"right" | "bottom">("right");
+    const drawingCanvasRef = useRef<DrawingCanvasHandle>(null);
+    const viewerContainerRef = useRef<HTMLDivElement>(null);
+    const [viewerSize, setViewerSize] = useState({ width: 800, height: 600 });
+
     // Video state
     const videoRef = useRef<HTMLVideoElement>(null);
     const [videoTime, setVideoTime] = useState(0);
@@ -77,6 +88,36 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         };
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    // Track viewer container size
+    useEffect(() => {
+        const el = viewerContainerRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setViewerSize({ width: entry.contentRect.width, height: entry.contentRect.height });
+            }
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, []);
+
+    // Keyboard shortcuts: Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+                e.preventDefault();
+                if (e.shiftKey) drawingCanvasRef.current?.redo();
+                else drawingCanvasRef.current?.undo();
+            }
+            if ((e.metaKey || e.ctrlKey) && e.key === "y") {
+                e.preventDefault();
+                drawingCanvasRef.current?.redo();
+            }
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, []);
 
     // Load signed URL
@@ -317,7 +358,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
                 {/* RIGHT: Share + Avatar */}
                 <div className="flex items-center gap-2 flex-1 justify-end">
-                    <button className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2" title="Share this proof">
+                    <button onClick={() => setShowShareDialog(true)} className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2" title="Share this proof">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                         </svg>
@@ -376,10 +417,10 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {(fileCategory === "image" || fileCategory === "video") && (
                     <>
                         {/* Undo / Redo */}
-                        <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors" title="Undo (Ctrl+Z)">
+                        <button onClick={() => drawingCanvasRef.current?.undo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors" title="Undo (Ctrl+Z)">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
                         </button>
-                        <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors" title="Redo (Ctrl+Shift+Z)">
+                        <button onClick={() => drawingCanvasRef.current?.redo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors" title="Redo (Ctrl+Shift+Z)">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" /></svg>
                         </button>
 
@@ -391,7 +432,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 onClick={() => {
                                     setActiveTool(tool.id);
                                     if (tool.id === "pin") setIsAnnotating(true);
-                                    else if (tool.id === "select") setIsAnnotating(false);
+                                    else setIsAnnotating(false);
                                 }}
                                 className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${activeTool === tool.id
                                     ? "text-white bg-[#3a3a55]"
@@ -409,20 +450,22 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
                         {/* Text */}
                         <button
-                            onClick={() => setActiveTool("text")}
+                            onClick={() => { setActiveTool("text"); setIsAnnotating(false); }}
                             className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-[15px] transition-colors ${activeTool === "text" ? "text-white bg-[#3a3a55]" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`}
                             title="Add text annotation"
                         >
                             T
                         </button>
 
-                        {/* Color */}
-                        <button className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#2a2a40] transition-colors" title="Change annotation color">
-                            <div className="h-5 w-5 rounded-full bg-red-500 ring-2 ring-[#3a3a55]" />
-                        </button>
+                        {/* Color Picker */}
+                        <ColorPicker color={annotColor} onChange={setAnnotColor} />
 
                         {/* Sidebar layout toggle */}
-                        <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Change layout">
+                        <button
+                            onClick={() => setSidebarLayout(sidebarLayout === "right" ? "bottom" : "right")}
+                            className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${sidebarLayout === "bottom" ? "text-blue-400 bg-blue-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`}
+                            title={`Layout: ${sidebarLayout === "right" ? "Sidebar right" : "Panel bottom"} (click to toggle)`}
+                        >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                             </svg>
@@ -481,7 +524,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     )}
 
                     {/* Viewer Canvas */}
-                    <div className="flex-1 flex items-center justify-center overflow-auto relative">
+                    <div ref={viewerContainerRef} className="flex-1 flex items-center justify-center overflow-auto relative">
                         {!selectedVersion ? (
                             <div className="text-center">
                                 <div className="h-16 w-16 rounded-2xl bg-[#2a2a40] flex items-center justify-center mb-4 mx-auto">
@@ -540,6 +583,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                             onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
                                             onCanvasClick={handleCanvasClick}
                                         />
+                                        <DrawingCanvas
+                                            ref={drawingCanvasRef}
+                                            tool={["rect", "circle", "arrow", "line", "pen", "text", "select"].includes(activeTool) ? activeTool as any : null}
+                                            color={annotColor}
+                                            containerWidth={viewerSize.width}
+                                            containerHeight={viewerSize.height}
+                                        />
                                     </div>
                                 )}
                                 {fileCategory === "video" && (
@@ -562,6 +612,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                         activePinId={activePinId}
                                                         onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
                                                         onCanvasClick={handleCanvasClick}
+                                                    />
+                                                    <DrawingCanvas
+                                                        ref={drawingCanvasRef}
+                                                        tool={["rect", "circle", "arrow", "line", "pen", "text", "select"].includes(activeTool) ? activeTool as any : null}
+                                                        color={annotColor}
+                                                        containerWidth={viewerSize.width}
+                                                        containerHeight={viewerSize.height}
                                                     />
                                                 </div>
                                             </div>
@@ -700,6 +757,14 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             <div className="h-6 flex items-center px-3 bg-[#15152a] border-t border-[#2a2a40] shrink-0">
                 <span className="text-[10px] text-zinc-600">Powered by GorillaProof®</span>
             </div>
+
+            {/* Share Dialog */}
+            <ShareDialog
+                isOpen={showShareDialog}
+                onClose={() => setShowShareDialog(false)}
+                proofId={proof.id}
+                proofTitle={proof.title}
+            />
         </div>
     );
 }
