@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         if (!error) {
             if (type === 'recovery') {
                 // If it's a password recovery, route them to the reset password form instead of dashboard
-                return NextResponse.redirect(`${origin}/reset-password`)
+                return NextResponse.redirect(`${origin}/en/reset-password`)
             }
 
             const forwardedHost = request.headers.get('x-forwarded-host')

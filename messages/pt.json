@@ -27,7 +27,10 @@
             "email": "E-mail",
             "password": "Senha",
             "submit": "Criar Conta",
-            "haveAccount": "Já tem uma conta? Voltar ao Login"
+            "submitButton": "Criar Conta",
+            "haveAccount": "Já tem uma conta? Voltar ao Login",
+            "alreadyHaveAccount": "Já tem uma conta?",
+            "loginLink": "Entrar"
         },
         "forgotPassword": {
             "title": "Esqueceu a senha?",

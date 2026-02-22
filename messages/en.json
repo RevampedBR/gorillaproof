@@ -27,7 +27,10 @@
             "email": "Email",
             "password": "Password",
             "submit": "Create Account",
-            "haveAccount": "Already have an account? Back to Login"
+            "submitButton": "Create Account",
+            "haveAccount": "Already have an account? Back to Login",
+            "alreadyHaveAccount": "Already have an account?",
+            "loginLink": "Sign in"
         },
         "forgotPassword": {
             "title": "Forgot password?",
