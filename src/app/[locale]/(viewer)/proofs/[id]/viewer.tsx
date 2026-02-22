@@ -310,7 +310,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     <div className="relative" ref={versionDropdownRef}>
                         <button
                             onClick={() => setShowVersionDropdown(!showVersionDropdown)}
-                            className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-300 hover:text-white bg-[#2a2a40] rounded-lg px-3 py-1.5 transition-colors"
+                            className="flex items-center gap-1.5 text-[13px] font-semibold text-zinc-300 hover:text-white bg-[#2a2a40] rounded-lg px-3 py-1.5 transition-colors cursor-pointer"
+                            title="Select version"
                         >
                             V.{selectedVersion?.version_number || 1}
                             <svg className="h-3 w-3 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -323,8 +324,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     <button
                                         key={v.id}
                                         onClick={() => { setSelectedVersion(v); setShowVersionDropdown(false); }}
-                                        className={`w-full flex items-center gap-3 px-3 py-2 text-[12px] transition-colors ${selectedVersion?.id === v.id ? "text-blue-400 bg-blue-500/10" : "text-zinc-300 hover:bg-[#2a2a40]"
+                                        className={`w-full flex items-center gap-3 px-3 py-2 text-[12px] transition-colors cursor-pointer ${selectedVersion?.id === v.id ? "text-blue-400 bg-blue-500/10" : "text-zinc-300 hover:bg-[#2a2a40]"
                                             }`}
+                                        title={`Switch to version ${v.version_number}`}
                                     >
                                         <span className="font-mono font-bold">V.{v.version_number}</span>
                                         <span className="text-zinc-500 text-[11px]">
@@ -340,7 +342,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     {versions.length > 1 && (
                         <button
                             onClick={() => setCompareMode(!compareMode)}
-                            className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${compareMode ? "text-blue-400 bg-blue-500/15" : "text-zinc-500 hover:text-zinc-300 hover:bg-[#2a2a40]"
+                            className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${compareMode ? "text-blue-400 bg-blue-500/15" : "text-zinc-500 hover:text-zinc-300 hover:bg-[#2a2a40]"
                                 }`}
                             title="Compare versions side-by-side"
                         >
@@ -355,7 +357,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 <div className="relative" ref={decisionRef}>
                     <button
                         onClick={() => setShowDecisionMenu(!showDecisionMenu)}
-                        className="h-[36px] px-6 rounded-lg text-[14px] font-bold bg-[#1a8cff] hover:bg-[#0077ee] text-white transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-[1.02]"
+                        className="h-[36px] px-6 rounded-lg text-[14px] font-bold bg-[#1a8cff] hover:bg-[#0077ee] text-white transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-[1.02] cursor-pointer"
+                        title="Set proof status (approve, request changes, etc.)"
                     >
                         {t("makeDecision")}
                     </button>
@@ -372,10 +375,11 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 <button
                                     key={opt.status}
                                     onClick={() => handleDecision(opt.status)}
-                                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors ${proof.status === opt.status
+                                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors cursor-pointer ${proof.status === opt.status
                                         ? "bg-blue-500/20 text-white"
                                         : "text-zinc-300 hover:bg-[#2a2a40]"
                                         }`}
+                                    title={opt.label}
                                 >
                                     <span className={`h-4 w-4 rounded-full border-2 ${proof.status === opt.status ? "border-green-400 bg-green-500" : `border-zinc-600 ${opt.dot}`} flex items-center justify-center`}>
                                         {proof.status === opt.status && (
@@ -397,7 +401,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
                 {/* RIGHT: Share + Avatar */}
                 <div className="flex items-center gap-2 flex-1 justify-end">
-                    <button onClick={() => setShowShareDialog(true)} className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2" title="Share this proof">
+                    <button onClick={() => setShowShareDialog(true)} className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2 cursor-pointer" title="Share this proof">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                         </svg>
@@ -419,18 +423,18 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {/* LEFT: Zoom */}
                 <div className="flex items-center gap-0.5">
                     <button onClick={() => setZoom((z) => Math.max(z - 0.25, 0.25))}
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Zoom out (-)">
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Zoom out (-)">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13.5 10.5h-6" />
                         </svg>
                     </button>
                     <button onClick={() => setZoom((z) => Math.min(z + 0.25, 5))}
-                        className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Zoom in (+)">
+                        className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Zoom in (+)">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
                         </svg>
                     </button>
-                    <button onClick={() => setZoom(1)} className="text-[12px] text-zinc-400 hover:text-white font-mono px-2 py-1 hover:bg-[#2a2a40] rounded-lg transition-colors min-w-[48px] text-center" title="Reset to 100% (0)">
+                    <button onClick={() => setZoom(1)} className="text-[12px] text-zinc-400 hover:text-white font-mono px-2 py-1 hover:bg-[#2a2a40] rounded-lg transition-colors min-w-[48px] text-center cursor-pointer" title="Reset to 100% (click to reset)">
                         {Math.round(zoom * 100)} %
                     </button>
                 </div>
@@ -438,12 +442,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 <div className="w-px h-4 bg-[#3a3a55] mx-1" />
 
                 {/* Fit/Crop icons */}
-                <button onClick={() => setZoom(1)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Fit to screen">
+                <button onClick={() => setZoom(1)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Fit to screen">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
                     </svg>
                 </button>
-                <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Crop / Focus area">
+                <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Crop / Focus area">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7.848 8.25l1.536.887M7.848 8.25a3 3 0 11-5.196-3 3 3 0 015.196 3zm1.536.887a2.165 2.165 0 011.083 1.839c.005.351.054.695.14 1.024M9.384 9.137l2.077 1.199M7.848 15.75l1.536-.887m-1.536.887a3 3 0 11-5.196 3 3 3 0 015.196-3zm1.536-.887a2.165 2.165 0 001.083-1.838c.005-.352.054-.695.14-1.025m-1.223 2.863l2.077-1.199m0-3.328a4.323 4.323 0 012.068-1.379l5.325-1.628a4.5 4.5 0 012.48-.044l.803.215-7.794 4.5m-2.882-1.664A4.331 4.331 0 0010.607 12m3.736 0l7.794 4.5-.802.215a4.5 4.5 0 01-2.48-.043l-5.326-1.629a4.324 4.324 0 01-2.068-1.379M14.343 12l-2.882 1.664" />
                     </svg>
@@ -456,10 +460,10 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {(fileCategory === "image" || fileCategory === "video") && (
                     <>
                         {/* Undo / Redo */}
-                        <button onClick={() => drawingCanvasRef.current?.undo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors" title="Undo (Ctrl+Z)">
+                        <button onClick={() => drawingCanvasRef.current?.undo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Undo (Ctrl+Z)">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg>
                         </button>
-                        <button onClick={() => drawingCanvasRef.current?.redo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors" title="Redo (Ctrl+Shift+Z)">
+                        <button onClick={() => drawingCanvasRef.current?.redo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Redo (Ctrl+Shift+Z)">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" /></svg>
                         </button>
 
@@ -517,8 +521,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {/* Comment toggle (Ziflow puts this at far right of row 2) */}
                 <button
                     onClick={() => setShowSidebar(!showSidebar)}
-                    className={`h-9 px-3.5 rounded-lg text-[13px] font-semibold flex items-center gap-2 transition-colors ${showSidebar ? "text-emerald-400 bg-emerald-500/15" : "text-zinc-400 hover:text-white hover:bg-[#2a2a40]"
+                    className={`h-9 px-3.5 rounded-lg text-[13px] font-semibold flex items-center gap-2 transition-colors cursor-pointer ${showSidebar ? "text-emerald-400 bg-emerald-500/15" : "text-zinc-400 hover:text-white hover:bg-[#2a2a40]"
                         }`}
+                    title={showSidebar ? "Hide comments panel" : "Show comments panel"}
                 >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
@@ -534,8 +539,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {/* Sidebar panel toggle */}
                 <button
                     onClick={() => setShowSidebar(!showSidebar)}
-                    className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${showSidebar ? "text-white bg-[#3a3a55]" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`}
-                    title="Toggle sidebar"
+                    className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${showSidebar ? "text-white bg-[#3a3a55]" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`}
+                    title="Toggle sidebar panel"
                 >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
@@ -698,6 +703,72 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                         />
                                                     ))}
                                                 </div>
+
+                                                {/* ═══ ANNOTATION TIMELINE TRACK ═══ */}
+                                                {(() => {
+                                                    const drawShapes = drawingCanvasRef.current?.getShapes() || [];
+                                                    const timedShapes = drawShapes.filter(s => s.timestamp != null);
+                                                    if (timedShapes.length === 0) return null;
+
+                                                    const SHAPE_LABELS: Record<string, string> = {
+                                                        rect: "□", circle: "○", arrow: "→", line: "╱", pen: "✎", text: "T",
+                                                    };
+
+                                                    return (
+                                                        <div className="mb-3">
+                                                            {/* Label */}
+                                                            <div className="flex items-center gap-2 mb-1.5">
+                                                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Annotations</span>
+                                                                <span className="text-[9px] bg-[#3a3a55] text-zinc-400 px-1.5 py-0.5 rounded-full font-mono">{timedShapes.length}</span>
+                                                            </div>
+                                                            {/* Track */}
+                                                            <div
+                                                                className="h-6 bg-[#1a1a2e] rounded-lg relative cursor-pointer border border-[#2a2a40] overflow-hidden"
+                                                                onClick={(e) => {
+                                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                                    const pos = (e.clientX - rect.left) / rect.width;
+                                                                    if (videoRef.current) videoRef.current.currentTime = pos * videoDuration;
+                                                                }}
+                                                            >
+                                                                {/* Playhead */}
+                                                                <div
+                                                                    className="absolute top-0 bottom-0 w-0.5 bg-white/60 z-10"
+                                                                    style={{ left: `${(videoTime / Math.max(videoDuration, 1)) * 100}%` }}
+                                                                />
+                                                                {/* Shape segments — each shows as a colored pill spanning ±2s */}
+                                                                {timedShapes.map((shape) => {
+                                                                    const t = shape.timestamp!;
+                                                                    const startPct = Math.max(0, ((t - 2) / Math.max(videoDuration, 1)) * 100);
+                                                                    const endPct = Math.min(100, ((t + 2) / Math.max(videoDuration, 1)) * 100);
+                                                                    const widthPct = Math.max(endPct - startPct, 1.5);
+                                                                    const isActive = Math.abs(videoTime - t) < 2;
+
+                                                                    return (
+                                                                        <div
+                                                                            key={shape.id}
+                                                                            title={`${shape.type} at ${formatTimestamp(t)} (click to jump)`}
+                                                                            className={`absolute top-0.5 bottom-0.5 rounded-md flex items-center justify-center text-[9px] font-bold transition-all cursor-pointer ${isActive ? "opacity-100 ring-1 ring-white/30" : "opacity-60 hover:opacity-90"}`}
+                                                                            style={{
+                                                                                left: `${startPct}%`,
+                                                                                width: `${widthPct}%`,
+                                                                                backgroundColor: shape.color + "40",
+                                                                                borderLeft: `2px solid ${shape.color}`,
+                                                                            }}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (videoRef.current) videoRef.current.currentTime = t;
+                                                                            }}
+                                                                        >
+                                                                            <span style={{ color: shape.color }} className="drop-shadow-sm">
+                                                                                {SHAPE_LABELS[shape.type] || "●"}
+                                                                            </span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })()}
 
                                                 {/* Controls row */}
                                                 <div className="flex items-center justify-between">
