@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { UploadDropzone } from "@/components/upload/dropzone";
 import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
-import { DrawingCanvas, DrawingCanvasHandle } from "@/components/annotations/drawing-canvas";
+import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
 import { ColorPicker } from "@/components/viewer/color-picker";
 import { ShareDialog } from "@/components/viewer/share-dialog";
 import { getSignedUrl, getFileCategory } from "@/lib/storage";
@@ -64,6 +64,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const drawingCanvasRef = useRef<DrawingCanvasHandle>(null);
     const viewerContainerRef = useRef<HTMLDivElement>(null);
     const [viewerSize, setViewerSize] = useState({ width: 800, height: 600 });
+    const [drawingShapes, setDrawingShapes] = useState<DrawnShape[]>([]);
 
     // Video state
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -116,6 +117,16 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             if ((e.metaKey || e.ctrlKey) && e.key === "y") {
                 e.preventDefault();
                 drawingCanvasRef.current?.redo();
+            }
+            // Spacebar = play/pause video
+            if (e.key === " " || e.code === "Space") {
+                const tag = (e.target as HTMLElement).tagName;
+                if (tag === "INPUT" || tag === "TEXTAREA" || tag === "BUTTON") return;
+                e.preventDefault();
+                if (videoRef.current) {
+                    if (videoRef.current.paused) { videoRef.current.play(); setIsPlaying(true); }
+                    else { videoRef.current.pause(); setIsPlaying(false); }
+                }
             }
         };
         window.addEventListener("keydown", handler);
@@ -633,6 +644,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                             color={annotColor}
                                             containerWidth={viewerSize.width}
                                             containerHeight={viewerSize.height}
+                                            onShapesChange={setDrawingShapes}
                                         />
                                     </div>
                                 )}
@@ -664,6 +676,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                         containerWidth={viewerSize.width}
                                                         containerHeight={viewerSize.height}
                                                         videoTimestamp={videoTime}
+                                                        onShapesChange={setDrawingShapes}
                                                     />
                                                 </div>
                                             </div>
@@ -706,8 +719,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
                                                 {/* ═══ ANNOTATION TIMELINE TRACK ═══ */}
                                                 {(() => {
-                                                    const drawShapes = drawingCanvasRef.current?.getShapes() || [];
-                                                    const timedShapes = drawShapes.filter(s => s.timestamp != null);
+                                                    const timedShapes = drawingShapes.filter(s => s.timestamp != null);
                                                     if (timedShapes.length === 0) return null;
 
                                                     const SHAPE_LABELS: Record<string, string> = {
@@ -723,7 +735,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                             </div>
                                                             {/* Track */}
                                                             <div
-                                                                className="h-6 bg-[#1a1a2e] rounded-lg relative cursor-pointer border border-[#2a2a40] overflow-hidden"
+                                                                className="h-8 bg-[#1a1a2e] rounded-lg relative cursor-pointer border border-[#2a2a40] overflow-hidden"
                                                                 onClick={(e) => {
                                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                                     const pos = (e.clientX - rect.left) / rect.width;
@@ -735,37 +747,89 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                                     className="absolute top-0 bottom-0 w-0.5 bg-white/60 z-10"
                                                                     style={{ left: `${(videoTime / Math.max(videoDuration, 1)) * 100}%` }}
                                                                 />
-                                                                {/* Shape segments — each shows as a colored pill spanning ±2s */}
+                                                                {/* Shape segments — colored bars with drag handles */}
                                                                 {timedShapes.map((shape) => {
                                                                     const t = shape.timestamp!;
-                                                                    const startPct = Math.max(0, ((t - 2) / Math.max(videoDuration, 1)) * 100);
-                                                                    const endPct = Math.min(100, ((t + 2) / Math.max(videoDuration, 1)) * 100);
-                                                                    const widthPct = Math.max(endPct - startPct, 1.5);
-                                                                    const isActive = Math.abs(videoTime - t) < 2;
+                                                                    const halfDur = shape.duration / 2;
+                                                                    const startPct = Math.max(0, ((t - halfDur) / Math.max(videoDuration, 1)) * 100);
+                                                                    const endPct = Math.min(100, ((t + halfDur) / Math.max(videoDuration, 1)) * 100);
+                                                                    const widthPct = Math.max(endPct - startPct, 2);
+                                                                    const isActive = Math.abs(videoTime - t) < halfDur;
 
                                                                     return (
                                                                         <div
                                                                             key={shape.id}
-                                                                            title={`${shape.type} at ${formatTimestamp(t)} (click to jump)`}
-                                                                            className={`absolute top-0.5 bottom-0.5 rounded-md flex items-center justify-center text-[9px] font-bold transition-all cursor-pointer ${isActive ? "opacity-100 ring-1 ring-white/30" : "opacity-60 hover:opacity-90"}`}
+                                                                            title={`${shape.type} at ${formatTimestamp(t)} · Duration: ${shape.duration.toFixed(1)}s (drag edges to resize)`}
+                                                                            className={`absolute top-1 bottom-1 rounded flex items-center justify-center text-[9px] font-bold transition-opacity group ${isActive ? "opacity-100" : "opacity-50 hover:opacity-80"}`}
                                                                             style={{
                                                                                 left: `${startPct}%`,
                                                                                 width: `${widthPct}%`,
-                                                                                backgroundColor: shape.color + "40",
-                                                                                borderLeft: `2px solid ${shape.color}`,
+                                                                                backgroundColor: shape.color + "35",
+                                                                                border: `1px solid ${shape.color}60`,
                                                                             }}
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
                                                                                 if (videoRef.current) videoRef.current.currentTime = t;
                                                                             }}
                                                                         >
-                                                                            <span style={{ color: shape.color }} className="drop-shadow-sm">
+                                                                            {/* Left drag handle — shrink start */}
+                                                                            <div
+                                                                                className="absolute left-0 top-0 bottom-0 w-2 cursor-w-resize hover:bg-white/20 rounded-l z-20"
+                                                                                onMouseDown={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    e.preventDefault();
+                                                                                    const startX = e.clientX;
+                                                                                    const origDuration = shape.duration;
+                                                                                    const trackRect = e.currentTarget.closest('[class*="h-8"]')!.getBoundingClientRect();
+                                                                                    const pxPerSec = trackRect.width / Math.max(videoDuration, 1);
+                                                                                    const onMove = (me: MouseEvent) => {
+                                                                                        const dx = me.clientX - startX;
+                                                                                        const dtSec = -dx / pxPerSec;
+                                                                                        const newDur = Math.max(1, Math.min(30, origDuration + dtSec * 2));
+                                                                                        drawingCanvasRef.current?.updateShape(shape.id, { duration: newDur });
+                                                                                    };
+                                                                                    const onUp = () => {
+                                                                                        window.removeEventListener("mousemove", onMove);
+                                                                                        window.removeEventListener("mouseup", onUp);
+                                                                                    };
+                                                                                    window.addEventListener("mousemove", onMove);
+                                                                                    window.addEventListener("mouseup", onUp);
+                                                                                }}
+                                                                            />
+                                                                            {/* Center label */}
+                                                                            <span style={{ color: shape.color }} className="drop-shadow-sm pointer-events-none select-none">
                                                                                 {SHAPE_LABELS[shape.type] || "●"}
                                                                             </span>
+                                                                            {/* Right drag handle — extend end */}
+                                                                            <div
+                                                                                className="absolute right-0 top-0 bottom-0 w-2 cursor-e-resize hover:bg-white/20 rounded-r z-20"
+                                                                                onMouseDown={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    e.preventDefault();
+                                                                                    const startX = e.clientX;
+                                                                                    const origDuration = shape.duration;
+                                                                                    const trackRect = e.currentTarget.closest('[class*="h-8"]')!.getBoundingClientRect();
+                                                                                    const pxPerSec = trackRect.width / Math.max(videoDuration, 1);
+                                                                                    const onMove = (me: MouseEvent) => {
+                                                                                        const dx = me.clientX - startX;
+                                                                                        const dtSec = dx / pxPerSec;
+                                                                                        const newDur = Math.max(1, Math.min(30, origDuration + dtSec * 2));
+                                                                                        drawingCanvasRef.current?.updateShape(shape.id, { duration: newDur });
+                                                                                    };
+                                                                                    const onUp = () => {
+                                                                                        window.removeEventListener("mousemove", onMove);
+                                                                                        window.removeEventListener("mouseup", onUp);
+                                                                                    };
+                                                                                    window.addEventListener("mousemove", onMove);
+                                                                                    window.addEventListener("mouseup", onUp);
+                                                                                }}
+                                                                            />
                                                                         </div>
                                                                     );
                                                                 })}
                                                             </div>
+                                                            {/* Duration hint */}
+                                                            <p className="text-[9px] text-zinc-600 mt-1">Drag bar edges to change how long each annotation stays visible</p>
                                                         </div>
                                                     );
                                                 })()}

@@ -24,6 +24,8 @@ export interface DrawnShape {
     fontSize: number;
     // Video timestamp (null = always visible, e.g. for images)
     timestamp: number | null;
+    // Duration in seconds (how long the annotation is visible, default 4 = ±2s)
+    duration: number;
 }
 
 export interface DrawingCanvasHandle {
@@ -31,6 +33,7 @@ export interface DrawingCanvasHandle {
     redo: () => void;
     getShapes: () => DrawnShape[];
     clearAll: () => void;
+    updateShape: (id: string, updates: Partial<DrawnShape>) => void;
 }
 
 interface DrawingCanvasProps {
@@ -89,6 +92,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
             redo,
             getShapes: () => shapes,
             clearAll: () => { saveToHistory(shapes); setShapes([]); onShapesChange?.([]); },
+            updateShape: (id: string, updates: Partial<DrawnShape>) => {
+                saveToHistory(shapes);
+                const newShapes = shapes.map(s => s.id === id ? { ...s, ...updates } : s);
+                setShapes(newShapes);
+                onShapesChange?.(newShapes);
+            },
         }), [undo, redo, shapes, saveToHistory, onShapesChange]);
 
         // Redraw canvas on changes
@@ -104,7 +113,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
 
             const visibleShapes = shapes.filter((s) => {
                 if (s.timestamp == null || videoTimestamp == null) return true;
-                return Math.abs(s.timestamp - videoTimestamp) < 2.0;
+                return Math.abs(s.timestamp - videoTimestamp) < (s.duration / 2);
             });
 
             const allShapes = currentShape ? [...visibleShapes, currentShape] : visibleShapes;
@@ -260,6 +269,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 text: "",
                 fontSize,
                 timestamp: videoTimestamp ?? null,
+                duration: 4,
             };
             setCurrentShape(newShape);
         };
@@ -356,6 +366,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 text: textValue,
                 fontSize,
                 timestamp: videoTimestamp ?? null,
+                duration: 4,
             };
             const newShapes = [...shapes, newShape];
             setShapes(newShapes);
