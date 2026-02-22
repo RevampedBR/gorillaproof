@@ -658,6 +658,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                         color={annotColor}
                                                         containerWidth={viewerSize.width}
                                                         containerHeight={viewerSize.height}
+                                                        videoTimestamp={videoTime}
                                                     />
                                                 </div>
                                             </div>

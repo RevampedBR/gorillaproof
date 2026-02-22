@@ -22,6 +22,8 @@ export interface DrawnShape {
     // For text
     text: string;
     fontSize: number;
+    // Video timestamp (null = always visible, e.g. for images)
+    timestamp: number | null;
 }
 
 export interface DrawingCanvasHandle {
@@ -38,6 +40,7 @@ interface DrawingCanvasProps {
     fontSize?: number;
     containerWidth: number;
     containerHeight: number;
+    videoTimestamp?: number | null; // null = image mode (always show), number = current video time
     onShapesChange?: (shapes: DrawnShape[]) => void;
 }
 
@@ -46,7 +49,7 @@ function generateId() {
 }
 
 export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(
-    function DrawingCanvas({ tool, color, lineWidth = 2, fontSize = 16, containerWidth, containerHeight, onShapesChange }, ref) {
+    function DrawingCanvas({ tool, color, lineWidth = 2, fontSize = 16, containerWidth, containerHeight, videoTimestamp, onShapesChange }, ref) {
         const canvasRef = useRef<HTMLCanvasElement>(null);
         const [shapes, setShapes] = useState<DrawnShape[]>([]);
         const [undoStack, setUndoStack] = useState<DrawnShape[][]>([]);
@@ -99,7 +102,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
             canvas.height = containerHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const allShapes = currentShape ? [...shapes, currentShape] : shapes;
+            const visibleShapes = shapes.filter((s) => {
+                if (s.timestamp == null || videoTimestamp == null) return true;
+                return Math.abs(s.timestamp - videoTimestamp) < 2.0;
+            });
+
+            const allShapes = currentShape ? [...visibleShapes, currentShape] : visibleShapes;
             for (const shape of allShapes) {
                 ctx.strokeStyle = shape.color;
                 ctx.fillStyle = shape.color;
@@ -166,7 +174,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
 
                 ctx.shadowBlur = 0;
             }
-        }, [shapes, currentShape, containerWidth, containerHeight, selectedShapeId]);
+        }, [shapes, currentShape, containerWidth, containerHeight, selectedShapeId, videoTimestamp]);
 
         const getCanvasPos = (e: React.MouseEvent) => {
             const canvas = canvasRef.current;
@@ -251,6 +259,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 points: tool === "pen" ? [{ x: pos.x, y: pos.y }] : [],
                 text: "",
                 fontSize,
+                timestamp: videoTimestamp ?? null,
             };
             setCurrentShape(newShape);
         };
@@ -346,6 +355,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 points: [],
                 text: textValue,
                 fontSize,
+                timestamp: videoTimestamp ?? null,
             };
             const newShapes = [...shapes, newShape];
             setShapes(newShapes);
