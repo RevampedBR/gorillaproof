@@ -19,6 +19,7 @@ import { usePresence } from "@/hooks/use-presence";
 import { notifyStatusChange } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
+import { submitDecision, getDecisions, lockProof, unlockProof, type ProofDecision } from "@/lib/actions/decisions";
 
 interface ProofViewerProps {
     proof: any;
@@ -55,6 +56,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     // UI state
     const [showDecisionMenu, setShowDecisionMenu] = useState(false);
+    const [showZoomPresets, setShowZoomPresets] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
     const [showVersionDropdown, setShowVersionDropdown] = useState(false);
     const [showShortcuts, setShowShortcuts] = useState(false);
@@ -294,9 +296,25 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         }
     }, [isAnnotating, fileCategory]);
 
+    const [reviewerDecisions, setReviewerDecisions] = useState<any[]>([]);
+    const isLocked = !!proof.locked_at;
+
+    useEffect(() => {
+        getDecisions(proof.id).then(({ data }) => setReviewerDecisions(data));
+    }, [proof.id]);
+
     const handleDecision = async (status: string) => {
+        if (isLocked) { toast(t("proofLocked"), "error"); return; }
+        // Record per-reviewer decision
+        const validDecisions: ProofDecision[] = ["approved", "approved_with_changes", "changes_requested", "not_relevant", "rejected"];
+        if (validDecisions.includes(status as ProofDecision)) {
+            await submitDecision(proof.id, status as ProofDecision);
+        }
+        // Update overall proof status
         await updateProofStatus(proof.id, status, proof.project_id);
         logActivity({ proofId: proof.id, action: "status_changed", metadata: { to: status } });
+        // Refresh reviewer decisions
+        getDecisions(proof.id).then(({ data }) => setReviewerDecisions(data));
         // Email notify org members (non-blocking)
         const recipients = orgMembers
             .filter((m) => m.users?.id !== currentUserId && m.users?.email)
@@ -311,6 +329,18 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             });
         }
         setShowDecisionMenu(false);
+        toast(status === "approved" ? "✅ Aprovado!" : `Decisão registrada: ${status}`, "success");
+        router.refresh();
+    };
+
+    const handleToggleLock = async () => {
+        if (isLocked) {
+            await unlockProof(proof.id);
+            toast("🔓 Prova destravada", "success");
+        } else {
+            await lockProof(proof.id);
+            toast("🔒 Prova travada — sem mais comentários ou decisões", "info");
+        }
         router.refresh();
     };
 
@@ -566,12 +596,20 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
                 {/* CENTER: Make Decision */}
                 <div className="relative" ref={decisionRef}>
+                    {isLocked && (
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 rounded-md bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-medium">
+                            🔒 Prova travada
+                        </div>
+                    )}
                     <button
                         onClick={() => setShowDecisionMenu(!showDecisionMenu)}
-                        className="h-[36px] px-6 rounded-lg text-[14px] font-bold bg-[#1a8cff] hover:bg-[#0077ee] text-white transition-all shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-[1.02] cursor-pointer"
+                        className={`h-[36px] px-6 rounded-lg text-[14px] font-bold transition-all shadow-lg cursor-pointer ${isLocked
+                            ? "bg-zinc-700 text-zinc-400 shadow-none cursor-not-allowed"
+                            : "bg-[#1a8cff] hover:bg-[#0077ee] text-white shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-[1.02]"
+                            }`}
                         data-tip="Definir status (aprovar, solicitar alterações, etc.)"
                     >
-                        {t("makeDecision")}
+                        {isLocked ? "🔒 Locked" : t("makeDecision")}
                     </button>
 
                     {showDecisionMenu && (
@@ -582,6 +620,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 { status: "approved_with_changes", label: t("decisionApprovedChanges"), dot: "bg-green-500", active: false },
                                 { status: "changes_requested", label: t("decisionChanges"), dot: "bg-red-500", active: false },
                                 { status: "not_relevant", label: t("decisionNotRelevant"), dot: "bg-zinc-500", active: false },
+                                { status: "rejected", label: t("decisionRejected"), dot: "bg-red-600", active: false },
                             ].map((opt) => (
                                 <button
                                     key={opt.status}
@@ -600,11 +639,32 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     {opt.label}
                                 </button>
                             ))}
+                            {/* Per-reviewer decisions summary */}
+                            {reviewerDecisions.length > 0 && (
+                                <div className="border-t border-[#3a3a55] mt-1.5 pt-1.5 px-3">
+                                    <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Decisões dos revisores</p>
+                                    {reviewerDecisions.map((d: any) => {
+                                        const name = d.users?.full_name || d.users?.email || "?";
+                                        const initials = name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+                                        const decColor: Record<string, string> = { approved: "text-green-400", approved_with_changes: "text-emerald-400", changes_requested: "text-amber-400", not_relevant: "text-zinc-400", rejected: "text-red-400" };
+                                        return (
+                                            <div key={d.id} className="flex items-center gap-2 py-1">
+                                                <div className="h-5 w-5 rounded-full bg-zinc-700 flex items-center justify-center text-[8px] font-bold text-zinc-300">{initials}</div>
+                                                <span className="text-[11px] text-zinc-400 flex-1 truncate">{name}</span>
+                                                <span className={`text-[10px] font-medium ${decColor[d.decision] || "text-zinc-500"}`}>{d.decision.replace(/_/g, " ")}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            {/* Lock/unlock */}
                             <div className="border-t border-[#3a3a55] mt-1.5 pt-1.5 mx-2">
-                                <label className="flex items-center gap-2 px-2 py-2 text-[12px] text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors">
-                                    <input type="checkbox" className="rounded border-zinc-600 bg-transparent" />
-                                    Send me an email confirmation
-                                </label>
+                                <button
+                                    onClick={handleToggleLock}
+                                    className="w-full flex items-center gap-2 px-2 py-2 text-[12px] text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors"
+                                >
+                                    {isLocked ? "🔓 Destravar prova" : "🔒 Travar prova"}
+                                </button>
                             </div>
                         </div>
                     )}
@@ -682,9 +742,28 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
                         </svg>
                     </button>
-                    <button onClick={() => setZoom(1)} className="text-[12px] text-zinc-400 hover:text-white font-mono px-2 py-1 hover:bg-[#2a2a40] rounded-lg transition-colors min-w-[48px] text-center cursor-pointer" data-tip="Resetar para 100%">
-                        {Math.round(zoom * 100)} %
-                    </button>
+                    <div className="relative">
+                        <button onClick={() => setShowZoomPresets(!showZoomPresets)} className="text-[12px] text-zinc-400 hover:text-white font-mono px-2 py-1 hover:bg-[#2a2a40] rounded-lg transition-colors min-w-[48px] text-center cursor-pointer" data-tip="Presets de zoom">
+                            {Math.round(zoom * 100)} %
+                        </button>
+                        {showZoomPresets && (
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-[#1e1e32] border border-[#3a3a55] rounded-lg shadow-2xl py-1 min-w-[120px] z-50">
+                                {[25, 50, 75, 100, 125, 150, 200, 300, 400].map((pct) => (
+                                    <button
+                                        key={pct}
+                                        onClick={() => { setZoom(pct / 100); setShowZoomPresets(false); }}
+                                        className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors cursor-pointer ${Math.round(zoom * 100) === pct ? "bg-blue-500/20 text-white" : "text-zinc-400 hover:bg-[#2a2a40] hover:text-zinc-200"}`}
+                                    >
+                                        {pct}%
+                                    </button>
+                                ))}
+                                <div className="border-t border-[#3a3a55] my-1" />
+                                <button onClick={() => { setZoom(1); setShowZoomPresets(false); }} className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-400 hover:bg-[#2a2a40] hover:text-zinc-200 cursor-pointer">
+                                    ↻ Reset (100%)
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="w-px h-4 bg-[#3a3a55] mx-1" />

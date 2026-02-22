@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +41,20 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
     const totalVersions = proofs.reduce((acc: number, p: any) => acc + (p.versions?.length || 0), 0);
     const approvedCount = proofs.filter((p: any) => p.status === "approved").length;
     const inReviewCount = proofs.filter((p: any) => p.status === "in_review").length;
+
+    // Status filter tabs
+    const [statusFilter, setStatusFilter] = useState<string>("all");
+    const STATUS_TABS = [
+        { key: "all", label: "All", count: proofs.length },
+        { key: "active", label: "Active", count: proofs.filter((p: any) => ["in_review", "changes_requested"].includes(p.status)).length },
+        { key: "approved", label: "Approved", count: approvedCount },
+        { key: "changes_requested", label: "Changes", count: proofs.filter((p: any) => p.status === "changes_requested").length },
+        { key: "completed", label: "Completed", count: proofs.filter((p: any) => ["approved", "rejected", "not_relevant"].includes(p.status)).length },
+    ];
+    const filteredProofs = statusFilter === "all" ? proofs
+        : statusFilter === "active" ? proofs.filter((p: any) => ["in_review", "changes_requested"].includes(p.status))
+            : statusFilter === "completed" ? proofs.filter((p: any) => ["approved", "rejected", "not_relevant"].includes(p.status))
+                : proofs.filter((p: any) => p.status === statusFilter);
 
     return (
         <div className="flex flex-col h-full">
@@ -128,6 +144,26 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                     </h2>
                 </div>
 
+                {/* ═══ STATUS FILTER TABS ═══ */}
+                <div className="flex items-center gap-1 mb-5 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-1">
+                    {STATUS_TABS.map((tab) => (
+                        <button
+                            key={tab.key}
+                            onClick={() => setStatusFilter(tab.key)}
+                            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${statusFilter === tab.key
+                                    ? "bg-[#1a8cff]/20 text-[#1a8cff] border border-[#1a8cff]/30 shadow-sm"
+                                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
+                                }`}
+                        >
+                            {tab.label}
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusFilter === tab.key
+                                    ? "bg-[#1a8cff]/20 text-[#1a8cff]"
+                                    : "bg-zinc-800 text-zinc-500"
+                                }`}>{tab.count}</span>
+                        </button>
+                    ))}
+                </div>
+
                 {proofs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border-2 border-dashed border-zinc-800/60 bg-zinc-900/20">
                         <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mb-5 border border-emerald-500/20">
@@ -147,7 +183,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                     </div>
                 ) : (
                     <div className="grid gap-4">
-                        {proofs.map((proof: any, index: number) => {
+                        {filteredProofs.map((proof: any, index: number) => {
                             // Compute comment stats from nested versions→comments
                             const allComments = (proof.versions || []).flatMap((v: any) => v.comments || []);
                             const openComments = allComments.filter((c: any) => c.status === "open").length;

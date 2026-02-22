@@ -135,7 +135,9 @@
             "decisionApproved": "Approved",
             "decisionApprovedChanges": "Approved with changes",
             "decisionChanges": "Changes required",
-            "decisionNotRelevant": "Not relevant"
+            "decisionNotRelevant": "Not relevant",
+            "decisionRejected": "Rejected",
+            "proofLocked": "This proof is locked. No further comments or decisions allowed."
         },
         "comments": {
             "title": "Comments",
