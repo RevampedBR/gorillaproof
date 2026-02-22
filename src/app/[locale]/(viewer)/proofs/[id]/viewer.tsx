@@ -138,9 +138,14 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     }, [selectedVersion]);
 
     const handleCanvasClick = useCallback((posX: number, posY: number) => {
+        if (!isAnnotating) return;
         setPendingPin({ posX, posY });
         setShowSidebar(true);
-    }, []);
+        if (fileCategory === "video" && videoRef.current) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+        }
+    }, [isAnnotating, fileCategory]);
 
     const handleDecision = async (status: string) => {
         await updateProofStatus(proof.id, status, proof.project_id);
@@ -175,13 +180,30 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     // Build pins
     const rootComments = comments.filter((c: any) => !c.parent_comment_id && c.pos_x != null && c.pos_y != null);
-    const pins = rootComments.map((c: any, i: number) => ({
-        id: c.id, number: i + 1, posX: c.pos_x, posY: c.pos_y,
-        status: c.status as "open" | "resolved", preview: c.content.slice(0, 80),
-    }));
+
+    // Only show video pins if we are within 1 second of their timestamp
+    const visibleRootComments = fileCategory === "video"
+        ? rootComments.filter((c: any) => c.video_timestamp == null || Math.abs(c.video_timestamp - videoTime) < 1.0)
+        : rootComments;
+
+    const pins = visibleRootComments.map((c: any, i: number) => {
+        // Find the absolute index among all root comments to keep pin numbers consistent
+        const absoluteIndex = rootComments.findIndex((rc: any) => rc.id === c.id);
+        return {
+            id: c.id,
+            number: absoluteIndex + 1,
+            posX: c.pos_x,
+            posY: c.pos_y,
+            status: c.status as "open" | "resolved",
+            preview: c.content.slice(0, 80),
+        };
+    });
+
     const allPins = pendingPin
-        ? [...pins, { id: "pending", number: pins.length + 1, posX: pendingPin.posX, posY: pendingPin.posY, status: "open" as const, preview: "..." }]
+        ? [...pins, { id: "pending", number: rootComments.length + 1, posX: pendingPin.posX, posY: pendingPin.posY, status: "open" as const, preview: "..." }]
         : pins;
+
+    const videoBookmarks = comments.filter((c: any) => !c.parent_comment_id && c.video_timestamp != null);
 
     const openComments = comments.filter((c: any) => !c.parent_comment_id && c.status === "open").length;
 
@@ -361,8 +383,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 key={tool.id}
                                 onClick={() => tool.id === "pin" ? setIsAnnotating(true) : tool.id === "select" ? setIsAnnotating(false) : null}
                                 className={`h-7 w-7 rounded flex items-center justify-center transition-colors ${(tool.id === "pin" && isAnnotating) || (tool.id === "select" && !isAnnotating)
-                                        ? "text-emerald-400 bg-emerald-500/10"
-                                        : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                                    ? "text-emerald-400 bg-emerald-500/10"
+                                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
                                     }`}
                                 title={tool.label}
                             >
@@ -437,20 +459,39 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 <p className="text-[12px] text-zinc-600 mt-1">{t("uploadFirstSub")}</p>
                             </div>
                         ) : compareMode && compareUrl ? (
-                            <div className="flex gap-1 h-full w-full items-center justify-center p-4">
-                                <div className="flex-1 flex flex-col items-center">
-                                    <span className="text-[10px] text-zinc-500 mb-2 font-mono">V.{compareVersion?.version_number}</span>
-                                    <div className="overflow-auto max-h-full rounded border border-zinc-800/40">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={compareUrl} alt="Compare" className="max-w-full h-auto" />
+                            <div className="flex gap-4 h-full w-full items-center justify-center p-6 bg-[#0f0f13]">
+                                <div className="flex-1 flex flex-col items-center h-full max-h-full">
+                                    <div className="w-full flex justify-between items-center mb-3 px-4">
+                                        <span className="text-[12px] font-bold text-zinc-400 font-mono tracking-widest uppercase">Version {compareVersion?.version_number}</span>
+                                        <Badge variant="outline" className={`text-[9px] px-1.5 py-0 border-zinc-700 text-zinc-400`}>Previous</Badge>
+                                    </div>
+                                    <div className="flex-1 overflow-auto rounded-xl border border-zinc-800/80 bg-zinc-900/50 shadow-2xl flex items-center justify-center w-full relative">
+                                        <div className="transition-transform duration-200 ease-out flex items-center justify-center" style={{ transform: `scale(${zoom})` }}>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={compareUrl} alt="Compare" className="max-w-none shadow-md" draggable={false} />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="w-px bg-emerald-500/40 self-stretch mx-2" />
-                                <div className="flex-1 flex flex-col items-center">
-                                    <span className="text-[10px] text-zinc-500 mb-2 font-mono">V.{selectedVersion.version_number}</span>
-                                    <div className="overflow-auto max-h-full rounded border border-zinc-800/40">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={fileUrl} alt="Current" className="max-w-full h-auto" />
+                                <div className="w-px bg-zinc-800 self-stretch my-10" />
+                                <div className="flex-1 flex flex-col items-center h-full max-h-full">
+                                    <div className="w-full flex justify-between items-center mb-3 px-4">
+                                        <span className="text-[12px] font-bold text-emerald-400 font-mono tracking-widest uppercase">Version {selectedVersion.version_number}</span>
+                                        <Badge variant="outline" className={`text-[9px] px-1.5 py-0 border-emerald-500/30 text-emerald-400 bg-emerald-500/10`}>Current</Badge>
+                                    </div>
+                                    <div className="flex-1 overflow-auto rounded-xl border border-emerald-500/20 bg-zinc-900/50 shadow-2xl flex items-center justify-center w-full relative">
+                                        <div className="transition-transform duration-200 ease-out flex items-center justify-center" style={{ transform: `scale(${zoom})` }}>
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={fileUrl} alt="Current" className="max-w-none shadow-md" draggable={false} />
+                                            {fileCategory === "image" && (
+                                                <AnnotationCanvas
+                                                    pins={allPins}
+                                                    isAnnotating={isAnnotating}
+                                                    activePinId={activePinId}
+                                                    onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                                    onCanvasClick={handleCanvasClick}
+                                                />
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -470,24 +511,34 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     </div>
                                 )}
                                 {fileCategory === "video" && (
-                                    <div className="flex flex-col items-center w-full h-full">
-                                        <div className="flex-1 flex items-center justify-center w-full">
-                                            <video
-                                                ref={videoRef}
-                                                src={fileUrl}
-                                                className="max-w-full max-h-full rounded shadow-2xl"
-                                                style={{ maxHeight: "calc(100vh - 180px)" }}
-                                                onTimeUpdate={() => setVideoTime(videoRef.current?.currentTime || 0)}
-                                                onLoadedMetadata={() => setVideoDuration(videoRef.current?.duration || 0)}
-                                                onPlay={() => setIsPlaying(true)}
-                                                onPause={() => setIsPlaying(false)}
-                                            />
+                                    <div className="flex flex-col items-center w-full h-full relative">
+                                        <div className="flex-1 flex items-center justify-center w-full relative overflow-hidden" style={{ maxHeight: "calc(100vh - 180px)" }}>
+                                            <div className="relative transition-transform duration-200 ease-out inline-block" style={{ transform: `scale(${zoom})` }}>
+                                                <video
+                                                    ref={videoRef}
+                                                    src={fileUrl}
+                                                    className="max-w-none max-h-[80vh] rounded shadow-2xl block"
+                                                    onTimeUpdate={() => setVideoTime(videoRef.current?.currentTime || 0)}
+                                                    onLoadedMetadata={() => setVideoDuration(videoRef.current?.duration || 0)}
+                                                    onPlay={() => setIsPlaying(true)}
+                                                    onPause={() => setIsPlaying(false)}
+                                                />
+                                                <div className="absolute inset-0">
+                                                    <AnnotationCanvas
+                                                        pins={allPins}
+                                                        isAnnotating={isAnnotating}
+                                                        activePinId={activePinId}
+                                                        onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                                        onCanvasClick={handleCanvasClick}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                         {/* Custom Video Controls */}
-                                        <div className="w-full max-w-3xl mx-auto px-4 pb-2">
+                                        <div className="w-full max-w-3xl mx-auto px-4 pb-4 shrink-0 mt-4">
                                             {/* Progress bar */}
                                             <div
-                                                className="h-1 bg-zinc-800 rounded-full cursor-pointer mb-2 group hover:h-1.5 transition-all"
+                                                className="h-1.5 bg-zinc-800/80 rounded-full cursor-pointer mb-3 group hover:h-2 transition-all relative"
                                                 onClick={(e) => {
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     const pos = (e.clientX - rect.left) / rect.width;
@@ -498,8 +549,24 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                     className="h-full bg-blue-500 rounded-full relative"
                                                     style={{ width: `${(videoTime / Math.max(videoDuration, 1)) * 100}%` }}
                                                 >
-                                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-blue-400 shadow opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-blue-400 shadow opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 </div>
+
+                                                {/* Timeline Markers */}
+                                                {videoBookmarks.map(c => (
+                                                    <div
+                                                        key={`marker-${c.id}`}
+                                                        title={c.content.slice(0, 30)}
+                                                        className={`absolute top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_2px_rgba(9,9,11,1)] cursor-pointer hover:scale-150 transition-transform ${activePinId === c.id ? "scale-150 ring-2 ring-emerald-400" : ""}`}
+                                                        style={{ left: `calc(${(c.video_timestamp / Math.max(videoDuration, 1)) * 100}% - 5px)` }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (videoRef.current) videoRef.current.currentTime = c.video_timestamp;
+                                                            setActivePinId(c.id);
+                                                            setShowSidebar(true);
+                                                        }}
+                                                    />
+                                                ))}
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
