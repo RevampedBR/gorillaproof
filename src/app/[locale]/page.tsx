@@ -1,14 +1,14 @@
-import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
-export default function Home({
+export default async function Home({
     params,
 }: {
-    params: { locale: string };
+    params: Promise<{ locale: string }>;
 }) {
-    setRequestLocale(params.locale);
-    const t = useTranslations("landing");
+    const { locale } = await params;
+    setRequestLocale(locale);
+    const t = await getTranslations({ locale, namespace: "landing" });
 
     return (
         <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-black font-sans text-zinc-50 selection:bg-indigo-500/30">

@@ -26,6 +26,14 @@ export async function signup(formData: FormData) {
     const password = formData.get("password") as string;
     const fullName = formData.get("fullName") as string;
     const agencyName = formData.get("agencyName") as string;
+
+    if (!email?.trim() || !password?.trim() || !fullName?.trim()) {
+        return { error: "All fields are required" };
+    }
+    if (password.length < 6) {
+        return { error: "Password must be at least 6 characters" };
+    }
+
     const supabase = await createClient();
 
     const { data, error } = await supabase.auth.signUp({
@@ -75,8 +83,15 @@ export async function signup(formData: FormData) {
         }
     }
 
-    // Redirect to dashboard
-    redirect("/dashboard");
+    // Check if email confirmation is required
+    // If user.identities is empty or email_confirmed_at is null, they need to confirm email
+    const needsConfirmation = !data.user?.email_confirmed_at;
+
+    if (needsConfirmation) {
+        redirect("/check-email");
+    } else {
+        redirect("/dashboard");
+    }
 }
 
 export async function recoverPassword(formData: FormData) {
