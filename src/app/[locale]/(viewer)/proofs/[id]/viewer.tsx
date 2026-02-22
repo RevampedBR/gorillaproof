@@ -71,6 +71,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const [videoDuration, setVideoDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
+    const [isMuted, setIsMuted] = useState(false);
+    const [volume, setVolume] = useState(1);
 
     // Refs for click outside
     const decisionRef = useRef<HTMLDivElement>(null);
@@ -210,6 +212,43 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         const sec = Math.floor(s % 60);
         const ms = Math.floor((s % 1) * 1000);
         return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}.${String(ms).padStart(3, "0")}`;
+    };
+    const takeScreenshot = () => {
+        if (!videoRef.current) return;
+        const video = videoRef.current;
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const link = document.createElement("a");
+        link.download = `screenshot_${formatTimestamp(videoTime).replace(/:/g, "-")}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    };
+    const togglePiP = async () => {
+        if (!videoRef.current) return;
+        try {
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+            } else {
+                await videoRef.current.requestPictureInPicture();
+            }
+        } catch (err) {
+            console.warn("PiP not supported:", err);
+        }
+    };
+    const toggleMute = () => {
+        if (!videoRef.current) return;
+        if (isMuted) {
+            videoRef.current.muted = false;
+            videoRef.current.volume = volume;
+            setIsMuted(false);
+        } else {
+            videoRef.current.muted = true;
+            setIsMuted(true);
+        }
     };
 
     // Build pins
@@ -662,44 +701,50 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                 {/* Controls row */}
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-3">
-                                                        <button className="text-zinc-400 hover:text-zinc-200 transition-colors">
-                                                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424" />
-                                                            </svg>
+                                                        <button onClick={toggleMute} className="text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" title={isMuted ? "Unmute" : "Mute"}>
+                                                            {isMuted ? (
+                                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.531V18.94a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.506-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                                                                </svg>
+                                                            ) : (
+                                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                                                                </svg>
+                                                            )}
                                                         </button>
                                                         <span className="text-[13px] text-zinc-300 font-mono tracking-wide">
                                                             {formatTimestamp(videoTime)} <span className="text-zinc-600">/</span> {formatTimestamp(videoDuration)}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <button onClick={() => stepFrame(-1)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] text-[16px] transition-colors" title="Previous frame">&lt;</button>
-                                                        <button onClick={togglePlay} className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg" title="Play / Pause">
+                                                        <button onClick={() => stepFrame(-1)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] text-[16px] transition-colors cursor-pointer" title="Previous frame">&#60;</button>
+                                                        <button onClick={togglePlay} className="h-10 w-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all shadow-lg cursor-pointer" title="Play / Pause">
                                                             {isPlaying ? (
                                                                 <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>
                                                             ) : (
                                                                 <svg className="h-4 w-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                                             )}
                                                         </button>
-                                                        <button onClick={() => stepFrame(1)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] text-[16px] transition-colors" title="Next frame">&gt;</button>
+                                                        <button onClick={() => stepFrame(1)} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] text-[16px] transition-colors cursor-pointer" title="Next frame">&#62;</button>
                                                     </div>
                                                     <div className="flex items-center gap-3">
-                                                        <button onClick={cycleSpeed} className="text-[13px] text-zinc-400 hover:text-zinc-200 font-mono transition-colors px-2 py-1 rounded-lg hover:bg-[#2a2a40]" title="Playback speed">
+                                                        <button onClick={cycleSpeed} className="text-[13px] text-zinc-400 hover:text-zinc-200 font-mono transition-colors px-2 py-1 rounded-lg hover:bg-[#2a2a40] cursor-pointer" title="Playback speed (click to cycle)">
                                                             {playbackSpeed}x
                                                         </button>
-                                                        <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Take screenshot">
+                                                        <button onClick={takeScreenshot} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Screenshot current frame">
                                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
                                                             </svg>
                                                         </button>
-                                                        <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors" title="Picture-in-picture">
+                                                        <button onClick={togglePiP} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" title="Picture-in-picture">
                                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 16.875h3.375m0 0h3.375m-3.375 0V13.5m0 3.375v3.375M6 10.5h2.25a2.25 2.25 0 002.25-2.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v2.25A2.25 2.25 0 006 10.5zm0 9.75h2.25A2.25 2.25 0 0010.5 18v-2.25a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25V18A2.25 2.25 0 006 20.25zm9.75-9.75H18a2.25 2.25 0 002.25-2.25V6A2.25 2.25 0 0018 3.75h-2.25A2.25 2.25 0 0013.5 6v2.25a2.25 2.25 0 002.25 2.25z" />
                                                             </svg>
                                                         </button>
                                                         <button
                                                             onClick={() => videoRef.current?.requestFullscreen?.()}
-                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors"
+                                                            className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer"
                                                             title="Fullscreen"
                                                         >
                                                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
