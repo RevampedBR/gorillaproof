@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { Link } from "@/i18n/navigation";
+import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 
 interface DashboardHomeClientProps {
     projects: any[];
@@ -78,6 +79,12 @@ export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProp
                         className="rounded-md bg-transparent px-3 py-1.5 text-[13px] font-medium text-zinc-400 data-[state=active]:text-zinc-100 data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm transition-all"
                     >
                         {t("recent")}
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="analytics"
+                        className="rounded-md bg-transparent px-3 py-1.5 text-[13px] font-medium text-zinc-400 data-[state=active]:text-zinc-100 data-[state=active]:bg-zinc-800 data-[state=active]:shadow-sm transition-all"
+                    >
+                        📊 Analytics
                     </TabsTrigger>
                 </TabsList>
 
@@ -191,6 +198,10 @@ export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProp
                         </div>
                     </div>
 
+                </TabsContent>
+
+                <TabsContent value="analytics" className="flex-1 pt-6 outline-none">
+                    <AnalyticsDashboard />
                 </TabsContent>
             </Tabs>
         </div>
