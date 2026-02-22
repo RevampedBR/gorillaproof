@@ -182,6 +182,51 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 }
 
                 ctx.shadowBlur = 0;
+
+                // Draw selection indicator (dashed box + corner handles)
+                if (isSelected) {
+                    let bx = shape.x, by = shape.y, bw = 0, bh = 0;
+                    switch (shape.type) {
+                        case "rect":
+                            bx = shape.x; by = shape.y; bw = shape.width; bh = shape.height;
+                            break;
+                        case "circle":
+                            bx = shape.x; by = shape.y; bw = shape.width; bh = shape.height;
+                            break;
+                        case "line":
+                        case "arrow":
+                            bx = Math.min(shape.x, shape.x2) - 4; by = Math.min(shape.y, shape.y2) - 4;
+                            bw = Math.abs(shape.x2 - shape.x) + 8; bh = Math.abs(shape.y2 - shape.y) + 8;
+                            break;
+                        case "pen":
+                            if (shape.points.length > 0) {
+                                const xs = shape.points.map(p => p.x);
+                                const ys = shape.points.map(p => p.y);
+                                bx = Math.min(...xs) - 4; by = Math.min(...ys) - 4;
+                                bw = Math.max(...xs) - bx + 8; bh = Math.max(...ys) - by + 8;
+                            }
+                            break;
+                        case "text":
+                            bw = shape.text.length * shape.fontSize * 0.6;
+                            bh = shape.fontSize;
+                            by = shape.y - shape.fontSize;
+                            break;
+                    }
+                    // Dashed border
+                    ctx.save();
+                    ctx.setLineDash([4, 4]);
+                    ctx.strokeStyle = "#5aa0e9";
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(bx - 4, by - 4, bw + 8, bh + 8);
+                    ctx.setLineDash([]);
+                    // Corner handles
+                    const hs = 5;
+                    ctx.fillStyle = "#5aa0e9";
+                    for (const [cx, cy] of [[bx - 4, by - 4], [bx + bw + 4, by - 4], [bx - 4, by + bh + 4], [bx + bw + 4, by + bh + 4]]) {
+                        ctx.fillRect(cx - hs / 2, cy - hs / 2, hs, hs);
+                    }
+                    ctx.restore();
+                }
             }
         }, [shapes, currentShape, containerWidth, containerHeight, selectedShapeId, videoTimestamp]);
 

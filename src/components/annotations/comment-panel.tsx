@@ -105,23 +105,33 @@ export function CommentPanel({
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const selected = newComment.slice(start, end);
-        let wrapped: string;
+
+        let prefix = "";
+        let suffix = "";
         switch (tag) {
-            case "B": wrapped = `**${selected || "bold text"}**`; break;
-            case "I": wrapped = `*${selected || "italic text"}*`; break;
-            case "U": wrapped = `__${selected || "underlined text"}__`; break;
-            case "S": wrapped = `~~${selected || "strikethrough text"}~~`; break;
-            case "UL": wrapped = `\n- ${selected || "list item"}`; break;
-            case "OL": wrapped = `\n1. ${selected || "list item"}`; break;
-            case "LINK": wrapped = `[${selected || "link text"}](url)`; break;
-            default: wrapped = selected; break;
+            case "B": prefix = "**"; suffix = "**"; break;
+            case "I": prefix = "*"; suffix = "*"; break;
+            case "U": prefix = "__"; suffix = "__"; break;
+            case "S": prefix = "~~"; suffix = "~~"; break;
+            case "UL": prefix = "\n- "; suffix = ""; break;
+            case "OL": prefix = "\n1. "; suffix = ""; break;
+            case "LINK": prefix = "["; suffix = "](url)"; break;
+            default: break;
         }
+
+        const wrapped = prefix + selected + suffix;
         const updated = newComment.slice(0, start) + wrapped + newComment.slice(end);
         setNewComment(updated);
-        // Restore focus
+
+        // Position cursor: if text was selected, place after the whole wrapped text.
+        // If no text was selected, place cursor between prefix and suffix so user can type.
+        const cursorPos = selected
+            ? start + wrapped.length
+            : start + prefix.length;
+
         setTimeout(() => {
             textarea.focus();
-            textarea.setSelectionRange(start + wrapped.length, start + wrapped.length);
+            textarea.setSelectionRange(cursorPos, cursorPos);
         }, 0);
     }, [newComment]);
 
