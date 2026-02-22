@@ -26,6 +26,8 @@ export interface DrawnShape {
     timestamp: number | null;
     // Duration in seconds (how long the annotation is visible, default 4 = ±2s)
     duration: number;
+    // Optional label for display on timeline
+    label?: string;
 }
 
 export interface DrawingCanvasHandle {

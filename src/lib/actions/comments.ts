@@ -100,3 +100,48 @@ export async function deleteComment(commentId: string, proofId: string) {
     revalidatePath(`/proofs/${proofId}`);
     return { error: null };
 }
+
+export async function carryCommentsForward(
+    fromVersionId: string,
+    toVersionId: string,
+    proofId: string
+) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Not authenticated", count: 0 };
+
+    // Fetch open root comments from source version
+    const { data: sourceComments, error: fetchErr } = await supabase
+        .from("comments")
+        .select("content, pos_x, pos_y, video_timestamp, user_id")
+        .eq("version_id", fromVersionId)
+        .eq("status", "open")
+        .is("parent_comment_id", null)
+        .order("created_at", { ascending: true });
+
+    if (fetchErr || !sourceComments?.length) {
+        return { error: fetchErr?.message ?? null, count: 0 };
+    }
+
+    // Copy to new version with carried-forward prefix
+    const inserts = sourceComments.map((c) => ({
+        version_id: toVersionId,
+        user_id: c.user_id,
+        content: `<em style="color:#a78bfa;font-size:11px">📋 Comentário da versão anterior:</em><br/>${c.content}`,
+        pos_x: c.pos_x,
+        pos_y: c.pos_y,
+        video_timestamp: c.video_timestamp,
+        status: "open" as const,
+        parent_comment_id: null,
+    }));
+
+    const { error: insertErr } = await supabase
+        .from("comments")
+        .insert(inserts);
+
+    if (insertErr) return { error: insertErr.message, count: 0 };
+
+    revalidatePath(`/proofs/${proofId}`);
+    return { error: null, count: inserts.length };
+}

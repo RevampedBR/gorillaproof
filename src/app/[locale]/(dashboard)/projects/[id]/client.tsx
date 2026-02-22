@@ -147,58 +147,89 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                     </div>
                 ) : (
                     <div className="grid gap-4">
-                        {proofs.map((proof: any, index: number) => (
-                            <Link
-                                key={proof.id}
-                                href={`/proofs/${proof.id}`}
-                                className="group relative flex items-center gap-4 px-5 py-4 rounded-xl border border-zinc-800/60 bg-gradient-to-r from-zinc-900/80 to-zinc-900/40 hover:from-[#1a1a2e] hover:to-[#16213e] hover:border-zinc-700/60 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
-                            >
-                                {/* Hover glow */}
-                                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/5 group-hover:to-blue-500/5 transition-all duration-300" />
+                        {proofs.map((proof: any, index: number) => {
+                            // Compute comment stats from nested versions→comments
+                            const allComments = (proof.versions || []).flatMap((v: any) => v.comments || []);
+                            const openComments = allComments.filter((c: any) => c.status === "open").length;
+                            const totalComments = allComments.length;
 
-                                {/* Number */}
-                                <div className="relative z-10 h-8 w-8 rounded-lg bg-zinc-800/80 flex items-center justify-center text-[12px] font-bold text-zinc-400 group-hover:text-white group-hover:bg-gradient-to-br group-hover:from-blue-500/30 group-hover:to-indigo-500/30 transition-all shrink-0">
-                                    {index + 1}
-                                </div>
+                            // Deadline helpers
+                            const deadline = proof.deadline ? new Date(proof.deadline) : null;
+                            const now = new Date();
+                            const msLeft = deadline ? deadline.getTime() - now.getTime() : Infinity;
+                            const deadlineColor = msLeft < 0 ? "text-red-400 bg-red-500/10 border-red-500/25" : msLeft < 86400000 ? "text-amber-400 bg-amber-500/10 border-amber-500/25" : "text-emerald-400 bg-emerald-500/10 border-emerald-500/25";
 
-                                {/* Icon */}
-                                <div className="relative z-10 h-11 w-11 rounded-xl bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center shrink-0 group-hover:border-zinc-600/50 transition-colors">
-                                    <svg className="h-5 w-5 text-zinc-500 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d={FILE_TYPE_ICON.image} />
-                                    </svg>
-                                </div>
+                            // File type icon
+                            const ft = proof.file_type || "image";
+                            const ftIcon = FILE_TYPE_ICON[ft] || FILE_TYPE_ICON.image;
 
-                                {/* Content */}
-                                <div className="relative z-10 flex-1 min-w-0">
-                                    <p className="text-[15px] font-semibold text-zinc-200 group-hover:text-white truncate transition-colors">
-                                        {proof.title}
-                                    </p>
-                                    <div className="flex items-center gap-3 mt-1 text-[12px] text-zinc-500">
-                                        <span className="flex items-center gap-1">
-                                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                            {proof.versions?.length || 0} {t("versions")}
-                                        </span>
-                                        <span>·</span>
-                                        <span>
-                                            {new Date(proof.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-                                        </span>
+                            return (
+                                <Link
+                                    key={proof.id}
+                                    href={`/proofs/${proof.id}`}
+                                    className="group relative flex items-center gap-4 px-5 py-4 rounded-xl border border-zinc-800/60 bg-gradient-to-r from-zinc-900/80 to-zinc-900/40 hover:from-[#1a1a2e] hover:to-[#16213e] hover:border-zinc-700/60 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
+                                >
+                                    {/* Hover glow */}
+                                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/5 group-hover:to-blue-500/5 transition-all duration-300" />
+
+                                    {/* Number */}
+                                    <div className="relative z-10 h-8 w-8 rounded-lg bg-zinc-800/80 flex items-center justify-center text-[12px] font-bold text-zinc-400 group-hover:text-white group-hover:bg-gradient-to-br group-hover:from-blue-500/30 group-hover:to-indigo-500/30 transition-all shrink-0">
+                                        {index + 1}
                                     </div>
-                                </div>
 
-                                {/* Status + Arrow */}
-                                <div className="relative z-10 flex items-center gap-3">
-                                    <Badge
-                                        variant="outline"
-                                        className={`text-[11px] px-3 py-1 ${PROOF_STATUS_COLORS[proof.status] || PROOF_STATUS_COLORS.draft}`}
-                                    >
-                                        {t(PROOF_STATUS_KEYS[proof.status] || "draft")}
-                                    </Badge>
-                                    <svg className="h-5 w-5 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                </div>
-                            </Link>
-                        ))}
+                                    {/* File Type Icon */}
+                                    <div className="relative z-10 h-11 w-11 rounded-xl bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center shrink-0 group-hover:border-zinc-600/50 transition-colors">
+                                        <svg className="h-5 w-5 text-zinc-500 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d={ftIcon} />
+                                        </svg>
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="relative z-10 flex-1 min-w-0">
+                                        <p className="text-[15px] font-semibold text-zinc-200 group-hover:text-white truncate transition-colors">
+                                            {proof.title}
+                                        </p>
+                                        <div className="flex items-center gap-3 mt-1 text-[12px] text-zinc-500">
+                                            <span className="flex items-center gap-1">
+                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                {proof.versions?.length || 0} {t("versions")}
+                                            </span>
+                                            {totalComments > 0 && (
+                                                <>
+                                                    <span>·</span>
+                                                    <span className={`flex items-center gap-1 ${openComments > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+                                                        💬 {openComments > 0 ? `${openComments} aberto${openComments > 1 ? "s" : ""}` : `${totalComments} ✓`}
+                                                    </span>
+                                                </>
+                                            )}
+                                            <span>·</span>
+                                            <span>
+                                                {new Date(proof.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Deadline + Status + Arrow */}
+                                    <div className="relative z-10 flex items-center gap-2">
+                                        {deadline && (
+                                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${deadlineColor}`}>
+                                                {msLeft < 0 ? "⏰ " : "📅 "}
+                                                {deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                                            </span>
+                                        )}
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[11px] px-3 py-1 ${PROOF_STATUS_COLORS[proof.status] || PROOF_STATUS_COLORS.draft}`}
+                                        >
+                                            {t(PROOF_STATUS_KEYS[proof.status] || "draft")}
+                                        </Badge>
+                                        <svg className="h-5 w-5 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </div>
+                                </Link>
+                            );
+                        })}
                     </div>
                 )}
             </div>

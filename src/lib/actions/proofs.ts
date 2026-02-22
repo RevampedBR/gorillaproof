@@ -12,9 +12,11 @@ export async function getProofs(projectId: string) {
             id,
             title,
             status,
+            file_type,
+            deadline,
             created_at,
             updated_at,
-            versions ( id )
+            versions ( id, comments ( id, status ) )
         `)
         .eq("project_id", projectId)
         .order("updated_at", { ascending: false });
@@ -67,4 +69,36 @@ export async function deleteProof(id: string, projectId: string) {
 
     revalidatePath(`/projects/${projectId}`);
     return { error: null };
+}
+
+export async function updateProofDeadline(id: string, deadline: string | null, projectId: string) {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from("proofs")
+        .update({ deadline, updated_at: new Date().toISOString() })
+        .eq("id", id);
+
+    if (error) return { error: error.message };
+
+    revalidatePath(`/projects/${projectId}`);
+    return { error: null };
+}
+
+export async function getOrgMembers(orgId: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("organization_members")
+        .select(`
+            user_id,
+            role,
+            users ( id, email, full_name, avatar_url )
+        `)
+        .eq("organization_id", orgId);
+
+    return {
+        data: data ?? [],
+        error: error?.message ?? null,
+    };
 }

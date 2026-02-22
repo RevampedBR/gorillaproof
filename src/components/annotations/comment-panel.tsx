@@ -3,6 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { createComment, resolveComment, reopenComment, deleteComment } from "@/lib/actions/comments";
+import { summarizeComments } from "@/lib/actions/ai";
+import { logActivity } from "@/lib/actions/activity";
+import { notifyMention } from "@/lib/actions/email";
+import { useToast } from "@/components/ui/toast-provider";
 
 interface Comment {
     id: string;
@@ -21,6 +25,7 @@ interface CommentPanelProps {
     comments: Comment[];
     versionId: string;
     proofId: string;
+    proofTitle?: string;
     currentUserId: string;
     activePinId: string | null;
     pendingPin: { posX: number; posY: number } | null;
@@ -28,6 +33,7 @@ interface CommentPanelProps {
     onCommentCreated: () => void;
     onPinClick: (commentId: string) => void;
     onCancelPin: () => void;
+    orgMembers?: any[];
 }
 
 type FilterType = "all" | "open" | "resolved";
@@ -36,6 +42,7 @@ export function CommentPanel({
     comments,
     versionId,
     proofId,
+    proofTitle,
     currentUserId,
     activePinId,
     pendingPin,
@@ -43,8 +50,10 @@ export function CommentPanel({
     onCommentCreated,
     onPinClick,
     onCancelPin,
+    orgMembers = [],
 }: CommentPanelProps) {
     const t = useTranslations("dashboard.comments");
+    const { toast } = useToast();
     const [filter, setFilter] = useState<FilterType>("all");
     const [newComment, setNewComment] = useState("");
     const [replyTo, setReplyTo] = useState<string | null>(null);
@@ -53,8 +62,24 @@ export function CommentPanel({
     const [showSearch, setShowSearch] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const [showFilterMenu, setShowFilterMenu] = useState(false);
-    const commentInputRef = useRef<HTMLTextAreaElement>(null);
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
+    const [aiLoading, setAiLoading] = useState(false);
+    const commentInputRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // @mentions state
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [showMentions, setShowMentions] = useState(false);
+    const [mentionIndex, setMentionIndex] = useState(0);
+    const mentionDropdownRef = useRef<HTMLDivElement>(null);
+
+    const filteredMembers = orgMembers.filter((m) => {
+        if (!mentionQuery) return true;
+        const q = mentionQuery.toLowerCase();
+        const user = m.users;
+        if (!user) return false;
+        return (user.full_name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q));
+    }).slice(0, 6);
 
     // Focus input when pending pin is placed
     useEffect(() => {
@@ -98,50 +123,116 @@ export function CommentPanel({
         return idx >= 0 ? idx + 1 : null;
     };
 
-    // Rich text formatting
+    // Rich text formatting — WYSIWYG via execCommand
     const applyFormat = useCallback((tag: string) => {
-        const textarea = commentInputRef.current;
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = newComment.slice(start, end);
+        const editor = commentInputRef.current;
+        if (!editor) return;
+        editor.focus();
 
-        let prefix = "";
-        let suffix = "";
         switch (tag) {
-            case "B": prefix = "**"; suffix = "**"; break;
-            case "I": prefix = "*"; suffix = "*"; break;
-            case "U": prefix = "__"; suffix = "__"; break;
-            case "S": prefix = "~~"; suffix = "~~"; break;
-            case "UL": prefix = "\n- "; suffix = ""; break;
-            case "OL": prefix = "\n1. "; suffix = ""; break;
-            case "LINK": prefix = "["; suffix = "](url)"; break;
-            default: break;
+            case "B": document.execCommand("bold"); break;
+            case "I": document.execCommand("italic"); break;
+            case "U": document.execCommand("underline"); break;
+            case "S": document.execCommand("strikeThrough"); break;
+            case "UL": document.execCommand("insertUnorderedList"); break;
+            case "OL": document.execCommand("insertOrderedList"); break;
+            case "LINK": {
+                const url = prompt("Enter URL:");
+                if (url) document.execCommand("createLink", false, url);
+                break;
+            }
+        }
+        // Sync state for submit button disabled check
+        setTimeout(() => {
+            setNewComment(editor.innerHTML || "");
+        }, 0);
+    }, []);
+
+    // Helper to get clean text content from the editor
+    const getEditorContent = useCallback(() => {
+        const editor = commentInputRef.current;
+        if (!editor) return "";
+        return editor.innerHTML || "";
+    }, []);
+
+    const getEditorTextContent = useCallback(() => {
+        const editor = commentInputRef.current;
+        if (!editor) return "";
+        return editor.textContent?.trim() || "";
+    }, []);
+
+    const clearEditor = useCallback(() => {
+        const editor = commentInputRef.current;
+        if (editor) editor.innerHTML = "";
+        setNewComment("");
+    }, []);
+
+    // Insert @mention into contentEditable
+    const insertMention = useCallback((member: any) => {
+        const editor = commentInputRef.current;
+        if (!editor) return;
+        const user = member.users;
+        if (!user) return;
+        const name = user.full_name || user.email;
+
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        const range = sel.getRangeAt(0);
+        const textNode = range.startContainer;
+
+        if (textNode.nodeType === Node.TEXT_NODE) {
+            const text = textNode.textContent || "";
+            const cursorPos = range.startOffset;
+            const beforeCursor = text.slice(0, cursorPos);
+            const atIdx = beforeCursor.lastIndexOf("@");
+            if (atIdx >= 0) {
+                // Split the text node: before @, mention span, after cursor
+                const before = text.slice(0, atIdx);
+                const after = text.slice(cursorPos);
+
+                // Create mention span
+                const mentionSpan = document.createElement("span");
+                mentionSpan.className = "mention-tag";
+                mentionSpan.setAttribute("data-mention-id", user.id);
+                mentionSpan.setAttribute("contenteditable", "false");
+                mentionSpan.style.cssText = "color:#34d399;background:#34d39915;padding:0 3px;border-radius:3px;font-weight:600;cursor:default;";
+                mentionSpan.textContent = `@${name}`;
+
+                // Create space after
+                const spaceNode = document.createTextNode("\u00A0");
+
+                // Build new nodes
+                const parent = textNode.parentNode!;
+                const beforeNode = document.createTextNode(before);
+                const afterNode = document.createTextNode(after);
+                parent.replaceChild(afterNode, textNode);
+                parent.insertBefore(spaceNode, afterNode);
+                parent.insertBefore(mentionSpan, spaceNode);
+                parent.insertBefore(beforeNode, mentionSpan);
+
+                // Move cursor after the space
+                const newRange = document.createRange();
+                newRange.setStartAfter(spaceNode);
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+            }
         }
 
-        const wrapped = prefix + selected + suffix;
-        const updated = newComment.slice(0, start) + wrapped + newComment.slice(end);
-        setNewComment(updated);
-
-        // Position cursor: if text was selected, place after the whole wrapped text.
-        // If no text was selected, place cursor between prefix and suffix so user can type.
-        const cursorPos = selected
-            ? start + wrapped.length
-            : start + prefix.length;
-
-        setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(cursorPos, cursorPos);
-        }, 0);
-    }, [newComment]);
+        setShowMentions(false);
+        setMentionQuery("");
+        setNewComment(editor.textContent?.trim() || "");
+    }, []);
 
     const handleSubmit = async () => {
-        if (!newComment.trim()) return;
+        const content = getEditorContent();
+        const textContent = getEditorTextContent();
+        if (!textContent) return;
         setSubmitting(true);
 
         await createComment(
             versionId,
-            newComment.trim(),
+            content,
             proofId,
             pendingPin?.posX ?? null,
             pendingPin?.posY ?? null,
@@ -149,7 +240,32 @@ export function CommentPanel({
             null
         );
 
-        setNewComment("");
+        // Activity log
+        logActivity({ proofId, action: "comment_added", metadata: { text: textContent.slice(0, 100) } });
+
+        // Detect @mentions and send email notifications
+        const mentionMatches = content.match(/data-mention-id="([^"]+)"/g);
+        if (mentionMatches && proofTitle) {
+            const currentUserName = orgMembers.find(m => m.users?.id === currentUserId)?.users?.full_name || "Alguém";
+            mentionMatches.forEach((match) => {
+                const idMatch = match.match(/data-mention-id="([^"]+)"/);
+                if (idMatch) {
+                    const mentionedMember = orgMembers.find(m => m.users?.id === idMatch[1]);
+                    if (mentionedMember?.users?.email && mentionedMember.users.id !== currentUserId) {
+                        notifyMention({
+                            proofTitle,
+                            proofUrl: `${typeof window !== "undefined" ? window.location.href : ""}`,
+                            mentionedBy: currentUserName,
+                            commentText: content,
+                            recipientEmail: mentionedMember.users.email,
+                            recipientName: mentionedMember.users.full_name || undefined,
+                        });
+                    }
+                }
+            });
+        }
+
+        clearEditor();
         onCancelPin();
         onCommentCreated();
         setSubmitting(false);
@@ -169,11 +285,13 @@ export function CommentPanel({
 
     const handleResolve = async (commentId: string) => {
         await resolveComment(commentId, proofId);
+        logActivity({ proofId, action: "comment_resolved", metadata: { commentId } });
         onCommentCreated();
     };
 
     const handleReopen = async (commentId: string) => {
         await reopenComment(commentId, proofId);
+        logActivity({ proofId, action: "comment_reopened", metadata: { commentId } });
         onCommentCreated();
     };
 
@@ -260,9 +378,9 @@ export function CommentPanel({
                         </div>
                     )}
 
-                    {/* Content — render basic markdown */}
-                    <p className="text-[13px] text-zinc-300 leading-relaxed whitespace-pre-wrap ml-8" dangerouslySetInnerHTML={{
-                        __html: comment.content
+                    {/* Content — render HTML (with markdown fallback for old comments) */}
+                    <div className="text-[13px] text-zinc-300 leading-relaxed whitespace-pre-wrap ml-8 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-blue-400 [&_a]:underline" dangerouslySetInnerHTML={{
+                        __html: comment.content.includes("<") ? comment.content : comment.content
                             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
                             .replace(/\*(.+?)\*/g, '<em>$1</em>')
                             .replace(/__(.+?)__/g, '<u>$1</u>')
@@ -371,26 +489,125 @@ export function CommentPanel({
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-6.364-6.364L4.5 8.257" /></svg>
                     </button>
                     <div className="flex-1" />
-                    <button className="h-6 px-2.5 rounded bg-[#e91e8c] hover:bg-[#d41a7e] text-white text-[10px] font-bold tracking-wider cursor-pointer transition-colors" title="Ask AI for suggestions">
-                        Ask AI
+                    <button
+                        onClick={async () => {
+                            if (aiLoading) return;
+                            if (aiSummary) { setAiSummary(null); return; }
+                            setAiLoading(true);
+                            const commentData = rootComments.map((c) => ({
+                                author: c.users?.full_name || c.users?.email || "User",
+                                content: c.content,
+                                status: c.status,
+                                hasPin: c.pos_x != null,
+                                timestamp: c.video_timestamp != null ? formatVideoTime(c.video_timestamp) : null,
+                            }));
+                            const result = await summarizeComments(commentData);
+                            setAiLoading(false);
+                            if (result.summary) setAiSummary(result.summary);
+                            else toast(result.error || "Erro ao gerar resumo", "error");
+                        }}
+                        disabled={rootComments.length === 0}
+                        className={`h-6 px-2.5 rounded text-white text-[10px] font-bold tracking-wider cursor-pointer transition-colors disabled:opacity-30 ${aiSummary ? "bg-[#e91e8c] ring-2 ring-[#e91e8c]/40" : "bg-[#e91e8c] hover:bg-[#d41a7e]"}`}
+                        title="AI Summary of all comments"
+                    >
+                        {aiLoading ? (
+                            <span className="flex items-center gap-1">✨ <span className="inline-block h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /></span>
+                        ) : aiSummary ? "✕ Close" : "✨ Ask AI"}
                     </button>
                 </div>
 
-                {/* Comment textarea */}
-                <textarea
-                    ref={commentInputRef}
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder={pendingPin ? t("commentOnPin") : t("addComment")}
-                    className="w-full bg-[#1e1e32] border border-[#3a3a55] rounded-lg px-3 py-2.5 text-[13px] text-zinc-200 placeholder:text-zinc-600 resize-none focus:outline-none focus:border-blue-500/50 min-h-[80px] transition-colors"
-                    rows={3}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey && (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault();
-                            handleSubmit();
-                        }
-                    }}
-                />
+                {/* Comment rich text editor (contentEditable) */}
+                <div className="relative">
+                    <div
+                        ref={commentInputRef}
+                        contentEditable
+                        suppressContentEditableWarning
+                        className="w-full bg-[#1e1e32] border border-[#3a3a55] rounded-lg px-3 py-2.5 text-[13px] text-zinc-200 focus:outline-none focus:border-blue-500/50 min-h-[80px] max-h-[200px] transition-colors overflow-y-auto overflow-x-hidden [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-blue-400 [&_a]:underline empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none"
+                        data-placeholder={pendingPin ? t("commentOnPin") : t("addComment")}
+                        onInput={() => {
+                            const editor = commentInputRef.current;
+                            if (editor) setNewComment(editor.textContent?.trim() || "");
+
+                            // @mention detection
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount > 0 && editor) {
+                                const range = sel.getRangeAt(0);
+                                const textNode = range.startContainer;
+                                if (textNode.nodeType === Node.TEXT_NODE) {
+                                    const text = textNode.textContent || "";
+                                    const cursorPos = range.startOffset;
+                                    const beforeCursor = text.slice(0, cursorPos);
+                                    const mentionMatch = beforeCursor.match(/@([\w\s]*)$/);
+                                    if (mentionMatch) {
+                                        setMentionQuery(mentionMatch[1]);
+                                        setShowMentions(true);
+                                        setMentionIndex(0);
+                                        return;
+                                    }
+                                }
+                            }
+                            setShowMentions(false);
+                        }}
+                        onKeyDown={(e) => {
+                            // @mention keyboard navigation
+                            if (showMentions && filteredMembers.length > 0) {
+                                if (e.key === "ArrowDown") {
+                                    e.preventDefault();
+                                    setMentionIndex((i) => Math.min(i + 1, filteredMembers.length - 1));
+                                    return;
+                                }
+                                if (e.key === "ArrowUp") {
+                                    e.preventDefault();
+                                    setMentionIndex((i) => Math.max(i - 1, 0));
+                                    return;
+                                }
+                                if (e.key === "Enter" || e.key === "Tab") {
+                                    e.preventDefault();
+                                    insertMention(filteredMembers[mentionIndex]);
+                                    return;
+                                }
+                                if (e.key === "Escape") {
+                                    setShowMentions(false);
+                                    return;
+                                }
+                            }
+                            if (e.key === "Enter" && !e.shiftKey && (e.metaKey || e.ctrlKey)) {
+                                e.preventDefault();
+                                handleSubmit();
+                            }
+                        }}
+                    />
+
+                    {/* @mention dropdown */}
+                    {showMentions && filteredMembers.length > 0 && (
+                        <div ref={mentionDropdownRef} className="absolute left-0 right-0 bottom-full mb-1 bg-[#1e1e32] border border-[#3a3a55] rounded-lg shadow-xl z-50 overflow-hidden max-h-48 overflow-y-auto">
+                            {filteredMembers.map((member, idx) => {
+                                const user = member.users;
+                                if (!user) return null;
+                                const name = user.full_name || user.email;
+                                return (
+                                    <button
+                                        key={user.id}
+                                        className={`w-full px-3 py-2 flex items-center gap-2 text-left text-[12px] transition-colors cursor-pointer ${idx === mentionIndex ? "bg-emerald-500/20 text-emerald-300" : "text-zinc-300 hover:bg-[#2a2a40]"}`}
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            insertMention(member);
+                                        }}
+                                        onMouseEnter={() => setMentionIndex(idx)}
+                                    >
+                                        <div className="h-6 w-6 rounded-full bg-emerald-600/30 flex items-center justify-center text-[10px] font-bold text-emerald-300 shrink-0">
+                                            {(user.full_name || user.email).charAt(0).toUpperCase()}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{name}</span>
+                                            {user.full_name && <span className="text-[10px] text-zinc-500">{user.email}</span>}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
 
                 {/* Time badge + attachments */}
                 <div className="flex items-center justify-between mt-2">
@@ -411,14 +628,14 @@ export function CommentPanel({
                 <div className="flex items-center gap-2 mt-2.5">
                     <button
                         onClick={handleSubmit}
-                        disabled={submitting || !newComment.trim()}
+                        disabled={submitting || !newComment}
                         className="h-8 px-4 rounded-md text-[12px] font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 text-white transition-colors cursor-pointer"
                         title="Post comment (Ctrl+Enter)"
                     >
                         Post
                     </button>
                     <button
-                        onClick={() => { setNewComment(""); onCancelPin(); }}
+                        onClick={() => { clearEditor(); onCancelPin(); }}
                         className="h-8 px-4 rounded-md text-[12px] font-medium text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors cursor-pointer"
                         title="Cancel and clear"
                     >
@@ -443,6 +660,27 @@ export function CommentPanel({
                     </div>
                 )}
             </div>
+
+            {/* ═══ AI Summary Panel ═══ */}
+            {aiSummary && (
+                <div className="border-b border-[#2a2a40] bg-gradient-to-r from-[#e91e8c]/5 to-[#7c3aed]/5">
+                    <div className="px-4 py-2.5 flex items-center gap-2 border-b border-[#2a2a40]/50">
+                        <span className="text-[11px] font-bold text-[#e91e8c]">✨ AI Summary</span>
+                        <span className="text-[9px] text-zinc-600 bg-[#2a2a40] px-1.5 py-0.5 rounded-full">Gemini 2.0</span>
+                        <button onClick={() => setAiSummary(null)} className="ml-auto text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer">✕</button>
+                    </div>
+                    <div className="px-4 py-3 text-[12px] text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto"
+                        dangerouslySetInnerHTML={{
+                            __html: aiSummary
+                                .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                                .replace(/^- /gm, '• ')
+                                .replace(/^### (.+)$/gm, '<span class="text-[#e91e8c] font-semibold block mt-2 mb-1">$1</span>')
+                                .replace(/^## (.+)$/gm, '<span class="text-[#e91e8c] font-bold block mt-2 mb-1">$1</span>')
+                                .replace(/\n/g, '<br/>')
+                        }}
+                    />
+                </div>
+            )}
 
             {/* ═══ Sort / Filter bar ═══ */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-[#2a2a40]">

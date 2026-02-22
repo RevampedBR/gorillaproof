@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { getVersions } from "@/lib/actions/versions";
 import { getComments } from "@/lib/actions/comments";
+import { getOrgMembers } from "@/lib/actions/proofs";
 import { notFound } from "next/navigation";
 import { ProofViewer } from "./viewer";
 
@@ -20,7 +21,7 @@ export default async function ProofViewerPage({ params }: Props) {
     const { data: proof, error } = await supabase
         .from("proofs")
         .select(`
-            id, title, status, created_at, updated_at,
+            id, title, status, created_at, updated_at, deadline,
             project_id,
             projects ( id, name, organization_id )
         `)
@@ -38,14 +39,19 @@ export default async function ProofViewerPage({ params }: Props) {
         ? (await getComments(latestVersion.id)).data
         : [];
 
+    // Fetch org members for @mentions
+    const orgId = (proof as any).projects?.organization_id || "";
+    const { data: orgMembers } = orgId ? await getOrgMembers(orgId) : { data: [] };
+
     return (
         <ProofViewer
             proof={proof}
             versions={versions}
             initialComments={initialComments}
             projectName={(proof as any).projects?.name || ""}
-            orgId={(proof as any).projects?.organization_id || ""}
+            orgId={orgId}
             currentUserId={user.id}
+            orgMembers={orgMembers}
         />
     );
 }

@@ -120,6 +120,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -129,6 +130,7 @@
 [data-tip] {
   position: relative;
 }
+
 [data-tip]::after {
   content: attr(data-tip);
   position: absolute;
@@ -148,23 +150,76 @@
   transition: opacity 0.12s, transform 0.12s;
   z-index: 9999;
   border: 1px solid #3a3a55;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
 [data-tip]:hover::after {
   opacity: 1;
   transform: translateX(-50%) scale(1);
 }
+
 /* Bottom-positioned tooltips */
 [data-tip-pos="bottom"]::after {
   bottom: auto;
   top: calc(100% + 6px);
 }
+
 /* Left-positioned tooltips (for right-edge buttons) */
 [data-tip-pos="left"]::after {
   left: auto;
   right: 0;
   transform: translateX(0) scale(0.95);
 }
+
 [data-tip-pos="left"]:hover::after {
   transform: translateX(0) scale(1);
+}
+
+/* ═══ Proof Viewer: hide unwanted scrollbars ═══ */
+.viewer-no-scrollbar {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+.viewer-no-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari */
+}
+
+/* contentEditable rich text editor — thin scrollbar only when needed */
+[contenteditable] {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a55 transparent;
+}
+
+[contenteditable]::-webkit-scrollbar {
+  width: 4px;
+}
+
+[contenteditable]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[contenteditable]::-webkit-scrollbar-thumb {
+  background: #3a3a55;
+  border-radius: 4px;
+}
+
+/* Toast animations */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
 }
