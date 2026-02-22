@@ -18,6 +18,8 @@ export async function getProofs(projectId: string) {
                 file_type,
                 deadline,
                 locked_at,
+                tags,
+                share_token,
                 created_at,
                 updated_at,
                 versions ( id, comments ( id, status ) )
@@ -144,5 +146,67 @@ export async function getOrgMembers(orgId: string) {
         };
     } catch (err) {
         return { data: [], error: "Failed to fetch members" };
+    }
+}
+
+export async function updateProofTags(id: string, tags: string[], projectId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+
+    try {
+        const { error } = await supabase
+            .from("proofs")
+            .update({ tags })
+            .eq("id", id);
+
+        if (error) return { error: error.message };
+
+        revalidatePath(`/projects/${projectId}`);
+        return { error: null };
+    } catch (err) {
+        return { error: "Failed to update tags" };
+    }
+}
+
+export async function bulkUpdateProofStatus(ids: string[], status: string, projectId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+
+    try {
+        const { error } = await supabase
+            .from("proofs")
+            .update({ status, updated_at: new Date().toISOString() })
+            .in("id", ids)
+            .is("locked_at", null);
+
+        if (error) return { error: error.message };
+
+        revalidatePath(`/projects/${projectId}`);
+        return { error: null, count: ids.length };
+    } catch (err) {
+        return { error: "Failed to bulk update" };
+    }
+}
+
+export async function generateShareToken(proofId: string, projectId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated", token: null };
+
+    try {
+        const token = crypto.randomUUID().replace(/-/g, "");
+        const { error } = await supabase
+            .from("proofs")
+            .update({ share_token: token })
+            .eq("id", proofId);
+
+        if (error) return { error: error.message, token: null };
+
+        revalidatePath(`/projects/${projectId}`);
+        return { error: null, token };
+    } catch (err) {
+        return { error: "Failed to generate share token", token: null };
     }
 }

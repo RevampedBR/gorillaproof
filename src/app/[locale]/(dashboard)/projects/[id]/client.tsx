@@ -7,6 +7,8 @@ import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreateProofDialog } from "@/components/proofs/create-proof-dialog";
+import { bulkUpdateProofStatus, updateProofTags } from "@/lib/actions/proofs";
+import { useToast } from "@/components/ui/toast-provider";
 
 interface ProjectDetailClientProps {
     project: any;
@@ -55,6 +57,42 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
         : statusFilter === "active" ? proofs.filter((p: any) => ["in_review", "changes_requested"].includes(p.status))
             : statusFilter === "completed" ? proofs.filter((p: any) => ["approved", "rejected", "not_relevant"].includes(p.status))
                 : proofs.filter((p: any) => p.status === statusFilter);
+
+    // Bulk select
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const { toast } = useToast();
+
+    const toggleSelect = (id: string, e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const handleBulkAction = async (action: string) => {
+        const ids = Array.from(selectedIds);
+        if (ids.length === 0) return;
+        const result = await bulkUpdateProofStatus(ids, action, project.id);
+        if (result.error) {
+            toast(result.error, "error");
+        } else {
+            toast(`✅ ${ids.length} proof(s) atualizados para ${action}`, "success");
+            setSelectedIds(new Set());
+        }
+    };
+
+    // Tag colors
+    const TAG_COLORS: Record<string, string> = {
+        urgent: "bg-red-500/20 text-red-300 border-red-500/30",
+        design: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+        video: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+        copy: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+        final: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    };
 
     return (
         <div className="flex flex-col h-full">
@@ -151,14 +189,14 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                             key={tab.key}
                             onClick={() => setStatusFilter(tab.key)}
                             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${statusFilter === tab.key
-                                    ? "bg-[#1a8cff]/20 text-[#1a8cff] border border-[#1a8cff]/30 shadow-sm"
-                                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
+                                ? "bg-[#1a8cff]/20 text-[#1a8cff] border border-[#1a8cff]/30 shadow-sm"
+                                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40"
                                 }`}
                         >
                             {tab.label}
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusFilter === tab.key
-                                    ? "bg-[#1a8cff]/20 text-[#1a8cff]"
-                                    : "bg-zinc-800 text-zinc-500"
+                                ? "bg-[#1a8cff]/20 text-[#1a8cff]"
+                                : "bg-zinc-800 text-zinc-500"
                                 }`}>{tab.count}</span>
                         </button>
                     ))}
@@ -200,72 +238,106 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                             const ftIcon = FILE_TYPE_ICON[ft] || FILE_TYPE_ICON.image;
 
                             return (
-                                <Link
-                                    key={proof.id}
-                                    href={`/proofs/${proof.id}`}
-                                    className="group relative flex items-center gap-4 px-5 py-4 rounded-xl border border-zinc-800/60 bg-gradient-to-r from-zinc-900/80 to-zinc-900/40 hover:from-[#1a1a2e] hover:to-[#16213e] hover:border-zinc-700/60 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
-                                >
-                                    {/* Hover glow */}
-                                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/5 group-hover:to-blue-500/5 transition-all duration-300" />
+                                <div key={proof.id} className="relative">
+                                    <Link
+                                        href={`/proofs/${proof.id}`}
+                                        className="group relative flex items-center gap-4 px-5 py-4 rounded-xl border border-zinc-800/60 bg-gradient-to-r from-zinc-900/80 to-zinc-900/40 hover:from-[#1a1a2e] hover:to-[#16213e] hover:border-zinc-700/60 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
+                                    >
+                                        {/* Hover glow */}
+                                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/5 group-hover:to-blue-500/5 transition-all duration-300" />
 
-                                    {/* Number */}
-                                    <div className="relative z-10 h-8 w-8 rounded-lg bg-zinc-800/80 flex items-center justify-center text-[12px] font-bold text-zinc-400 group-hover:text-white group-hover:bg-gradient-to-br group-hover:from-blue-500/30 group-hover:to-indigo-500/30 transition-all shrink-0">
-                                        {index + 1}
-                                    </div>
-
-                                    {/* File Type Icon */}
-                                    <div className="relative z-10 h-11 w-11 rounded-xl bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center shrink-0 group-hover:border-zinc-600/50 transition-colors">
-                                        <svg className="h-5 w-5 text-zinc-500 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d={ftIcon} />
-                                        </svg>
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="relative z-10 flex-1 min-w-0">
-                                        <p className="text-[15px] font-semibold text-zinc-200 group-hover:text-white truncate transition-colors">
-                                            {proof.title}
-                                        </p>
-                                        <div className="flex items-center gap-3 mt-1 text-[12px] text-zinc-500">
-                                            <span className="flex items-center gap-1">
-                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                                {proof.versions?.length || 0} {t("versions")}
-                                            </span>
-                                            {totalComments > 0 && (
-                                                <>
-                                                    <span>·</span>
-                                                    <span className={`flex items-center gap-1 ${openComments > 0 ? "text-amber-400" : "text-emerald-400"}`}>
-                                                        💬 {openComments > 0 ? `${openComments} aberto${openComments > 1 ? "s" : ""}` : `${totalComments} ✓`}
-                                                    </span>
-                                                </>
-                                            )}
-                                            <span>·</span>
-                                            <span>
-                                                {new Date(proof.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Deadline + Status + Arrow */}
-                                    <div className="relative z-10 flex items-center gap-2">
-                                        {deadline && (
-                                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${deadlineColor}`}>
-                                                {msLeft < 0 ? "⏰ " : "📅 "}
-                                                {deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-                                            </span>
-                                        )}
-                                        <Badge
-                                            variant="outline"
-                                            className={`text-[11px] px-3 py-1 ${PROOF_STATUS_COLORS[proof.status] || PROOF_STATUS_COLORS.draft}`}
+                                        {/* Bulk Select Checkbox */}
+                                        <div
+                                            onClick={(e) => toggleSelect(proof.id, e)}
+                                            className={`relative z-20 h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 cursor-pointer transition-all ${selectedIds.has(proof.id) ? "bg-emerald-500 border-emerald-500" : "border-zinc-600 hover:border-zinc-400"}`}
                                         >
-                                            {t(PROOF_STATUS_KEYS[proof.status] || "draft")}
-                                        </Badge>
-                                        <svg className="h-5 w-5 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                        </svg>
-                                    </div>
-                                </Link>
+                                            {selectedIds.has(proof.id) && (
+                                                <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                            )}
+                                        </div>
+
+                                        {/* Number */}
+                                        <div className="relative z-10 h-8 w-8 rounded-lg bg-zinc-800/80 flex items-center justify-center text-[12px] font-bold text-zinc-400 group-hover:text-white group-hover:bg-gradient-to-br group-hover:from-blue-500/30 group-hover:to-indigo-500/30 transition-all shrink-0">
+                                            {index + 1}
+                                        </div>
+
+                                        {/* File Type Icon */}
+                                        <div className="relative z-10 h-11 w-11 rounded-xl bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center shrink-0 group-hover:border-zinc-600/50 transition-colors">
+                                            <svg className="h-5 w-5 text-zinc-500 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d={ftIcon} />
+                                            </svg>
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="relative z-10 flex-1 min-w-0">
+                                            <p className="text-[15px] font-semibold text-zinc-200 group-hover:text-white truncate transition-colors">
+                                                {proof.title}
+                                            </p>
+                                            <div className="flex items-center gap-3 mt-1 text-[12px] text-zinc-500">
+                                                <span className="flex items-center gap-1">
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                    {proof.versions?.length || 0} {t("versions")}
+                                                </span>
+                                                {totalComments > 0 && (
+                                                    <>
+                                                        <span>·</span>
+                                                        <span className={`flex items-center gap-1 ${openComments > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+                                                            💬 {openComments > 0 ? `${openComments} aberto${openComments > 1 ? "s" : ""}` : `${totalComments} ✓`}
+                                                        </span>
+                                                    </>
+                                                )}
+                                                <span>·</span>
+                                                <span>
+                                                    {new Date(proof.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                                                </span>
+                                            </div>
+                                            {/* Tag Pills */}
+                                            {proof.tags && proof.tags.length > 0 && (
+                                                <div className="flex items-center gap-1 mt-1.5">
+                                                    {proof.tags.map((tag: string) => (
+                                                        <span key={tag} className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${TAG_COLORS[tag.toLowerCase()] || "bg-zinc-700/30 text-zinc-400 border-zinc-600/30"}`}>
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Deadline + Status + Arrow */}
+                                        <div className="relative z-10 flex items-center gap-2">
+                                            {deadline && (
+                                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${deadlineColor}`}>
+                                                    {msLeft < 0 ? "⏰ " : "📅 "}
+                                                    {deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                                                </span>
+                                            )}
+                                            <Badge
+                                                variant="outline"
+                                                className={`text-[11px] px-3 py-1 ${PROOF_STATUS_COLORS[proof.status] || PROOF_STATUS_COLORS.draft}`}
+                                            >
+                                                {t(PROOF_STATUS_KEYS[proof.status] || "draft")}
+                                            </Badge>
+                                            <svg className="h-5 w-5 text-zinc-600 group-hover:text-zinc-300 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                            </svg>
+                                        </div>
+                                    </Link>
+                                </div>
                             );
                         })}
+                    </div>
+                )}
+
+                {/* ═══ BULK ACTION BAR ═══ */}
+                {selectedIds.size > 0 && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1a1a2e] border border-zinc-700/60 rounded-xl px-5 py-3 shadow-2xl shadow-black/40">
+                        <span className="text-[13px] font-semibold text-white">{selectedIds.size} selecionado(s)</span>
+                        <div className="h-5 w-px bg-zinc-700" />
+                        <button onClick={() => handleBulkAction("approved")} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-[12px] font-semibold hover:bg-emerald-500/30 transition-colors cursor-pointer">✅ Aprovar</button>
+                        <button onClick={() => handleBulkAction("changes_requested")} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[12px] font-semibold hover:bg-amber-500/30 transition-colors cursor-pointer">🔄 Alterações</button>
+                        <button onClick={() => handleBulkAction("rejected")} className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-[12px] font-semibold hover:bg-red-500/30 transition-colors cursor-pointer">❌ Rejeitar</button>
+                        <div className="h-5 w-px bg-zinc-700" />
+                        <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1.5 rounded-lg bg-zinc-700/50 text-zinc-400 text-[12px] font-medium hover:bg-zinc-700 transition-colors cursor-pointer">Limpar</button>
                     </div>
                 )}
             </div>

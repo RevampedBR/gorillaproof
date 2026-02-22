@@ -683,6 +683,15 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         </svg>
                         Share
                     </button>
+                    {/* Download Original */}
+                    {fileUrl && (
+                        <a href={fileUrl} target="_blank" rel="noopener noreferrer" download className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2 cursor-pointer no-underline">
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            Download
+                        </a>
+                    )}
                     <button
                         onClick={() => {
                             navigator.clipboard.writeText(window.location.href);
