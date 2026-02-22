@@ -122,7 +122,32 @@
             "uploadFirst": "Upload the first file",
             "uploadFirstSub": "Drag an image, video or PDF to start the review.",
             "previewUnavailable": "Preview unavailable for this format",
-            "downloadFile": "Download original file"
+            "downloadFile": "Download original file",
+            "annotate": "Annotate",
+            "select": "Select",
+            "approve": "Approve",
+            "requestChanges": "Request Changes",
+            "reject": "Reject",
+            "commentsTab": "Comments",
+            "versionsTab": "Versions"
+        },
+        "comments": {
+            "title": "Comments",
+            "open": "open",
+            "resolved": "resolved",
+            "all": "All",
+            "noComments": "No comments yet",
+            "noCommentsSub": "Click on the image to place a pin and comment.",
+            "addComment": "Add a comment...",
+            "commentOnPin": "Comment on this point...",
+            "pinPlaced": "Pin placed",
+            "cancelPin": "Cancel",
+            "reply": "Reply",
+            "resolve": "Resolve",
+            "reopen": "Reopen",
+            "delete": "Delete",
+            "replyPlaceholder": "Reply...",
+            "justNow": "just now"
         }
     },
     "metadata": {

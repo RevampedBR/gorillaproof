@@ -122,7 +122,32 @@
             "uploadFirst": "Envie o primeiro arquivo",
             "uploadFirstSub": "Arraste uma imagem, vídeo ou PDF para começar a revisão.",
             "previewUnavailable": "Prévia indisponível para este formato",
-            "downloadFile": "Baixar arquivo original"
+            "downloadFile": "Baixar arquivo original",
+            "annotate": "Anotar",
+            "select": "Selecionar",
+            "approve": "Aprovar",
+            "requestChanges": "Pedir Ajustes",
+            "reject": "Rejeitar",
+            "commentsTab": "Coment\u00e1rios",
+            "versionsTab": "Vers\u00f5es"
+        },
+        "comments": {
+            "title": "Coment\u00e1rios",
+            "open": "abertos",
+            "resolved": "resolvidos",
+            "all": "Todos",
+            "noComments": "Nenhum coment\u00e1rio ainda",
+            "noCommentsSub": "Clique na imagem para fixar um pin e comentar.",
+            "addComment": "Adicionar coment\u00e1rio...",
+            "commentOnPin": "Comente sobre este ponto...",
+            "pinPlaced": "Pin posicionado",
+            "cancelPin": "Cancelar",
+            "reply": "Responder",
+            "resolve": "Resolver",
+            "reopen": "Reabrir",
+            "delete": "Excluir",
+            "replyPlaceholder": "Responder...",
+            "justNow": "agora"
         }
     },
     "metadata": {
