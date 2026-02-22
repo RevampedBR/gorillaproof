@@ -49,18 +49,15 @@
     "dashboard": {
         "sidebar": {
             "search": "Buscar...",
-            "home": "Início",
-            "notifications": "Notificações",
-            "goals": "Metas",
-            "favorites": "Favoritos",
-            "spaces": "ESPAÇOS",
-            "marketing": "Marketing",
-            "design": "Design",
-            "allSpaces": "Ver todos..."
+            "home": "Inicio",
+            "allProofs": "Todas as Provas",
+            "projects": "Projetos",
+            "notifications": "Notificacoes",
+            "settings": "Configuracoes"
         },
         "header": {
-            "search": "Buscar projetos e provas... (Cmd+K)",
-            "newProject": "Nova Tarefa",
+            "search": "Buscar provas e projetos...",
+            "newProof": "Nova Prova",
             "invite": "Convidar",
             "myAccount": "Minha Conta",
             "logout": "Sair"

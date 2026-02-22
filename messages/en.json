@@ -50,23 +50,20 @@
         "sidebar": {
             "search": "Search...",
             "home": "Home",
+            "allProofs": "All Proofs",
+            "projects": "Projects",
             "notifications": "Notifications",
-            "goals": "Goals",
-            "favorites": "Favorites",
-            "spaces": "SPACES",
-            "marketing": "Marketing",
-            "design": "Design",
-            "allSpaces": "View all..."
+            "settings": "Settings"
         },
         "header": {
-            "search": "Search projects and proofs... (Cmd+K)",
-            "newProject": "New Task",
+            "search": "Search proofs and projects...",
+            "newProof": "New Proof",
             "invite": "Invite",
             "myAccount": "My Account",
             "logout": "Log out"
         },
         "home": {
-            "welcome": "Good morning, Gorilla",
+            "welcome": "Welcome back",
             "overview": "Overview",
             "assigned": "Assigned to me",
             "recent": "Recent",
