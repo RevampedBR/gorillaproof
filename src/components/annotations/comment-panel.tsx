@@ -18,6 +18,8 @@ interface Comment {
     parent_comment_id: string | null;
     created_at: string;
     user_id: string;
+    attachment_url?: string | null;
+    is_internal?: boolean;
     users: { id: string; full_name: string | null; avatar_url: string | null; email: string } | null;
 }
 
@@ -66,6 +68,9 @@ export function CommentPanel({
     const [aiLoading, setAiLoading] = useState(false);
     const commentInputRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [isInternal, setIsInternal] = useState(false);
+    const [sortBy, setSortBy] = useState<"date" | "status" | "author">("date");
+    const [showSortMenu, setShowSortMenu] = useState(false);
 
     // @mentions state
     const [mentionQuery, setMentionQuery] = useState("");
@@ -111,6 +116,10 @@ export function CommentPanel({
         return c.content.toLowerCase().includes(q) ||
             c.users?.full_name?.toLowerCase().includes(q) ||
             c.users?.email?.toLowerCase().includes(q);
+    }).sort((a, b) => {
+        if (sortBy === "status") return a.status.localeCompare(b.status);
+        if (sortBy === "author") return (a.users?.full_name || a.users?.email || "").localeCompare(b.users?.full_name || b.users?.email || "");
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
 
     const openCount = rootComments.filter((c) => c.status === "open").length;
@@ -237,7 +246,9 @@ export function CommentPanel({
             pendingPin?.posX ?? null,
             pendingPin?.posY ?? null,
             videoTimestamp ?? null,
-            null
+            null,
+            null,
+            isInternal
         );
 
         // Activity log
@@ -362,8 +373,8 @@ export function CommentPanel({
                         <span className="text-[11px] text-zinc-500 shrink-0">{formatTime(comment.created_at)}</span>
                     </div>
 
-                    {/* Badges: Pin # + Timestamp */}
-                    {(pinNum || comment.video_timestamp != null) && (
+                    {/* Badges: Pin # + Timestamp + Internal */}
+                    {(pinNum || comment.video_timestamp != null || comment.is_internal) && (
                         <div className="flex items-center gap-2 mb-1.5 ml-8">
                             {pinNum && (
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${comment.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-[#2a2a40] text-zinc-500"}`}>
@@ -373,6 +384,11 @@ export function CommentPanel({
                             {comment.video_timestamp != null && (
                                 <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-500/20 transition-colors" title="Jump to this timestamp">
                                     ⏱ {formatVideoTime(comment.video_timestamp)}
+                                </span>
+                            )}
+                            {comment.is_internal && (
+                                <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title="Visível apenas para sua equipe">
+                                    🔒 INTERNAL
                                 </span>
                             )}
                         </div>
@@ -641,6 +657,17 @@ export function CommentPanel({
                     >
                         Cancel
                     </button>
+                    <div className="flex-1" />
+                    <button
+                        onClick={() => setIsInternal(!isInternal)}
+                        className={`h-7 px-2.5 rounded-md text-[10px] font-medium transition-all cursor-pointer flex items-center gap-1 ${isInternal
+                            ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                            : "bg-zinc-800/50 text-zinc-500 border border-zinc-700/30 hover:text-zinc-300"
+                            }`}
+                        title={isInternal ? "Visível apenas para sua equipe" : "Visível para todos"}
+                    >
+                        {isInternal ? "🔒 Internal" : "🌐 All"}
+                    </button>
                 </div>
 
                 {/* Pending pin indicator */}
@@ -707,6 +734,23 @@ export function CommentPanel({
                                     className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors cursor-pointer ${filter === f ? "text-blue-400 bg-blue-500/10" : "text-zinc-400 hover:bg-[#2a2a40]"}`}
                                 >
                                     {f === "all" ? `All (${rootComments.length})` : f === "open" ? `Open (${openCount})` : `Resolved (${resolvedCount})`}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {/* Sort */}
+                    <button onClick={() => setShowSortMenu(!showSortMenu)} className={`h-7 w-7 rounded transition-colors flex items-center justify-center cursor-pointer ${sortBy !== "date" ? "text-emerald-400 bg-emerald-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`} title="Sort comments">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
+                    </button>
+                    {showSortMenu && (
+                        <div className="absolute top-full right-0 mt-1 bg-[#1e1e32] border border-[#3a3a55] rounded-lg shadow-2xl py-1 min-w-[120px] z-50">
+                            {([{ key: "date", label: "Date" }, { key: "status", label: "Status" }, { key: "author", label: "Author" }] as const).map((s) => (
+                                <button
+                                    key={s.key}
+                                    onClick={() => { setSortBy(s.key); setShowSortMenu(false); }}
+                                    className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors cursor-pointer ${sortBy === s.key ? "text-emerald-400 bg-emerald-500/10" : "text-zinc-400 hover:bg-[#2a2a40]"}`}
+                                >
+                                    {s.label}
                                 </button>
                             ))}
                         </div>

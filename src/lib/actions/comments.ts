@@ -11,7 +11,7 @@ export async function getComments(versionId: string) {
         .select(`
             id, content, pos_x, pos_y, video_timestamp,
             status, parent_comment_id, created_at, updated_at,
-            user_id,
+            user_id, attachment_url, is_internal,
             users ( id, full_name, avatar_url, email )
         `)
         .eq("version_id", versionId)
@@ -27,7 +27,9 @@ export async function createComment(
     posX?: number | null,
     posY?: number | null,
     videoTimestamp?: number | null,
-    parentCommentId?: string | null
+    parentCommentId?: string | null,
+    attachmentUrl?: string | null,
+    isInternal?: boolean
 ) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -44,11 +46,13 @@ export async function createComment(
             pos_y: posY ?? null,
             video_timestamp: videoTimestamp ?? null,
             parent_comment_id: parentCommentId ?? null,
+            attachment_url: attachmentUrl ?? null,
+            is_internal: isInternal ?? false,
         })
         .select(`
             id, content, pos_x, pos_y, video_timestamp,
             status, parent_comment_id, created_at,
-            user_id,
+            user_id, attachment_url, is_internal,
             users ( id, full_name, avatar_url, email )
         `)
         .single();
