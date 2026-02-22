@@ -129,7 +129,13 @@
             "requestChanges": "Request Changes",
             "reject": "Reject",
             "commentsTab": "Comments",
-            "versionsTab": "Versions"
+            "versionsTab": "Versions",
+            "makeDecision": "Make decision",
+            "decisionPending": "Decision pending",
+            "decisionApproved": "Approved",
+            "decisionApprovedChanges": "Approved with changes",
+            "decisionChanges": "Changes required",
+            "decisionNotRelevant": "Not relevant"
         },
         "comments": {
             "title": "Comments",
