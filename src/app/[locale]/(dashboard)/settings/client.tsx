@@ -60,7 +60,7 @@ export function SettingsClient({ orgId }: SettingsClientProps) {
 
     const TABS = [
         { key: "org" as const, label: "🏢 Organização" },
-        { key: "notifications" as const, label: "🔔 Notificações" },
+        { key: "notifications" as const, label: "Notificações" },
         { key: "usage" as const, label: "📊 Uso" },
     ];
 
@@ -147,7 +147,7 @@ export function SettingsClient({ orgId }: SettingsClientProps) {
                 <div className="grid grid-cols-2 gap-4">
                     {usage ? (
                         [
-                            { label: "Projetos", value: usage.projects, icon: "📁", color: "from-blue-500 to-indigo-500" },
+                            { label: "Projetos", value: usage.projects, icon: "P", color: "from-blue-500 to-indigo-500" },
                             { label: "Proofs", value: usage.proofs, icon: "📄", color: "from-emerald-500 to-teal-500" },
                             { label: "Versões", value: usage.versions, icon: "🔄", color: "from-violet-500 to-purple-500" },
                             { label: "Membros", value: usage.members, icon: "👥", color: "from-amber-500 to-orange-500" },

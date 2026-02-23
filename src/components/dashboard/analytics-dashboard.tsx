@@ -31,14 +31,14 @@ export function AnalyticsDashboard() {
     const trendColor = weekTrend > 0 ? "text-emerald-400" : weekTrend < 0 ? "text-red-400" : "text-zinc-400";
 
     const stats = [
-        { label: "Total Proofs", value: data.totalProofs, icon: "📋", color: "from-blue-500/20 to-indigo-500/20", border: "border-blue-500/20" },
+        { label: "Total Proofs", value: data.totalProofs, icon: "#", color: "from-blue-500/20 to-indigo-500/20", border: "border-blue-500/20" },
         { label: "Versions Created", value: data.totalVersions, icon: "📄", color: "from-violet-500/20 to-purple-500/20", border: "border-violet-500/20" },
-        { label: "Approved", value: data.approvedCount, icon: "✅", color: "from-emerald-500/20 to-teal-500/20", border: "border-emerald-500/20" },
+        { label: "Approved", value: data.approvedCount, icon: "✓", color: "from-emerald-500/20 to-teal-500/20", border: "border-emerald-500/20" },
         { label: "In Review", value: data.inReviewCount, icon: "👁️", color: "from-amber-500/20 to-orange-500/20", border: "border-amber-500/20" },
         { label: "Changes Requested", value: data.changesRequestedCount, icon: "⚠️", color: "from-amber-600/20 to-red-500/20", border: "border-amber-600/20" },
-        { label: "Rejected", value: data.rejectedCount, icon: "❌", color: "from-red-500/20 to-rose-500/20", border: "border-red-500/20" },
+        { label: "Rejected", value: data.rejectedCount, icon: "✗", color: "from-red-500/20 to-rose-500/20", border: "border-red-500/20" },
         { label: "Late Proofs", value: data.lateProofs, icon: "⏰", color: data.lateProofs > 0 ? "from-red-500/20 to-red-600/20" : "from-zinc-700/20 to-zinc-800/20", border: data.lateProofs > 0 ? "border-red-500/30" : "border-zinc-700/20" },
-        { label: "Avg Turnaround", value: data.avgTurnaroundDays != null ? `${data.avgTurnaroundDays}d` : "—", icon: "⚡", color: "from-cyan-500/20 to-blue-500/20", border: "border-cyan-500/20" },
+        { label: "Avg Turnaround", value: data.avgTurnaroundDays != null ? `${data.avgTurnaroundDays}d` : "—", icon: "→", color: "from-cyan-500/20 to-blue-500/20", border: "border-cyan-500/20" },
     ];
 
     return (

@@ -174,7 +174,7 @@ export function UploadDropzone({
             case "design":
                 return "🎨";
             default:
-                return "📁";
+                return "";
         }
     };
 
@@ -254,10 +254,10 @@ export function UploadDropzone({
                                     </p>
                                     <span
                                         className={`text-[10px] font-medium shrink-0 ${f.status === "success"
-                                                ? "text-emerald-400"
-                                                : f.status === "error"
-                                                    ? "text-red-400"
-                                                    : "text-zinc-500"
+                                            ? "text-emerald-400"
+                                            : f.status === "error"
+                                                ? "text-red-400"
+                                                : "text-zinc-500"
                                             }`}
                                     >
                                         {f.status === "success"
@@ -273,10 +273,10 @@ export function UploadDropzone({
                                 <div className="h-1 rounded-full bg-zinc-800 overflow-hidden">
                                     <div
                                         className={`h-full rounded-full transition-all duration-700 ease-out ${f.status === "success"
-                                                ? "bg-emerald-500"
-                                                : f.status === "error"
-                                                    ? "bg-red-500"
-                                                    : "bg-emerald-500/70"
+                                            ? "bg-emerald-500"
+                                            : f.status === "error"
+                                                ? "bg-red-500"
+                                                : "bg-emerald-500/70"
                                             }`}
                                         style={{ width: `${f.progress}%` }}
                                     />

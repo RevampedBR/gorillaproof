@@ -17,7 +17,7 @@ export default async function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         // Match all pathnames except for
-        // - … if they start with `/_next`, `/api`, or contain a dot (e.g. `favicon.ico`)
-        '/((?!_next|api|.*\\..*).*)',
+        // - … if they start with `/_next`, `/api`, `/auth`, or contain a dot (e.g. `favicon.ico`)
+        '/((?!_next|api|auth|.*\\..*).*)',
     ],
 };

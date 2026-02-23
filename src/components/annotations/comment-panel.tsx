@@ -528,8 +528,8 @@ export function CommentPanel({
                         title="AI Summary of all comments"
                     >
                         {aiLoading ? (
-                            <span className="flex items-center gap-1">✨ <span className="inline-block h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /></span>
-                        ) : aiSummary ? "✕ Close" : "✨ Ask AI"}
+                            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /></span>
+                        ) : aiSummary ? "Close" : "Ask AI"}
                     </button>
                 </div>
 
@@ -693,7 +693,7 @@ export function CommentPanel({
             {aiSummary && (
                 <div className="border-b border-[#2a2a40] bg-gradient-to-r from-[#e91e8c]/5 to-[#7c3aed]/5">
                     <div className="px-4 py-2.5 flex items-center gap-2 border-b border-[#2a2a40]/50">
-                        <span className="text-[11px] font-bold text-[#e91e8c]">✨ AI Summary</span>
+                        <span className="text-[11px] font-bold text-[#e91e8c]">AI Summary</span>
                         <span className="text-[9px] text-zinc-600 bg-[#2a2a40] px-1.5 py-0.5 rounded-full">Gemini 2.0</span>
                         <button onClick={() => setAiSummary(null)} className="ml-auto text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer">✕</button>
                     </div>

@@ -96,13 +96,13 @@ export async function notifyStatusChange(params: {
     recipients: { email: string; name?: string }[];
 }) {
     const statusLabels: Record<string, { label: string; color: string; emoji: string }> = {
-        approved: { label: "Aprovado", color: "#34d399", emoji: "✅" },
-        rejected: { label: "Rejeitado", color: "#ef4444", emoji: "❌" },
+        approved: { label: "Aprovado", color: "#34d399", emoji: "" },
+        rejected: { label: "Rejeitado", color: "#ef4444", emoji: "" },
         changes_requested: { label: "Alterações solicitadas", color: "#f59e0b", emoji: "🔄" },
         in_review: { label: "Em revisão", color: "#60a5fa", emoji: "👀" },
     };
 
-    const st = statusLabels[params.newStatus] || { label: params.newStatus, color: "#a1a1aa", emoji: "📋" };
+    const st = statusLabels[params.newStatus] || { label: params.newStatus, color: "#a1a1aa", emoji: "" };
 
     await sendEmail({
         to: params.recipients,
@@ -132,7 +132,7 @@ export async function notifyMention(params: {
 
     await sendEmail({
         to: [{ email: params.recipientEmail, name: params.recipientName }],
-        subject: `🔔 ${params.mentionedBy} mencionou você em "${params.proofTitle}"`,
+        subject: `${params.mentionedBy} mencionou você em "${params.proofTitle}"`,
         html: baseTemplate(`
 <h2 style="color:#fff;font-size:16px;margin:0 0 8px">Você foi mencionado(a)</h2>
 <p style="color:#a1a1aa;font-size:13px;margin:0 0 16px"><strong style="color:#34d399">${escapeHtml(params.mentionedBy)}</strong> mencionou você em <strong style="color:#fff">${escapeHtml(params.proofTitle)}</strong></p>

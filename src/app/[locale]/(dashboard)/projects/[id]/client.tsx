@@ -80,7 +80,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
         if (result.error) {
             toast(result.error, "error");
         } else {
-            toast(`✅ ${ids.length} proof(s) atualizados para ${action}`, "success");
+            toast(`${ids.length} proof(s) atualizados para ${action}`, "success");
             setSelectedIds(new Set());
         }
     };
@@ -333,9 +333,9 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1a1a2e] border border-zinc-700/60 rounded-xl px-5 py-3 shadow-2xl shadow-black/40">
                         <span className="text-[13px] font-semibold text-white">{selectedIds.size} selecionado(s)</span>
                         <div className="h-5 w-px bg-zinc-700" />
-                        <button onClick={() => handleBulkAction("approved")} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-[12px] font-semibold hover:bg-emerald-500/30 transition-colors cursor-pointer">✅ Aprovar</button>
+                        <button onClick={() => handleBulkAction("approved")} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-[12px] font-semibold hover:bg-emerald-500/30 transition-colors cursor-pointer">Aprovar</button>
                         <button onClick={() => handleBulkAction("changes_requested")} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[12px] font-semibold hover:bg-amber-500/30 transition-colors cursor-pointer">🔄 Alterações</button>
-                        <button onClick={() => handleBulkAction("rejected")} className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-[12px] font-semibold hover:bg-red-500/30 transition-colors cursor-pointer">❌ Rejeitar</button>
+                        <button onClick={() => handleBulkAction("rejected")} className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-[12px] font-semibold hover:bg-red-500/30 transition-colors cursor-pointer">Rejeitar</button>
                         <div className="h-5 w-px bg-zinc-700" />
                         <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1.5 rounded-lg bg-zinc-700/50 text-zinc-400 text-[12px] font-medium hover:bg-zinc-700 transition-colors cursor-pointer">Limpar</button>
                     </div>

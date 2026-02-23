@@ -10,12 +10,12 @@ interface ActivityLogPanelProps {
 const ACTION_CONFIG: Record<string, { icon: string; label: string; color: string }> = {
     version_uploaded: { icon: "📤", label: "Enviou nova versão", color: "text-blue-400" },
     comment_added: { icon: "💬", label: "Adicionou comentário", color: "text-emerald-400" },
-    comment_resolved: { icon: "✅", label: "Resolveu comentário", color: "text-green-400" },
+    comment_resolved: { icon: "✓", label: "Resolveu comentário", color: "text-green-400" },
     comment_reopened: { icon: "🔄", label: "Reabriu comentário", color: "text-amber-400" },
     status_changed: { icon: "🏷️", label: "Alterou status", color: "text-violet-400" },
     deadline_set: { icon: "📅", label: "Definiu prazo", color: "text-cyan-400" },
     deadline_removed: { icon: "📅", label: "Removeu prazo", color: "text-zinc-400" },
-    comments_carried: { icon: "📋", label: "Copiou comentários", color: "text-violet-400" },
+    comments_carried: { icon: "↳", label: "Copiou comentários", color: "text-violet-400" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -114,7 +114,7 @@ export function ActivityLogPanel({ proofId }: ActivityLogPanelProps) {
                 ) : (
                     <div className="space-y-0">
                         {entries.map((entry, idx) => {
-                            const config = ACTION_CONFIG[entry.action] || { icon: "📌", label: entry.action, color: "text-zinc-400" };
+                            const config = ACTION_CONFIG[entry.action] || { icon: "•", label: entry.action, color: "text-zinc-400" };
                             const user = entry.users;
                             const userName = user?.full_name || user?.email || "Usuário";
                             const detail = getDetailText(entry);

@@ -15,11 +15,11 @@ interface NotificationEntry {
 const ACTION_LABELS: Record<string, { icon: string; label: string }> = {
     status_changed: { icon: "🏷️", label: "alterou status" },
     comment_added: { icon: "💬", label: "comentou" },
-    comment_resolved: { icon: "✅", label: "resolveu comentário" },
+    comment_resolved: { icon: "✓", label: "resolveu comentário" },
     comment_reopened: { icon: "🔄", label: "reabriu comentário" },
     version_uploaded: { icon: "📤", label: "enviou nova versão" },
     deadline_set: { icon: "📅", label: "definiu prazo" },
-    comments_carried: { icon: "📋", label: "copiou comentários" },
+    comments_carried: { icon: "↳", label: "copiou comentários" },
 };
 
 export function NotificationCenter({ userId }: { userId: string }) {
@@ -120,7 +120,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
                                 .filter((e) => e.user_id !== userId)
                                 .slice(0, 15)
                                 .map((entry) => {
-                                    const config = ACTION_LABELS[entry.action] || { icon: "📌", label: entry.action };
+                                    const config = ACTION_LABELS[entry.action] || { icon: "•", label: entry.action };
                                     const isNew = lastSeen ? new Date(entry.created_at) > new Date(lastSeen) : true;
                                     const userName = entry.users?.full_name || entry.users?.email || "Alguém";
 

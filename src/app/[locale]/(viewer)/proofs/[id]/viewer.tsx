@@ -329,7 +329,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             });
         }
         setShowDecisionMenu(false);
-        toast(status === "approved" ? "✅ Aprovado!" : `Decisão registrada: ${status}`, "success");
+        toast(status === "approved" ? "Aprovado!" : `Decisão registrada: ${status}`, "success");
         router.refresh();
     };
 
@@ -1590,7 +1590,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                 if (result.count > 0) {
                                                     refreshComments();
                                                     logActivity({ proofId: proof.id, action: "comments_carried", metadata: { count: result.count, from_version: prevVersion.version_number } });
-                                                    toast(`✅ ${result.count} comentário(s) copiado(s) da versão anterior!`, "success");
+                                                    toast(`${result.count} comentário(s) copiado(s) da versão anterior!`, "success");
                                                 } else {
                                                     toast("Nenhum comentário aberto na versão anterior para copiar.", "info");
                                                 }
