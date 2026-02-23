@@ -3,6 +3,65 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export async function getAllProofs() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "Not authenticated" };
+
+    try {
+        // Get user's organization(s)
+        const { data: memberships } = await supabase
+            .from("organization_members")
+            .select("organization_id")
+            .eq("user_id", user.id);
+
+        if (!memberships || memberships.length === 0) return { data: [], error: null };
+
+        const orgIds = memberships.map((m) => m.organization_id);
+
+        // Fetch projects with nested proofs
+        const { data: projects, error } = await supabase
+            .from("projects")
+            .select(`
+                id,
+                name,
+                proofs (
+                    id,
+                    title,
+                    status,
+                    deadline,
+                    locked_at,
+                    tags,
+                    project_id,
+                    created_at,
+                    updated_at,
+                    versions ( id, comments ( id, status ) )
+                )
+            `)
+            .in("organization_id", orgIds);
+
+        if (error) return { data: [], error: error.message };
+
+        // Flatten: extract proofs from each project and attach project_name
+        const allProofs = (projects ?? []).flatMap((project: any) =>
+            (project.proofs || []).map((proof: any) => ({
+                ...proof,
+                project_name: project.name,
+            }))
+        );
+
+        // Sort by updated_at descending
+        allProofs.sort((a: any, b: any) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+
+        return { data: allProofs, error: null };
+    } catch (err) {
+        return { data: [], error: "Failed to fetch proofs" };
+    }
+}
+
+
 export async function getProofs(projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
