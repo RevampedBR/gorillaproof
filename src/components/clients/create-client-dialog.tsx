@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import {
     Dialog,
     DialogContent,
-    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -13,20 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createProject } from "@/lib/actions/projects";
+import { createClient } from "@/lib/actions/clients";
 
-interface Client {
-    id: string;
-    name: string;
-}
-
-interface CreateProjectDialogProps {
+interface CreateClientDialogProps {
     children: React.ReactNode;
-    clients: Client[];
 }
 
-export function CreateProjectDialog({ children, clients }: CreateProjectDialogProps) {
-    const t = useTranslations("dashboard.projects");
+export function CreateClientDialog({ children }: CreateClientDialogProps) {
+    const t = useTranslations("dashboard.clients");
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -37,7 +30,7 @@ export function CreateProjectDialog({ children, clients }: CreateProjectDialogPr
         const formData = new FormData(e.currentTarget);
 
         startTransition(async () => {
-            const result = await createProject(formData);
+            const result = await createClient(formData);
             if (result?.error) {
                 setError(result.error);
             } else {
@@ -49,14 +42,11 @@ export function CreateProjectDialog({ children, clients }: CreateProjectDialogPr
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-zinc-800 text-zinc-100">
+            <DialogContent className="sm:max-w-[425px] bg-zinc-950 border-zinc-800 text-zinc-100">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-zinc-100">
                         {t("createTitle")}
                     </DialogTitle>
-                    <DialogDescription className="text-zinc-400">
-                        {t("createSubtitle")}
-                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="grid gap-5 pt-2">
@@ -65,25 +55,6 @@ export function CreateProjectDialog({ children, clients }: CreateProjectDialogPr
                             {error}
                         </div>
                     )}
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="client_id" className="text-zinc-300 text-sm">
-                            {t("client")}
-                        </Label>
-                        <select
-                            id="client_id"
-                            name="client_id"
-                            className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500 rounded-md h-10 px-3 text-sm appearance-none"
-                            required
-                            defaultValue=""
-                        >
-                            <option value="" disabled>{t("selectClient")}</option>
-                            <option value="none">{t("noClient")}</option>
-                            {clients.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
-                    </div>
 
                     <div className="grid gap-2">
                         <Label htmlFor="name" className="text-zinc-300 text-sm">
@@ -99,19 +70,6 @@ export function CreateProjectDialog({ children, clients }: CreateProjectDialogPr
                         />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="description" className="text-zinc-300 text-sm">
-                            {t("description")}
-                        </Label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            placeholder={t("descriptionPlaceholder")}
-                            rows={3}
-                            className="flex min-h-[60px] w-full rounded-md border border-zinc-800/80 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
-                        />
-                    </div>
-
                     <div className="flex justify-end gap-3 pt-2">
                         <Button
                             type="button"
@@ -124,7 +82,7 @@ export function CreateProjectDialog({ children, clients }: CreateProjectDialogPr
                         <Button
                             type="submit"
                             disabled={isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                         >
                             {isPending ? "..." : t("submit")}
                         </Button>

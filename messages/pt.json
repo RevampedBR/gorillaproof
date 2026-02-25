@@ -49,11 +49,12 @@
     "dashboard": {
         "sidebar": {
             "search": "Buscar...",
-            "home": "Inicio",
+            "home": "Início",
+            "clients": "Clientes",
             "allProofs": "Todas as Provas",
             "projects": "Projetos",
-            "notifications": "Notificacoes",
-            "settings": "Configuracoes"
+            "notifications": "Notificações",
+            "settings": "Configurações"
         },
         "header": {
             "search": "Buscar provas e projetos...",
@@ -87,6 +88,9 @@
             "namePlaceholder": "Ex: Campanha de Verão 2026",
             "description": "Descrição (opcional)",
             "descriptionPlaceholder": "Descreva brevemente o objetivo deste projeto...",
+            "client": "Cliente",
+            "selectClient": "Selecione um cliente",
+            "noClient": "Interno / Sem Cliente",
             "submit": "Criar Projeto",
             "cancel": "Cancelar",
             "statusActive": "Ativo",
@@ -104,6 +108,48 @@
             "rejected": "Rejeitada",
             "changesRequested": "Ajustes Solicitados",
             "versions": "versões"
+        },
+        "clients": {
+            "title": "Clientes",
+            "subtitle": "Gerencie os clientes da sua agência.",
+            "createTitle": "Novo Cliente",
+            "name": "Nome do Cliente",
+            "namePlaceholder": "Ex: Coca-Cola",
+            "cancel": "Cancelar",
+            "submit": "Criar Cliente",
+            "addedOn": "Adicionado em",
+            "noClients": "Nenhum cliente cadastrado."
+        },
+        "settings": {
+            "title": "Configurações",
+            "tabs": {
+                "organization": "Organização",
+                "notifications": "Notificações",
+                "usage": "Uso",
+                "language": "Idioma"
+            },
+            "orgName": "Nome da organização",
+            "brandColor": "Cor da marca",
+            "save": "Salvar",
+            "saving": "Salvando...",
+            "saveSuccess": "Configurações salvas!",
+            "notifications": {
+                "comments": "Novos comentários",
+                "commentsDesc": "Receber email quando alguém comentar em seus proofs",
+                "decisions": "Decisões de review",
+                "decisionsDesc": "Notificar quando um reviewer aprovar ou rejeitar",
+                "mentions": "Menções (@)",
+                "mentionsDesc": "Receber email quando for mencionado em um comentário",
+                "deadlines": "Deadlines próximos",
+                "deadlinesDesc": "Lembrete quando um proof estiver perto do prazo"
+            },
+            "usage": {
+                "projects": "Projetos",
+                "proofs": "Proofs",
+                "versions": "Versões",
+                "members": "Membros"
+            },
+            "languageDesc": "Selecione o idioma da interface."
         },
         "upload": {
             "dragOrClick": "Arraste arquivos aqui ou clique para selecionar",
@@ -128,25 +174,25 @@
             "approve": "Aprovar",
             "requestChanges": "Pedir Ajustes",
             "reject": "Rejeitar",
-            "commentsTab": "Coment\u00e1rios",
-            "versionsTab": "Vers\u00f5es",
-            "makeDecision": "Tomar decis\u00e3o",
-            "decisionPending": "Decis\u00e3o pendente",
+            "commentsTab": "Comentários",
+            "versionsTab": "Versões",
+            "makeDecision": "Tomar decisão",
+            "decisionPending": "Decisão pendente",
             "decisionApproved": "Aprovado",
-            "decisionApprovedChanges": "Aprovado com altera\u00e7\u00f5es",
-            "decisionChanges": "Altera\u00e7\u00f5es necess\u00e1rias",
-            "decisionNotRelevant": "N\u00e3o relevante",
+            "decisionApprovedChanges": "Aprovado com alterações",
+            "decisionChanges": "Alterações necessárias",
+            "decisionNotRelevant": "Não relevante",
             "decisionRejected": "Rejeitado",
             "proofLocked": "Esta prova está travada. Nenhum comentário ou decisão permitidos."
         },
         "comments": {
-            "title": "Coment\u00e1rios",
+            "title": "Comentários",
             "open": "abertos",
             "resolved": "resolvidos",
             "all": "Todos",
-            "noComments": "Nenhum coment\u00e1rio ainda",
+            "noComments": "Nenhum comentário ainda",
             "noCommentsSub": "Clique na imagem para fixar um pin e comentar.",
-            "addComment": "Adicionar coment\u00e1rio...",
+            "addComment": "Adicionar comentário...",
             "commentOnPin": "Comente sobre este ponto...",
             "pinPlaced": "Pin posicionado",
             "cancelPin": "Cancelar",

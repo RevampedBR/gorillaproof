@@ -50,6 +50,7 @@
         "sidebar": {
             "search": "Search...",
             "home": "Home",
+            "clients": "Clients",
             "allProofs": "All Proofs",
             "projects": "Projects",
             "notifications": "Notifications",
@@ -87,6 +88,9 @@
             "namePlaceholder": "e.g. Summer Campaign 2026",
             "description": "Description (optional)",
             "descriptionPlaceholder": "Briefly describe this project's goal...",
+            "client": "Client",
+            "selectClient": "Select a client",
+            "noClient": "Internal / No Client",
             "submit": "Create Project",
             "cancel": "Cancel",
             "statusActive": "Active",
@@ -104,6 +108,48 @@
             "rejected": "Rejected",
             "changesRequested": "Changes Requested",
             "versions": "versions"
+        },
+        "clients": {
+            "title": "Clients",
+            "subtitle": "Manage your agency's clients.",
+            "createTitle": "New Client",
+            "name": "Client Name",
+            "namePlaceholder": "e.g. Coca-Cola",
+            "cancel": "Cancel",
+            "submit": "Create Client",
+            "addedOn": "Added on",
+            "noClients": "No clients found."
+        },
+        "settings": {
+            "title": "Settings",
+            "tabs": {
+                "organization": "Organization",
+                "notifications": "Notifications",
+                "usage": "Usage",
+                "language": "Language"
+            },
+            "orgName": "Organization Name",
+            "brandColor": "Brand Color",
+            "save": "Save",
+            "saving": "Saving...",
+            "saveSuccess": "Settings saved!",
+            "notifications": {
+                "comments": "New comments",
+                "commentsDesc": "Receive email when someone comments on your proofs",
+                "decisions": "Review decisions",
+                "decisionsDesc": "Notify when a reviewer approves or rejects",
+                "mentions": "Mentions (@)",
+                "mentionsDesc": "Receive email when mentioned in a comment",
+                "deadlines": "Upcoming deadlines",
+                "deadlinesDesc": "Reminder when a proof is near its deadline"
+            },
+            "usage": {
+                "projects": "Projects",
+                "proofs": "Proofs",
+                "versions": "Versions",
+                "members": "Members"
+            },
+            "languageDesc": "Select the interface language."
         },
         "upload": {
             "dragOrClick": "Drag files here or click to select",

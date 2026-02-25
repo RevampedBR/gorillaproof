@@ -29,15 +29,15 @@ export function LoginForm() {
     return (
         <div className="grid gap-6">
             <div className="flex flex-col space-y-2 text-center">
-                <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
+                <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
                     {t("title")}
                 </h1>
-                <p className="text-sm text-zinc-400">{t("subtitle")}</p>
+                <p className="text-sm text-gray-500">{t("subtitle")}</p>
             </div>
             <form onSubmit={handleSubmit}>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="text-zinc-200">
+                        <Label htmlFor="email" className="text-gray-700">
                             {t("email")}
                         </Label>
                         <Input
@@ -50,17 +50,17 @@ export function LoginForm() {
                             autoCorrect="off"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus-visible:ring-indigo-500 shadow-sm"
                         />
                     </div>
                     <div className="grid gap-2">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="password" className="text-zinc-200">
+                            <Label htmlFor="password" className="text-gray-700">
                                 {t("password")}
                             </Label>
                             <Link
                                 href="/forgot-password"
-                                className="text-sm font-medium text-indigo-400 hover:text-indigo-300"
+                                className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                             >
                                 {t("forgotPassword")}
                             </Link>
@@ -72,15 +72,15 @@ export function LoginForm() {
                             autoComplete="current-password"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-white border-gray-200 text-gray-900 focus-visible:ring-indigo-500 shadow-sm"
                         />
                     </div>
 
                     {error && (
-                        <div className="text-sm text-red-500 font-medium">{error}</div>
+                        <div className="text-sm text-red-600 font-medium bg-red-50 p-2 rounded border border-red-100">{error}</div>
                     )}
 
-                    <Button disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full">
+                    <Button disabled={isPending} className="bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-700 hover:to-fuchsia-700 text-white w-full shadow-md transition-all">
                         {isPending && (
                             <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -91,9 +91,9 @@ export function LoginForm() {
                     </Button>
                 </div>
             </form>
-            <div className="text-center text-sm text-zinc-400">
+            <div className="text-center text-sm text-gray-500">
                 {t("noAccount")}{" "}
-                <Link href="/register" className="font-medium text-indigo-400 hover:text-indigo-300">
+                <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500 underline underline-offset-4">
                     {t("signUpLink")}
                 </Link>
             </div>

@@ -5,6 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { Link } from "@/i18n/navigation";
 
+interface Client {
+    id: string;
+    name: string;
+}
+
 interface DashboardHomeClientProps {
     projects: any[];
     stats: {
@@ -13,6 +18,7 @@ interface DashboardHomeClientProps {
         pendingComments: number;
         approvedToday: number;
     };
+    clients: Client[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -21,7 +27,7 @@ const STATUS_COLORS: Record<string, string> = {
     completed: "bg-blue-500/20 text-blue-400 border-blue-500/30",
 };
 
-export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProps) {
+export function DashboardHomeClient({ projects, stats, clients }: DashboardHomeClientProps) {
     const t = useTranslations("dashboard.home");
     const tp = useTranslations("dashboard.projects");
 
@@ -50,7 +56,7 @@ export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProp
                         })}
                     </p>
                 </div>
-                <CreateProjectDialog>
+                <CreateProjectDialog clients={clients}>
                     <button className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-700/50 bg-zinc-900/50 text-[12px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -102,7 +108,7 @@ export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProp
                             </div>
                             <h3 className="text-[14px] font-medium text-zinc-300">{t("noProjects")}</h3>
                             <p className="text-[12px] text-zinc-500 mt-1 mb-4 max-w-xs">{t("subtitle")}</p>
-                            <CreateProjectDialog>
+                            <CreateProjectDialog clients={clients}>
                                 <button className="h-8 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-medium transition-colors">
                                     + {tp("createTitle")}
                                 </button>
@@ -123,9 +129,16 @@ export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProp
                                             </svg>
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-[13px] font-medium text-zinc-200 group-hover:text-white truncate">
-                                                {project.name}
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-[13px] font-medium text-zinc-200 group-hover:text-white truncate">
+                                                    {project.name}
+                                                </p>
+                                                {project.clients && (
+                                                    <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 border-zinc-700 text-zinc-500">
+                                                        {project.clients.name}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             <p className="text-[11px] text-zinc-500 mt-0.5">
                                                 {project.proofs?.length || 0} {t("proofs")} · {t("lastUpdated")}{" "}
                                                 {new Date(project.updated_at).toLocaleDateString("en-US", {
