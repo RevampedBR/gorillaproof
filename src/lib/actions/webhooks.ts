@@ -3,12 +3,36 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
+// ─── Authorization Helper ───
+
+async function verifyAdmin(supabase: any, orgId: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { authorized: false, error: "Not authenticated" };
+
+    try {
+        const { data: membership } = await supabase
+            .from("organization_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!membership || membership.role !== "admin") {
+            return { authorized: false, error: "Only organization admins can manage webhooks" };
+        }
+
+        return { authorized: true, user };
+    } catch (err) {
+        return { authorized: false, error: "Failed to verify permissions" };
+    }
+}
+
 // ─── Webhook Management ───
 
 export async function getWebhooks(orgId: string) {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    const { authorized, error: authError } = await verifyAdmin(supabase, orgId);
+    if (!authorized) return { data: [], error: authError };
 
     try {
         const { data, error } = await supabase
@@ -25,8 +49,8 @@ export async function getWebhooks(orgId: string) {
 
 export async function createWebhook(orgId: string, url: string, events: string[]) {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    const { authorized, error: authError } = await verifyAdmin(supabase, orgId);
+    if (!authorized) return { error: authError };
 
     if (!url || !url.startsWith("https://")) return { error: "URL must start with https://" };
 
@@ -48,10 +72,19 @@ export async function createWebhook(orgId: string, url: string, events: string[]
 
 export async function deleteWebhook(webhookId: string) {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
 
     try {
+        const { data: webhook, error: fetchError } = await supabase
+            .from("webhooks")
+            .select("organization_id")
+            .eq("id", webhookId)
+            .single();
+
+        if (fetchError || !webhook) return { error: "Webhook not found" };
+
+        const { authorized, error: authError } = await verifyAdmin(supabase, webhook.organization_id);
+        if (!authorized) return { error: authError };
+
         const { error } = await supabase.from("webhooks").delete().eq("id", webhookId);
         if (error) return { error: error.message };
         return { error: null };
@@ -62,10 +95,19 @@ export async function deleteWebhook(webhookId: string) {
 
 export async function toggleWebhook(webhookId: string, isActive: boolean) {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
 
     try {
+        const { data: webhook, error: fetchError } = await supabase
+            .from("webhooks")
+            .select("organization_id")
+            .eq("id", webhookId)
+            .single();
+
+        if (fetchError || !webhook) return { error: "Webhook not found" };
+
+        const { authorized, error: authError } = await verifyAdmin(supabase, webhook.organization_id);
+        if (!authorized) return { error: authError };
+
         const { error } = await supabase.from("webhooks").update({ is_active: isActive }).eq("id", webhookId);
         if (error) return { error: error.message };
         return { error: null };
