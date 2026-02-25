@@ -27,17 +27,23 @@ export function LoginForm() {
     };
 
     return (
-        <div className="grid gap-6">
+        <div className="flex flex-col gap-6 w-full max-w-sm mx-auto p-6">
             <div className="flex flex-col space-y-2 text-center">
-                <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
+                <div className="mx-auto h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+                     <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground">
                     {t("title")}
                 </h1>
-                <p className="text-sm text-zinc-400">{t("subtitle")}</p>
+                <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
             </div>
-            <form onSubmit={handleSubmit}>
-                <div className="grid gap-4">
+
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                <form onSubmit={handleSubmit} className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="text-zinc-200">
+                        <Label htmlFor="email" className="text-foreground">
                             {t("email")}
                         </Label>
                         <Input
@@ -50,17 +56,17 @@ export function LoginForm() {
                             autoCorrect="off"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-secondary/50 border-input text-foreground focus-visible:ring-primary"
                         />
                     </div>
                     <div className="grid gap-2">
                         <div className="flex items-center justify-between">
-                            <Label htmlFor="password" className="text-zinc-200">
+                            <Label htmlFor="password" className="text-foreground">
                                 {t("password")}
                             </Label>
                             <Link
                                 href="/forgot-password"
-                                className="text-sm font-medium text-indigo-400 hover:text-indigo-300"
+                                className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                             >
                                 {t("forgotPassword")}
                             </Link>
@@ -72,15 +78,17 @@ export function LoginForm() {
                             autoComplete="current-password"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-secondary/50 border-input text-foreground focus-visible:ring-primary"
                         />
                     </div>
 
                     {error && (
-                        <div className="text-sm text-red-500 font-medium">{error}</div>
+                        <div className="text-sm text-destructive font-medium bg-destructive/10 p-3 rounded-lg border border-destructive/20 text-center">
+                            {error}
+                        </div>
                     )}
 
-                    <Button disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full">
+                    <Button disabled={isPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md">
                         {isPending && (
                             <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -89,11 +97,12 @@ export function LoginForm() {
                         )}
                         {t("submitButton")}
                     </Button>
-                </div>
-            </form>
-            <div className="text-center text-sm text-zinc-400">
+                </form>
+            </div>
+
+            <div className="text-center text-sm text-muted-foreground">
                 {t("noAccount")}{" "}
-                <Link href="/register" className="font-medium text-indigo-400 hover:text-indigo-300">
+                <Link href="/register" className="font-medium text-primary hover:text-primary/80 transition-colors">
                     {t("signUpLink")}
                 </Link>
             </div>

@@ -1,10 +1,10 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { createClient as createSupabaseClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getProjects() {
-    const supabase = await createClient();
+export async function getClients() {
+    const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { data: [], error: "Not authenticated" };
@@ -22,21 +22,10 @@ export async function getProjects() {
     const orgIds = memberships.map((m) => m.organization_id);
 
     const { data, error } = await supabase
-        .from("projects")
-        .select(`
-            id,
-            name,
-            description,
-            status,
-            organization_id,
-            client_id,
-            created_at,
-            updated_at,
-            proofs ( id ),
-            clients ( id, name )
-        `)
+        .from("clients")
+        .select("*")
         .in("organization_id", orgIds)
-        .order("updated_at", { ascending: false });
+        .order("name", { ascending: true });
 
     return {
         data: data ?? [],
@@ -44,14 +33,12 @@ export async function getProjects() {
     };
 }
 
-export async function createProject(formData: FormData) {
+export async function createClient(formData: FormData) {
     const name = (formData.get("name") as string)?.trim();
     if (!name || name.length === 0) return { error: "Name is required" };
     if (name.length > 200) return { error: "Name too long (max 200)" };
-    const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
-    const client_id = (formData.get("client_id") as string)?.trim() || null;
 
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { error: "Not authenticated" };
@@ -66,68 +53,62 @@ export async function createProject(formData: FormData) {
 
         if (!membership) return { error: "No organization found" };
 
-        const { error } = await supabase.from("projects").insert({
+        const { error } = await supabase.from("clients").insert({
             name: name.replace(/<[^>]+>/g, ""),
-            description: description.replace(/<[^>]+>/g, ""),
             organization_id: membership.organization_id,
-            client_id: client_id === "null" || client_id === "" ? null : client_id,
         });
 
         if (error) return { error: error.message };
 
+        revalidatePath("/settings");
         revalidatePath("/dashboard");
         return { error: null };
     } catch (err) {
-        return { error: "Failed to create project" };
+        return { error: "Failed to create client" };
     }
 }
 
-export async function updateProject(id: string, formData: FormData) {
+export async function updateClient(id: string, formData: FormData) {
     const name = (formData.get("name") as string)?.trim();
     if (!name || name.length === 0) return { error: "Name is required" };
-    const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
-    const client_id = (formData.get("client_id") as string)?.trim() || null;
 
-    const supabase = await createClient();
+    const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
 
     try {
         const { error } = await supabase
-            .from("projects")
-            .update({
-                name: name.replace(/<[^>]+>/g, ""),
-                description: description.replace(/<[^>]+>/g, ""),
-                client_id: client_id === "null" || client_id === "" ? null : client_id,
-                updated_at: new Date().toISOString()
-            })
+            .from("clients")
+            .update({ name: name.replace(/<[^>]+>/g, ""), updated_at: new Date().toISOString() })
             .eq("id", id);
 
         if (error) return { error: error.message };
 
+        revalidatePath("/settings");
         revalidatePath("/dashboard");
         return { error: null };
     } catch (err) {
-        return { error: "Failed to update project" };
+        return { error: "Failed to update client" };
     }
 }
 
-export async function deleteProject(id: string) {
-    const supabase = await createClient();
+export async function deleteClient(id: string) {
+    const supabase = await createSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
 
     try {
         const { error } = await supabase
-            .from("projects")
-            .update({ status: "archived" })
+            .from("clients")
+            .delete()
             .eq("id", id);
 
         if (error) return { error: error.message };
 
+        revalidatePath("/settings");
         revalidatePath("/dashboard");
         return { error: null };
     } catch (err) {
-        return { error: "Failed to archive project" };
+        return { error: "Failed to delete client" };
     }
 }
