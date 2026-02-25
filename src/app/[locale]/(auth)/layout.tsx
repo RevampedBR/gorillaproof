@@ -7,13 +7,13 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex min-h-screen bg-zinc-950">
+        <div className="flex min-h-screen bg-white">
             {/* Left Pane - Branding / Visuals */}
-            <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-zinc-900 p-12 lg:flex">
+            <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-gray-50 p-12 lg:flex border-r border-gray-100">
                 {/* Background Gradients */}
-                <div className="absolute inset-0 z-0">
-                    <div className="absolute -left-1/4 -top-1/4 h-[800px] w-[800px] rounded-full bg-indigo-600/10 blur-[120px]" />
-                    <div className="absolute -bottom-1/4 -right-1/4 h-[600px] w-[600px] rounded-full bg-fuchsia-600/10 blur-[120px]" />
+                <div className="absolute inset-0 z-0 opacity-50">
+                    <div className="absolute -left-1/4 -top-1/4 h-[800px] w-[800px] rounded-full bg-indigo-200/40 blur-[120px]" />
+                    <div className="absolute -bottom-1/4 -right-1/4 h-[600px] w-[600px] rounded-full bg-fuchsia-200/40 blur-[120px]" />
                 </div>
 
                 <div className="relative z-10">
@@ -23,19 +23,19 @@ export default function AuthLayout({
                             alt="GorillaProof Logo"
                             width={38}
                             height={30}
-                            className="drop-shadow-xl"
+                            className="drop-shadow-sm"
                         />
-                        <span className="text-xl font-bold tracking-tight text-white drop-shadow-md">
+                        <span className="text-xl font-bold tracking-tight text-gray-900">
                             GorillaProof
                         </span>
                     </Link>
                 </div>
 
                 <div className="relative z-10 space-y-4">
-                    <h1 className="text-4xl font-bold tracking-tight text-zinc-100">
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900">
                         Streamline your creative review process.
                     </h1>
-                    <p className="text-lg text-zinc-400">
+                    <p className="text-lg text-gray-500">
                         Join hundreds of agencies managing feedback, versions, and approvals
                         in one centralized workspace.
                     </p>
@@ -43,7 +43,7 @@ export default function AuthLayout({
             </div>
 
             {/* Right Pane - Auth Form */}
-            <div className="flex w-full items-center justify-center p-8 lg:w-1/2">
+            <div className="flex w-full items-center justify-center p-8 lg:w-1/2 bg-white">
                 <div className="w-full max-w-sm">{children}</div>
             </div>
         </div>
