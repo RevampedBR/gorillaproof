@@ -8,7 +8,7 @@ export default async function DashboardHomePage() {
 
     const activeProjects = projects.filter((p: any) => p.status === "active");
     const totalProofs = projects.reduce(
-        (acc: number, p: any) => acc + (p.proofs?.length || 0),
+        (acc: number, p: any) => acc + (p.proofs?.[0]?.count || 0),
         0
     );
 

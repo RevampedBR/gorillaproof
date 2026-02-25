@@ -127,7 +127,7 @@ export function DashboardHomeClient({ projects, stats }: DashboardHomeClientProp
                                                 {project.name}
                                             </p>
                                             <p className="text-[11px] text-zinc-500 mt-0.5">
-                                                {project.proofs?.length || 0} {t("proofs")} · {t("lastUpdated")}{" "}
+                                                {project.proofs?.[0]?.count || 0} {t("proofs")} · {t("lastUpdated")}{" "}
                                                 {new Date(project.updated_at).toLocaleDateString("en-US", {
                                                     day: "2-digit",
                                                     month: "short",
