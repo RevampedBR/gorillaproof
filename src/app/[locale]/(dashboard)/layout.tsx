@@ -87,7 +87,7 @@ export default function DashboardLayout({
         <div className="flex h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-indigo-500/30">
 
             {/* ========== SIDEBAR ========== */}
-            <aside className="hidden w-[220px] flex-col border-r border-zinc-800/60 bg-zinc-950 lg:flex z-10">
+            <aside className="hidden w-[220px] flex-col border-r border-zinc-800/60 bg-gradient-to-b from-zinc-900 via-zinc-950 to-zinc-950 lg:flex z-10">
 
                 {/* Logo */}
                 <div className="flex h-[52px] items-center gap-2.5 px-4 border-b border-zinc-800/60 shrink-0">
@@ -187,10 +187,14 @@ export default function DashboardLayout({
             </aside>
 
             {/* ========== MAIN CONTENT AREA ========== */}
-            <div className="flex flex-1 flex-col overflow-hidden bg-[#18181B] relative">
+            <div className="flex flex-1 flex-col overflow-hidden bg-gradient-to-br from-[#18181B] via-[#131316] to-[#0c0c0e] relative">
+
+                {/* Background Glow */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-500/5 rounded-full blur-[100px] pointer-events-none" />
 
                 {/* Top Header */}
-                <header className="flex h-[52px] items-center justify-between border-b border-zinc-800/60 bg-[#18181B] px-4 shrink-0">
+                <header className="flex h-[52px] items-center justify-between border-b border-zinc-800/60 bg-[#18181B]/80 backdrop-blur-sm px-4 shrink-0 z-20">
 
                     {/* Search trigger */}
                     <button
