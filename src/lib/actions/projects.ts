@@ -31,7 +31,7 @@ export async function getProjects() {
             organization_id,
             created_at,
             updated_at,
-            proofs ( id )
+            proofs ( count )
         `)
         .in("organization_id", orgIds)
         .order("updated_at", { ascending: false });

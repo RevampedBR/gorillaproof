@@ -12,7 +12,7 @@ interface Project {
     organization_id: string;
     created_at: string;
     updated_at: string;
-    proofs: { id: string }[];
+    proofs: { count: number }[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -93,7 +93,7 @@ export function ProjectsListClient({ projects }: { projects: Project[] }) {
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((project) => {
                         const config = STATUS_CONFIG[project.status] || STATUS_CONFIG.active;
-                        const proofCount = project.proofs?.length || 0;
+                        const proofCount = project.proofs?.[0]?.count || 0;
 
                         return (
                             <Link
