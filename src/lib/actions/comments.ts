@@ -22,6 +22,7 @@ export async function getComments(versionId: string) {
 
         return { data: data ?? [], error: error?.message ?? null };
     } catch (err) {
+        console.error(err);
         return { data: [], error: "Failed to fetch comments" };
     }
 }
@@ -77,6 +78,7 @@ export async function createComment(
         revalidatePath(`/proofs/${proofId}`);
         return { error: null, data };
     } catch (err) {
+        console.error(err);
         return { error: "Failed to create comment", data: null };
     }
 }
@@ -97,6 +99,7 @@ export async function resolveComment(commentId: string, proofId: string) {
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
     } catch (err) {
+        console.error(err);
         return { error: "Failed to resolve comment" };
     }
 }
@@ -117,6 +120,7 @@ export async function reopenComment(commentId: string, proofId: string) {
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
     } catch (err) {
+        console.error(err);
         return { error: "Failed to reopen comment" };
     }
 }
@@ -137,6 +141,7 @@ export async function deleteComment(commentId: string, proofId: string) {
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
     } catch (err) {
+        console.error(err);
         return { error: "Failed to delete comment" };
     }
 }
@@ -174,6 +179,7 @@ export async function carryCommentsForward(fromVersionId: string, toVersionId: s
         revalidatePath(`/proofs/${proofId}`);
         return { count: newComments.length, error: null };
     } catch (err) {
+        console.error(err);
         return { count: 0, error: "Failed to carry comments" };
     }
 }
