@@ -62,6 +62,54 @@
             "myAccount": "Minha Conta",
             "logout": "Sair"
         },
+        "settings": {
+            "title": "Configurações",
+            "tabs": {
+                "organization": "🏢 Organização",
+                "clients": "👥 Clientes",
+                "notifications": "🔔 Notificações",
+                "language": "🌐 Idioma"
+            },
+            "org": {
+                "name": "Nome da Organização",
+                "brandColor": "Cor da Marca",
+                "save": "Salvar",
+                "saving": "Salvando..."
+            },
+            "clients": {
+                "title": "Gerenciar Clientes",
+                "subtitle": "Crie e gerencie os clientes da sua agência.",
+                "addClient": "Novo Cliente",
+                "noClients": "Nenhum cliente cadastrado.",
+                "name": "Nome do Cliente",
+                "edit": "Editar",
+                "delete": "Excluir",
+                "confirmDelete": "Tem certeza que deseja excluir este cliente?"
+            },
+            "notifications": {
+                "emailOnComment": "Novos comentários",
+                "emailOnCommentDesc": "Receber email quando alguém comentar em seus proofs",
+                "emailOnDecision": "Decisões de review",
+                "emailOnDecisionDesc": "Notificar quando um reviewer aprovar ou rejeitar",
+                "emailOnMention": "Menções (@)",
+                "emailOnMentionDesc": "Receber email quando for mencionado em um comentário",
+                "emailOnDeadline": "Deadlines próximos",
+                "emailOnDeadlineDesc": "Lembrete quando um proof estiver perto do prazo"
+            },
+            "language": {
+                "select": "Selecionar Idioma",
+                "pt": "Português (Brasil)",
+                "en": "English (US)",
+                "saved": "Idioma alterado com sucesso!"
+            },
+            "usage": {
+                "tab": "📊 Uso",
+                "projects": "Projetos",
+                "proofs": "Provas",
+                "versions": "Versões",
+                "members": "Membros"
+            }
+        },
         "home": {
             "welcome": "Bom dia, Gorilla",
             "overview": "Visão Geral",
@@ -96,6 +144,8 @@
             "proofsTitle": "Provas",
             "noProofs": "Nenhuma prova neste projeto ainda.",
             "createProof": "Nova Prova",
+            "client": "Cliente (Opcional)",
+            "selectClient": "Selecione um cliente...",
             "proofTitle": "Título da Prova",
             "proofTitlePlaceholder": "Ex: Banner Principal - v1",
             "draft": "Rascunho",

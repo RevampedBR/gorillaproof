@@ -56,7 +56,7 @@ export default function DashboardLayout({
         },
         {
             href: "/proofs",
-            label: "All Proofs",
+            label: t("sidebar.allProofs") || "All Proofs",
             icon: (
                 <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -75,30 +75,26 @@ export default function DashboardLayout({
     ];
 
     return (
-        <div className="flex h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-indigo-500/30">
+        <div className="flex h-screen bg-background text-foreground font-sans selection:bg-primary/30">
 
             {/* ========== SIDEBAR ========== */}
-            <aside className="hidden w-[220px] flex-col border-r border-zinc-800/60 bg-zinc-950 lg:flex z-10">
+            <aside className="hidden w-[240px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex z-10">
 
                 {/* Logo */}
-                <div className="flex h-[52px] items-center gap-2.5 px-4 border-b border-zinc-800/60 shrink-0">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-lg shadow-indigo-500/20">
-                        <Image
-                            src="https://static.wixstatic.com/media/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png/v1/fill/w_38,h_30,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png"
-                            alt="GP"
-                            width={16}
-                            height={13}
-                            className="brightness-200"
-                        />
+                <div className="flex h-[60px] items-center gap-3 px-6 border-b border-sidebar-border shrink-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-600 shadow-lg shadow-primary/20">
+                         <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                             <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                        </svg>
                     </div>
-                    <span className="text-[14px] font-semibold tracking-tight text-zinc-100">GorillaProof</span>
+                    <span className="text-[15px] font-bold tracking-tight">GorillaProof</span>
                 </div>
 
                 {/* + New Proof Button */}
-                <div className="px-3 pt-4 pb-2">
+                <div className="px-4 pt-6 pb-2">
                     <Button
                         onClick={() => setIsNewProofOpen(true)}
-                        className="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-medium rounded-lg shadow-sm gap-1.5"
+                        className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground text-[13px] font-medium rounded-xl shadow-md gap-2"
                     >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -108,66 +104,65 @@ export default function DashboardLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+                <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive(item.href)
-                                    ? "bg-zinc-800/80 text-zinc-100"
-                                    : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
+                            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all ${isActive(item.href)
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm ring-1 ring-sidebar-border"
+                                    : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
                                 }`}
                         >
-                            <span className={isActive(item.href) ? "text-indigo-400" : ""}>{item.icon}</span>
+                            <span className={isActive(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}>{item.icon}</span>
                             {item.label}
                         </Link>
                     ))}
 
-                    <div className="pt-4 pb-1 px-2">
-                        <span className="text-[11px] font-semibold tracking-wider text-zinc-600 uppercase">
-                            Settings
+                    <div className="pt-6 pb-2 px-3">
+                        <span className="text-[11px] font-bold tracking-wider text-muted-foreground/70 uppercase">
+                            Configuration
                         </span>
                     </div>
                     <Link
                         href="/settings"
-                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/settings")
-                                ? "bg-zinc-800/80 text-zinc-100"
-                                : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all ${isActive("/settings")
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm ring-1 ring-sidebar-border"
+                                : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
                             }`}
                     >
                         <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
                         </svg>
-                        Settings
+                        {t("sidebar.settings")}
                     </Link>
                 </nav>
 
                 {/* User / Account */}
-                <div className="border-t border-zinc-800/60 p-3">
+                <div className="border-t border-sidebar-border p-4">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-zinc-800/40 transition-colors">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-zinc-300 ring-1 ring-zinc-700">
+                            <button className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-sidebar-accent/50 transition-colors">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-xs font-bold text-foreground ring-1 ring-border">
                                     G
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-medium text-zinc-200 truncate">Gorilla Studio</p>
-                                    <p className="text-[11px] text-zinc-500 truncate">Free plan</p>
+                                    <p className="text-[13px] font-medium text-foreground truncate">Gorilla Studio</p>
+                                    <p className="text-[11px] text-muted-foreground truncate">Free plan</p>
                                 </div>
-                                <svg className="h-4 w-4 text-zinc-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg className="h-4 w-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                                 </svg>
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" side="top" className="w-56 bg-zinc-950 border-zinc-800 text-zinc-300">
-                            <DropdownMenuItem className="focus:bg-zinc-800 focus:text-zinc-100 cursor-pointer text-[13px]">
+                        <DropdownMenuContent align="end" side="top" className="w-56">
+                            <DropdownMenuItem className="cursor-pointer text-[13px]">
                                 {t("header.myAccount")}
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-zinc-800" />
+                            <DropdownMenuSeparator />
                             <form action="/auth/logout" method="post">
                                 <button type="submit" className="w-full text-left">
-                                    <DropdownMenuItem className="text-red-400 focus:bg-red-400/10 focus:text-red-300 cursor-pointer text-[13px]">
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-[13px]">
                                         {t("header.logout")}
                                     </DropdownMenuItem>
                                 </button>
@@ -178,45 +173,45 @@ export default function DashboardLayout({
             </aside>
 
             {/* ========== MAIN CONTENT AREA ========== */}
-            <div className="flex flex-1 flex-col overflow-hidden bg-[#18181B] relative">
+            <div className="flex flex-1 flex-col overflow-hidden bg-background/50 relative">
 
                 {/* Top Header */}
-                <header className="flex h-[52px] items-center justify-between border-b border-zinc-800/60 bg-[#18181B] px-4 shrink-0">
+                <header className="flex h-[60px] items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-6 shrink-0 z-20">
 
                     {/* Search trigger */}
                     <button
                         onClick={() => setIsSearchOpen(true)}
-                        className="flex items-center w-72 h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 text-[13px] text-zinc-500 font-medium cursor-text hover:border-zinc-700 transition-colors gap-2"
+                        className="flex items-center w-80 h-9 rounded-xl border border-input bg-secondary/30 px-3 text-[13px] text-muted-foreground font-medium cursor-text hover:border-ring/30 hover:bg-secondary/50 transition-colors gap-2"
                     >
-                        <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="h-4 w-4 shrink-0 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                         </svg>
-                        <span className="flex-1 text-left truncate">Search proofs and projects...</span>
-                        <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-zinc-700 bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-400">
+                        <span className="flex-1 text-left truncate">{t("header.search")}</span>
+                        <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-secondary px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
                             <span className="text-[11px]">Cmd</span>K
                         </kbd>
                     </button>
 
                     {/* Right actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                         <NotificationsDropdown />
 
                         <Button
                             size="sm"
-                            variant="ghost"
-                            className="h-8 border border-zinc-700/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 gap-1.5 text-[12px] px-2.5"
+                            variant="outline"
+                            className="h-9 gap-1.5 text-[12px] px-3 font-medium border-border/60 hover:bg-secondary/80"
                         >
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                             </svg>
-                            Invite
+                            {t("header.invite")}
                         </Button>
                     </div>
                 </header>
 
                 {/* Dynamic Page Content */}
                 <main className="flex-1 overflow-hidden relative">
-                    <div className="h-full w-full overflow-y-auto px-6 py-6 lg:px-8 relative z-10">
+                    <div className="h-full w-full overflow-y-auto px-6 py-6 lg:px-8 relative z-10 scroll-smooth">
                         {children}
                     </div>
                 </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
     Dialog,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProject } from "@/lib/actions/projects";
+import { getClients } from "@/lib/actions/clients";
 
 interface CreateProjectDialogProps {
     children: React.ReactNode;
@@ -24,11 +25,24 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
+    const [clients, setClients] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (open) {
+            getClients().then(({ data }) => setClients(data || []));
+        }
+    }, [open]);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
-        const formData = new FormData(e.currentTarget);
+
+        // We need to construct FormData manually to ensure client_id is included correctly
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+
+        // If client_id is empty string, set it to null or remove it?
+        // createProject handles "null" string or empty string as null.
 
         startTransition(async () => {
             const result = await createProject(formData);
@@ -36,6 +50,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                 setError(result.error);
             } else {
                 setOpen(false);
+                form.reset();
             }
         });
     };
@@ -43,25 +58,25 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-zinc-800 text-zinc-100">
+            <DialogContent className="sm:max-w-[480px] bg-background border-border text-foreground">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-bold text-zinc-100">
+                    <DialogTitle className="text-xl font-bold">
                         {t("createTitle")}
                     </DialogTitle>
-                    <DialogDescription className="text-zinc-400">
+                    <DialogDescription className="text-muted-foreground">
                         {t("createSubtitle")}
                     </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="grid gap-5 pt-2">
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm px-4 py-2 rounded">
+                        <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm px-4 py-2 rounded">
                             {error}
                         </div>
                     )}
 
                     <div className="grid gap-2">
-                        <Label htmlFor="name" className="text-zinc-300 text-sm">
+                        <Label htmlFor="name" className="text-sm">
                             {t("name")}
                         </Label>
                         <Input
@@ -70,12 +85,30 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                             placeholder={t("namePlaceholder")}
                             required
                             autoFocus
-                            className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500"
+                            className="bg-secondary/50 border-input placeholder:text-muted-foreground focus-visible:ring-primary"
                         />
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="description" className="text-zinc-300 text-sm">
+                        <Label htmlFor="client_id" className="text-sm">
+                            {t("client")}
+                        </Label>
+                        <select
+                            id="client_id"
+                            name="client_id"
+                            className="flex h-10 w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            <option value="">{t("selectClient")}</option>
+                            {clients.map((client) => (
+                                <option key={client.id} value={client.id}>
+                                    {client.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <Label htmlFor="description" className="text-sm">
                             {t("description")}
                         </Label>
                         <textarea
@@ -83,7 +116,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                             name="description"
                             placeholder={t("descriptionPlaceholder")}
                             rows={3}
-                            className="flex min-h-[60px] w-full rounded-md border border-zinc-800/80 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
+                            className="flex min-h-[60px] w-full rounded-md border border-input bg-secondary/50 px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary resize-none"
                         />
                     </div>
 
@@ -92,14 +125,14 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
                             type="button"
                             variant="ghost"
                             onClick={() => setOpen(false)}
-                            className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+                            className="text-muted-foreground hover:text-foreground hover:bg-secondary"
                         >
                             {t("cancel")}
                         </Button>
                         <Button
                             type="submit"
                             disabled={isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md"
                         >
                             {isPending ? "..." : t("submit")}
                         </Button>
