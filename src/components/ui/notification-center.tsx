@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Tag, MessageSquare, CheckCircle2, RefreshCw, Upload, Calendar, CornerDownRight, Circle } from "lucide-react";
 
 interface NotificationEntry {
     id: string;
@@ -12,14 +13,14 @@ interface NotificationEntry {
     users: { id: string; full_name: string | null; email: string } | null;
 }
 
-const ACTION_LABELS: Record<string, { icon: string; label: string }> = {
-    status_changed: { icon: "🏷️", label: "alterou status" },
-    comment_added: { icon: "💬", label: "comentou" },
-    comment_resolved: { icon: "✓", label: "resolveu comentário" },
-    comment_reopened: { icon: "🔄", label: "reabriu comentário" },
-    version_uploaded: { icon: "📤", label: "enviou nova versão" },
-    deadline_set: { icon: "📅", label: "definiu prazo" },
-    comments_carried: { icon: "↳", label: "copiou comentários" },
+const ACTION_LABELS: Record<string, { icon: any; label: string }> = {
+    status_changed: { icon: Tag, label: "alterou status" },
+    comment_added: { icon: MessageSquare, label: "comentou" },
+    comment_resolved: { icon: CheckCircle2, label: "resolveu comentário" },
+    comment_reopened: { icon: RefreshCw, label: "reabriu comentário" },
+    version_uploaded: { icon: Upload, label: "enviou nova versão" },
+    deadline_set: { icon: Calendar, label: "definiu prazo" },
+    comments_carried: { icon: CornerDownRight, label: "copiou comentários" },
 };
 
 export function NotificationCenter({ userId }: { userId: string }) {
@@ -120,7 +121,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
                                 .filter((e) => e.user_id !== userId)
                                 .slice(0, 15)
                                 .map((entry) => {
-                                    const config = ACTION_LABELS[entry.action] || { icon: "•", label: entry.action };
+                                    const config = ACTION_LABELS[entry.action] || { icon: Circle, label: entry.action };
                                     const isNew = lastSeen ? new Date(entry.created_at) > new Date(lastSeen) : true;
                                     const userName = entry.users?.full_name || entry.users?.email || "Alguém";
 
@@ -130,7 +131,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
                                             className={`px-4 py-3 border-b border-zinc-800/40 hover:bg-zinc-800/30 transition-colors ${isNew ? "bg-emerald-500/5" : ""}`}
                                         >
                                             <div className="flex items-start gap-2.5">
-                                                <span className="text-[14px] mt-0.5">{config.icon}</span>
+                                                <config.icon className="h-4 w-4 mt-0.5 text-zinc-400 shrink-0" />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[12px] text-zinc-300 leading-snug">
                                                         <strong className="text-zinc-100">{userName}</strong>{" "}

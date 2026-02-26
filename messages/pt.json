@@ -49,18 +49,22 @@
     "dashboard": {
         "sidebar": {
             "search": "Buscar...",
-            "home": "Inicio",
+            "home": "Início",
+            "newProof": "Nova Prova",
+            "clients": "Clientes",
             "allProofs": "Todas as Provas",
             "projects": "Projetos",
-            "notifications": "Notificacoes",
-            "settings": "Configuracoes"
+            "notifications": "Notificações",
+            "settings": "Configurações",
+            "settingsSection": "Configurações"
         },
         "header": {
-            "search": "Buscar provas e projetos...",
+            "search": "Buscar clientes, projetos e provas...",
             "newProof": "Nova Prova",
             "invite": "Convidar",
             "myAccount": "Minha Conta",
-            "logout": "Sair"
+            "logout": "Sair",
+            "freePlan": "Plano Gratuito"
         },
         "home": {
             "welcome": "Bom dia, Gorilla",
@@ -156,6 +160,28 @@
             "delete": "Excluir",
             "replyPlaceholder": "Responder...",
             "justNow": "agora"
+        },
+        "clients": {
+            "title": "Clientes",
+            "createTitle": "Novo Cliente",
+            "createSubtitle": "Adicione um cliente para organizar seus projetos.",
+            "name": "Nome do Cliente",
+            "namePlaceholder": "Ex: Acme Publicidade",
+            "description": "Descrição (opcional)",
+            "descriptionPlaceholder": "Descreva brevemente este cliente...",
+            "submit": "Criar Cliente",
+            "cancel": "Cancelar",
+            "noClients": "Nenhum cliente ainda. Crie o primeiro!",
+            "noClientsDesc": "Organize seus projetos por cliente para ter mais controle.",
+            "createFirst": "Novo Cliente",
+            "projectsCount": "projetos",
+            "projectsTitle": "Projetos",
+            "noProjects": "Nenhum projeto neste cliente ainda.",
+            "createProject": "Novo Projeto",
+            "backToClients": "Voltar para Clientes",
+            "statusActive": "Ativo",
+            "statusArchived": "Arquivado",
+            "editClient": "Editar Cliente"
         }
     },
     "metadata": {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAnalytics, type ProofAnalytics } from "@/lib/actions/analytics";
+import { Hash, FileText, CheckCircle2, Eye, AlertTriangle, XCircle, Clock, ArrowRight, TrendingUp, TrendingDown, ArrowRight as ArrowRightTrend } from "lucide-react";
 
 export function AnalyticsDashboard() {
     const [data, setData] = useState<ProofAnalytics | null>(null);
@@ -27,18 +28,18 @@ export function AnalyticsDashboard() {
     if (!data) return null;
 
     const weekTrend = data.proofsThisWeek - data.proofsLastWeek;
-    const trendIcon = weekTrend > 0 ? "↑" : weekTrend < 0 ? "↓" : "→";
+    const TrendIcon = weekTrend > 0 ? TrendingUp : weekTrend < 0 ? TrendingDown : ArrowRightTrend;
     const trendColor = weekTrend > 0 ? "text-emerald-400" : weekTrend < 0 ? "text-red-400" : "text-zinc-400";
 
     const stats = [
-        { label: "Total Proofs", value: data.totalProofs, icon: "#", color: "from-blue-500/20 to-indigo-500/20", border: "border-blue-500/20" },
-        { label: "Versions Created", value: data.totalVersions, icon: "📄", color: "from-violet-500/20 to-purple-500/20", border: "border-violet-500/20" },
-        { label: "Approved", value: data.approvedCount, icon: "✓", color: "from-emerald-500/20 to-teal-500/20", border: "border-emerald-500/20" },
-        { label: "In Review", value: data.inReviewCount, icon: "👁️", color: "from-amber-500/20 to-orange-500/20", border: "border-amber-500/20" },
-        { label: "Changes Requested", value: data.changesRequestedCount, icon: "⚠️", color: "from-amber-600/20 to-red-500/20", border: "border-amber-600/20" },
-        { label: "Rejected", value: data.rejectedCount, icon: "✗", color: "from-red-500/20 to-rose-500/20", border: "border-red-500/20" },
-        { label: "Late Proofs", value: data.lateProofs, icon: "⏰", color: data.lateProofs > 0 ? "from-red-500/20 to-red-600/20" : "from-zinc-700/20 to-zinc-800/20", border: data.lateProofs > 0 ? "border-red-500/30" : "border-zinc-700/20" },
-        { label: "Avg Turnaround", value: data.avgTurnaroundDays != null ? `${data.avgTurnaroundDays}d` : "—", icon: "→", color: "from-cyan-500/20 to-blue-500/20", border: "border-cyan-500/20" },
+        { label: "Total Proofs", value: data.totalProofs, Icon: Hash, color: "from-blue-500/20 to-indigo-500/20", border: "border-blue-500/20" },
+        { label: "Versions Created", value: data.totalVersions, Icon: FileText, color: "from-violet-500/20 to-purple-500/20", border: "border-violet-500/20" },
+        { label: "Approved", value: data.approvedCount, Icon: CheckCircle2, color: "from-emerald-500/20 to-teal-500/20", border: "border-emerald-500/20" },
+        { label: "In Review", value: data.inReviewCount, Icon: Eye, color: "from-amber-500/20 to-orange-500/20", border: "border-amber-500/20" },
+        { label: "Changes Requested", value: data.changesRequestedCount, Icon: AlertTriangle, color: "from-amber-600/20 to-red-500/20", border: "border-amber-600/20" },
+        { label: "Rejected", value: data.rejectedCount, Icon: XCircle, color: "from-red-500/20 to-rose-500/20", border: "border-red-500/20" },
+        { label: "Late Proofs", value: data.lateProofs, Icon: Clock, color: data.lateProofs > 0 ? "from-red-500/20 to-red-600/20" : "from-zinc-700/20 to-zinc-800/20", border: data.lateProofs > 0 ? "border-red-500/30" : "border-zinc-700/20" },
+        { label: "Avg Turnaround", value: data.avgTurnaroundDays != null ? `${data.avgTurnaroundDays}d` : "—", Icon: ArrowRight, color: "from-cyan-500/20 to-blue-500/20", border: "border-cyan-500/20" },
     ];
 
     return (
@@ -52,7 +53,7 @@ export function AnalyticsDashboard() {
                                 <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">{stat.label}</p>
                                 <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
                             </div>
-                            <span className="text-xl">{stat.icon}</span>
+                            <stat.Icon className="h-6 w-6 opacity-80" />
                         </div>
                     </div>
                 ))}
@@ -109,7 +110,9 @@ export function AnalyticsDashboard() {
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className={`text-lg font-bold ${trendColor}`}>{trendIcon} {Math.abs(weekTrend)}</span>
+                            <span className={`text-lg font-bold flex items-center justify-end gap-1 ${trendColor}`}>
+                                <TrendIcon className="h-4 w-4" /> {Math.abs(weekTrend)}
+                            </span>
                             <p className="text-[10px] text-zinc-500">vs last week</p>
                         </div>
                     </div>

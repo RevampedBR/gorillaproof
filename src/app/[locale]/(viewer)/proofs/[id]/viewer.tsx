@@ -20,6 +20,7 @@ import { notifyStatusChange } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { submitDecision, getDecisions, lockProof, unlockProof, type ProofDecision } from "@/lib/actions/decisions";
+import { Lock, Unlock, MessageSquare, Clock } from "lucide-react";
 
 interface ProofViewerProps {
     proof: any;
@@ -597,8 +598,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {/* CENTER: Make Decision */}
                 <div className="relative" ref={decisionRef}>
                     {isLocked && (
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 rounded-md bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-medium">
-                            🔒 Prova travada
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 rounded-md bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-medium flex items-center gap-1.5">
+                            <Lock className="h-3 w-3" /> Prova travada
                         </div>
                     )}
                     <button
@@ -609,7 +610,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                             }`}
                         data-tip="Definir status (aprovar, solicitar alterações, etc.)"
                     >
-                        {isLocked ? "🔒 Locked" : t("makeDecision")}
+                        {isLocked ? <span className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Locked</span> : t("makeDecision")}
                     </button>
 
                     {showDecisionMenu && (
@@ -663,7 +664,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     onClick={handleToggleLock}
                                     className="w-full flex items-center gap-2 px-2 py-2 text-[12px] text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors"
                                 >
-                                    {isLocked ? "🔓 Destravar prova" : "🔒 Travar prova"}
+                                    {isLocked ? <><Unlock className="h-3.5 w-3.5" /> Destravar prova</> : <><Lock className="h-3.5 w-3.5" /> Travar prova</>}
                                 </button>
                             </div>
                         </div>
@@ -1565,15 +1566,15 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         <div className="flex border-b border-[#2a2a40] shrink-0">
                             <button
                                 onClick={() => setSidebarTab("comments")}
-                                className={`flex-1 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "comments" ? "text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "comments" ? "text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
-                                💬 Comentários
+                                <MessageSquare className="h-3.5 w-3.5" /> Comentários
                             </button>
                             <button
                                 onClick={() => setSidebarTab("activity")}
-                                className={`flex-1 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "activity" ? "text-violet-400 border-b-2 border-violet-400 bg-violet-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "activity" ? "text-violet-400 border-b-2 border-violet-400 bg-violet-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
-                                🕐 Atividade
+                                <Clock className="h-3.5 w-3.5" /> Atividade
                             </button>
                         </div>
 

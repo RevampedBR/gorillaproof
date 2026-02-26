@@ -3,13 +3,12 @@
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getProjects() {
+export async function getClients() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) return { data: [], error: "Not authenticated" };
 
-    // Get user's organization(s)
     const { data: memberships } = await supabase
         .from("organization_members")
         .select("organization_id")
@@ -22,7 +21,7 @@ export async function getProjects() {
     const orgIds = memberships.map((m) => m.organization_id);
 
     const { data, error } = await supabase
-        .from("projects")
+        .from("clients")
         .select(`
             id,
             name,
@@ -31,8 +30,7 @@ export async function getProjects() {
             organization_id,
             created_at,
             updated_at,
-            proofs ( id ),
-            client:clients!projects_client_id_fkey ( id, name )
+            projects ( id )
         `)
         .in("organization_id", orgIds)
         .order("updated_at", { ascending: false });
@@ -43,12 +41,47 @@ export async function getProjects() {
     };
 }
 
-export async function createProject(formData: FormData) {
+export async function getClientById(id: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { data: null, error: "Not authenticated" };
+
+    const { data, error } = await supabase
+        .from("clients")
+        .select(`
+            id,
+            name,
+            description,
+            status,
+            organization_id,
+            created_at,
+            updated_at,
+            projects (
+                id,
+                name,
+                description,
+                status,
+                created_at,
+                updated_at,
+                proofs ( id )
+            )
+        `)
+        .eq("id", id)
+        .single();
+
+    return {
+        data: data ?? null,
+        error: error?.message ?? null,
+    };
+}
+
+export async function createClientAction(formData: FormData) {
     const name = (formData.get("name") as string)?.trim();
     if (!name || name.length === 0) return { error: "Name is required" };
     if (name.length > 200) return { error: "Name too long (max 200)" };
+
     const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
-    const clientId = (formData.get("client_id") as string) || null;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -64,24 +97,22 @@ export async function createProject(formData: FormData) {
 
         if (!membership) return { error: "No organization found" };
 
-        const { error } = await supabase.from("projects").insert({
+        const { error } = await supabase.from("clients").insert({
             name: name.replace(/<[^>]+>/g, ""),
             description: description.replace(/<[^>]+>/g, ""),
             organization_id: membership.organization_id,
-            ...(clientId ? { client_id: clientId } : {}),
         });
 
         if (error) return { error: error.message };
 
-        revalidatePath("/dashboard");
         revalidatePath("/clients");
         return { error: null };
     } catch {
-        return { error: "Failed to create project" };
+        return { error: "Failed to create client" };
     }
 }
 
-export async function updateProject(id: string, formData: FormData) {
+export async function updateClientAction(id: string, formData: FormData) {
     const name = (formData.get("name") as string)?.trim();
     if (!name || name.length === 0) return { error: "Name is required" };
     const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
@@ -91,35 +122,39 @@ export async function updateProject(id: string, formData: FormData) {
 
     try {
         const { error } = await supabase
-            .from("projects")
-            .update({ name: name.replace(/<[^>]+>/g, ""), description: description.replace(/<[^>]+>/g, ""), updated_at: new Date().toISOString() })
+            .from("clients")
+            .update({
+                name: name.replace(/<[^>]+>/g, ""),
+                description: description.replace(/<[^>]+>/g, ""),
+                updated_at: new Date().toISOString(),
+            })
             .eq("id", id);
 
         if (error) return { error: error.message };
 
-        revalidatePath("/dashboard");
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to update project" };
+    } catch {
+        return { error: "Failed to update client" };
     }
 }
 
-export async function deleteProject(id: string) {
+export async function deleteClientAction(id: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Not authenticated" };
 
     try {
         const { error } = await supabase
-            .from("projects")
+            .from("clients")
             .update({ status: "archived" })
             .eq("id", id);
 
         if (error) return { error: error.message };
 
-        revalidatePath("/dashboard");
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to archive project" };
+    } catch {
+        return { error: "Failed to archive client" };
     }
 }

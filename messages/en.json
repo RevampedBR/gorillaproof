@@ -50,17 +50,21 @@
         "sidebar": {
             "search": "Search...",
             "home": "Home",
+            "newProof": "New Proof",
+            "clients": "Clients",
             "allProofs": "All Proofs",
             "projects": "Projects",
             "notifications": "Notifications",
-            "settings": "Settings"
+            "settings": "Settings",
+            "settingsSection": "Settings"
         },
         "header": {
-            "search": "Search proofs and projects...",
+            "search": "Search clients, projects and proofs...",
             "newProof": "New Proof",
             "invite": "Invite",
             "myAccount": "My Account",
-            "logout": "Log out"
+            "logout": "Log out",
+            "freePlan": "Free Plan"
         },
         "home": {
             "welcome": "Welcome back",
@@ -156,6 +160,28 @@
             "delete": "Delete",
             "replyPlaceholder": "Reply...",
             "justNow": "just now"
+        },
+        "clients": {
+            "title": "Clients",
+            "createTitle": "New Client",
+            "createSubtitle": "Add a client to organize your projects.",
+            "name": "Client Name",
+            "namePlaceholder": "e.g. Acme Agency",
+            "description": "Description (optional)",
+            "descriptionPlaceholder": "Briefly describe this client...",
+            "submit": "Create Client",
+            "cancel": "Cancel",
+            "noClients": "No clients yet. Create your first!",
+            "noClientsDesc": "Organize your projects by client for better control.",
+            "createFirst": "New Client",
+            "projectsCount": "projects",
+            "projectsTitle": "Projects",
+            "noProjects": "No projects for this client yet.",
+            "createProject": "New Project",
+            "backToClients": "Back to Clients",
+            "statusActive": "Active",
+            "statusArchived": "Archived",
+            "editClient": "Edit Client"
         }
     },
     "metadata": {

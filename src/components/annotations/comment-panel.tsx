@@ -8,6 +8,7 @@ import { logActivity } from "@/lib/actions/activity";
 import { notifyMention } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import DOMPurify from "dompurify";
+import { Lock, MapPin, Clock, Check, RefreshCw, X, Globe, RotateCcw } from "lucide-react";
 
 interface Comment {
     id: string;
@@ -379,17 +380,17 @@ export function CommentPanel({
                         <div className="flex items-center gap-2 mb-1.5 ml-8">
                             {pinNum && (
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${comment.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-[#2a2a40] text-zinc-500"}`}>
-                                    📍 {pinNum}
+                                    <MapPin className="h-3 w-3" /> {pinNum}
                                 </span>
                             )}
                             {comment.video_timestamp != null && (
-                                <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-500/20 transition-colors" title="Jump to this timestamp">
-                                    ⏱ {formatVideoTime(comment.video_timestamp)}
+                                <span className="text-[10px] font-mono flex items-center gap-1 text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-500/20 transition-colors" title="Jump to this timestamp">
+                                    <Clock className="h-3 w-3" /> {formatVideoTime(comment.video_timestamp)}
                                 </span>
                             )}
                             {comment.is_internal && (
-                                <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title="Visível apenas para sua equipe">
-                                    🔒 INTERNAL
+                                <span className="text-[9px] flex items-center gap-1 font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title="Visível apenas para sua equipe">
+                                    <Lock className="h-2.5 w-2.5" /> INTERNAL
                                 </span>
                             )}
                         </div>
@@ -418,18 +419,18 @@ export function CommentPanel({
                         {comment.status === "open" ? (
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleResolve(comment.id); }}
-                                className="text-[11px] font-medium text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
+                                className="flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
                                 title="Mark as resolved"
                             >
-                                ✓ Resolve
+                                <Check className="h-3 w-3" /> Resolve
                             </button>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleReopen(comment.id); }}
-                                className="text-[11px] font-medium text-zinc-500 hover:text-amber-400 transition-colors cursor-pointer"
+                                className="flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-amber-400 transition-colors cursor-pointer"
                                 title="Reopen this comment"
                             >
-                                ↩ Reopen
+                                <RefreshCw className="h-3 w-3" /> Reopen
                             </button>
                         )}
                         {comment.user_id === currentUserId && (
@@ -667,7 +668,11 @@ export function CommentPanel({
                             }`}
                         title={isInternal ? "Visível apenas para sua equipe" : "Visível para todos"}
                     >
-                        {isInternal ? "🔒 Internal" : "🌐 All"}
+                        {isInternal ? (
+                            <><Lock className="h-3 w-3" /> Internal</>
+                        ) : (
+                            <><Globe className="h-3 w-3" /> All</>
+                        )}
                     </button>
                 </div>
 
@@ -680,10 +685,10 @@ export function CommentPanel({
                         <span className="text-[11px] text-emerald-400 font-medium">{t("pinPlaced")}</span>
                         <button
                             onClick={onCancelPin}
-                            className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors ml-auto cursor-pointer"
+                            className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors ml-auto cursor-pointer flex items-center"
                             title="Remove pin"
                         >
-                            ✕
+                            <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
                 )}
@@ -695,7 +700,9 @@ export function CommentPanel({
                     <div className="px-4 py-2.5 flex items-center gap-2 border-b border-[#2a2a40]/50">
                         <span className="text-[11px] font-bold text-[#e91e8c]">AI Summary</span>
                         <span className="text-[9px] text-zinc-600 bg-[#2a2a40] px-1.5 py-0.5 rounded-full">Gemini 2.0</span>
-                        <button onClick={() => setAiSummary(null)} className="ml-auto text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer">✕</button>
+                        <button onClick={() => setAiSummary(null)} className="ml-auto text-zinc-500 hover:text-zinc-300 cursor-pointer flex items-center">
+                            <X className="h-3.5 w-3.5" />
+                        </button>
                     </div>
                     <div className="px-4 py-3 text-[12px] text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto"
                         dangerouslySetInnerHTML={{
