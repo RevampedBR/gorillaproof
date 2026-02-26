@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { getFileCategory } from "@/lib/file-utils";
 import { revalidatePath } from "next/cache";
 
 export async function createVersion(
@@ -38,12 +39,15 @@ export async function createVersion(
 
     if (error) return { error: error.message, data: null };
 
-    // Update proof status to in_review if it was draft
+    // Update proof status to in_review and update file_type
     await supabase
         .from("proofs")
-        .update({ status: "in_review", updated_at: new Date().toISOString() })
-        .eq("id", proofId)
-        .eq("status", "draft");
+        .update({
+            status: "in_review",
+            updated_at: new Date().toISOString(),
+            file_type: getFileCategory(fileType),
+        })
+        .eq("id", proofId);
 
     revalidatePath(`/projects/${projectId}`);
     revalidatePath(`/proofs/${proofId}`);
