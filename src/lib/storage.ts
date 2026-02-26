@@ -1,4 +1,7 @@
 import { createClient } from "@/utils/supabase/client";
+import { getFileCategory } from "@/lib/file-utils";
+
+export { getFileCategory };
 
 const BUCKET = "proofs";
 
@@ -77,24 +80,6 @@ export async function getSignedUrl(path: string): Promise<string> {
     return data?.signedUrl || "";
 }
 
-/**
- * Detect file category from MIME type.
- */
-export function getFileCategory(
-    mimeType: string
-): "image" | "video" | "pdf" | "design" | "unknown" {
-    if (mimeType.startsWith("image/")) return "image";
-    if (mimeType.startsWith("video/")) return "video";
-    if (mimeType === "application/pdf") return "pdf";
-    if (
-        mimeType === "application/postscript" ||
-        mimeType === "application/illustrator" ||
-        mimeType === "image/vnd.adobe.photoshop" ||
-        mimeType === "application/octet-stream"
-    )
-        return "design";
-    return "unknown";
-}
 
 /**
  * Accepted file types for the dropzone.
