@@ -68,6 +68,16 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const [compareView, setCompareView] = useState<"sideBySide" | "overlay">("sideBySide");
     const [overlayPos, setOverlayPos] = useState(50);
 
+    // ═══ SYNCHRONIZED COMPARE STATE ═══
+    const [syncViews, setSyncViews] = useState(true);
+    const leftPanelRef = useRef<HTMLDivElement>(null);
+    const rightPanelRef = useRef<HTMLDivElement>(null);
+    const isSyncingScroll = useRef(false);
+    const [marqueeActive, setMarqueeActive] = useState(false);
+    const [marqueeStart, setMarqueeStart] = useState<{ x: number; y: number } | null>(null);
+    const [marqueeRect, setMarqueeRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+    const marqueeSourceRef = useRef<"left" | "right" | null>(null);
+
     // Deadline state
     const [deadlineValue, setDeadlineValue] = useState<string | null>(proof.deadline || null);
     const [editingDeadline, setEditingDeadline] = useState(false);
@@ -415,6 +425,98 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             setIsMuted(true);
         }
     }, [isMuted, volume]);
+
+    // ═══ SYNCHRONIZED SCROLL HANDLER ═══
+    const handleSyncScroll = useCallback((source: "left" | "right") => {
+        if (!syncViews || isSyncingScroll.current) return;
+        isSyncingScroll.current = true;
+        const src = source === "left" ? leftPanelRef.current : rightPanelRef.current;
+        const dst = source === "left" ? rightPanelRef.current : leftPanelRef.current;
+        if (src && dst) {
+            const xPct = src.scrollWidth > src.clientWidth
+                ? src.scrollLeft / (src.scrollWidth - src.clientWidth) : 0;
+            const yPct = src.scrollHeight > src.clientHeight
+                ? src.scrollTop / (src.scrollHeight - src.clientHeight) : 0;
+            dst.scrollLeft = xPct * (dst.scrollWidth - dst.clientWidth);
+            dst.scrollTop = yPct * (dst.scrollHeight - dst.clientHeight);
+        }
+        requestAnimationFrame(() => { isSyncingScroll.current = false; });
+    }, [syncViews]);
+
+    // ═══ WHEEL-TO-ZOOM (Ctrl/Cmd + Wheel) ═══
+    useEffect(() => {
+        const panels = [leftPanelRef.current, rightPanelRef.current, viewerContainerRef.current];
+        const handler = (e: WheelEvent) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                setZoom(z => Math.min(5, Math.max(0.25, z - e.deltaY * 0.003)));
+            }
+        };
+        panels.forEach(el => el?.addEventListener("wheel", handler, { passive: false }));
+        return () => panels.forEach(el => el?.removeEventListener("wheel", handler));
+    }, [compareMode]);
+
+    // ═══ MARQUEE ZOOM (LOUPE) HANDLERS ═══
+    const handleMarqueeDown = useCallback((e: React.MouseEvent, panel: "left" | "right") => {
+        if (!marqueeActive) return;
+        e.preventDefault();
+        const panelEl = panel === "left" ? leftPanelRef.current : rightPanelRef.current;
+        if (!panelEl) return;
+        const rect = panelEl.getBoundingClientRect();
+        marqueeSourceRef.current = panel;
+        setMarqueeStart({ x: e.clientX - rect.left + panelEl.scrollLeft, y: e.clientY - rect.top + panelEl.scrollTop });
+        setMarqueeRect(null);
+    }, [marqueeActive]);
+
+    const handleMarqueeMove = useCallback((e: React.MouseEvent, panel: "left" | "right") => {
+        if (!marqueeActive || !marqueeStart || marqueeSourceRef.current !== panel) return;
+        const panelEl = panel === "left" ? leftPanelRef.current : rightPanelRef.current;
+        if (!panelEl) return;
+        const rect = panelEl.getBoundingClientRect();
+        const curX = e.clientX - rect.left + panelEl.scrollLeft;
+        const curY = e.clientY - rect.top + panelEl.scrollTop;
+        setMarqueeRect({
+            x: Math.min(marqueeStart.x, curX),
+            y: Math.min(marqueeStart.y, curY),
+            w: Math.abs(curX - marqueeStart.x),
+            h: Math.abs(curY - marqueeStart.y),
+        });
+    }, [marqueeActive, marqueeStart]);
+
+    const handleMarqueeUp = useCallback((_e: React.MouseEvent, panel: "left" | "right") => {
+        if (!marqueeActive || !marqueeRect || marqueeSourceRef.current !== panel) {
+            setMarqueeStart(null);
+            setMarqueeRect(null);
+            return;
+        }
+        const panelEl = panel === "left" ? leftPanelRef.current : rightPanelRef.current;
+        if (!panelEl || marqueeRect.w < 10 || marqueeRect.h < 10) {
+            setMarqueeStart(null);
+            setMarqueeRect(null);
+            return;
+        }
+        // Calculate new zoom to fit the selected rectangle
+        const panelW = panelEl.clientWidth;
+        const panelH = panelEl.clientHeight;
+        const fitZoom = Math.min(panelW / (marqueeRect.w / zoom), panelH / (marqueeRect.h / zoom), 5);
+        const newZoom = Math.max(0.25, Math.round(fitZoom * 100) / 100);
+        setZoom(newZoom);
+        // After zoom is applied, scroll to center the selected area
+        requestAnimationFrame(() => {
+            const scrollX = (marqueeRect.x / zoom) * newZoom - panelW / 2 + (marqueeRect.w / zoom) * newZoom / 2;
+            const scrollY = (marqueeRect.y / zoom) * newZoom - panelH / 2 + (marqueeRect.h / zoom) * newZoom / 2;
+            if (leftPanelRef.current) {
+                leftPanelRef.current.scrollLeft = scrollX;
+                leftPanelRef.current.scrollTop = scrollY;
+            }
+            if (syncViews && rightPanelRef.current) {
+                rightPanelRef.current.scrollLeft = scrollX;
+                rightPanelRef.current.scrollTop = scrollY;
+            }
+        });
+        setMarqueeStart(null);
+        setMarqueeRect(null);
+    }, [marqueeActive, marqueeRect, zoom, syncViews]);
 
     // Build pins
     const rootComments = comments.filter((c: any) => !c.parent_comment_id && c.pos_x != null && c.pos_y != null);
@@ -937,51 +1039,153 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 <p className="text-[12px] text-zinc-600 mt-1">{t("uploadFirstSub")}</p>
                             </div>
                         ) : compareMode && compareUrl && fileCategory !== "video" ? (
-                            /* ═══ COMPARE MODE ═══ */
+                            /* ═══ COMPARE MODE — GorillaProof Edition ═══ */
                             <div className="flex flex-col h-full w-full">
-                                {/* Compare mode toggle bar */}
-                                <div className="h-8 flex items-center justify-center gap-4 bg-[#1e1e32] border-b border-[#2a2a40] shrink-0">
-                                    <div className="flex items-center bg-[#15152a] rounded-md p-0.5">
+                                {/* ── Compare Toolbar ── */}
+                                <div className="h-10 flex items-center justify-center gap-3 bg-[#1e1e32] border-b border-[#2a2a40] shrink-0 px-3">
+                                    {/* View mode toggle */}
+                                    <div className="flex items-center bg-[#15152a] rounded-lg p-0.5">
                                         <button
                                             onClick={() => setCompareView("sideBySide")}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded transition-colors cursor-pointer ${compareView === "sideBySide" ? "bg-[#2a2a40] text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                                            className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${compareView === "sideBySide" ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
                                         >
-                                            Side by Side
+                                            <span className="flex items-center gap-1.5">
+                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15M3.75 4.5h16.5" />
+                                                </svg>
+                                                Lado a Lado
+                                            </span>
                                         </button>
                                         <button
                                             onClick={() => setCompareView("overlay")}
-                                            className={`px-3 py-1 text-[10px] font-bold rounded transition-colors cursor-pointer ${compareView === "overlay" ? "bg-[#2a2a40] text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                                            className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${compareView === "overlay" ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
                                         >
-                                            Sobreposição
+                                            <span className="flex items-center gap-1.5">
+                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                                </svg>
+                                                Sobreposição
+                                            </span>
                                         </button>
                                     </div>
+
+                                    {/* Divider */}
+                                    <div className="w-px h-5 bg-[#3a3a55]" />
+
+                                    {/* Sync views toggle */}
+                                    <button
+                                        onClick={() => setSyncViews(v => !v)}
+                                        className={`h-7 px-2.5 rounded-lg flex items-center gap-1.5 text-[10px] font-bold transition-all cursor-pointer border ${syncViews ? "text-emerald-400 bg-emerald-500/15 border-emerald-500/30" : "text-zinc-600 hover:text-zinc-400 border-transparent hover:bg-[#2a2a40]"}`}
+                                        data-tip={syncViews ? "Desativar sincronização" : "Ativar sincronização"}
+                                    >
+                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={syncViews ? 2.5 : 1.5}>
+                                            {syncViews ? (
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-6.364-6.364L4.5 8.257" />
+                                            ) : (
+                                                <>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.81 15.312a4.5 4.5 0 01-1.242-7.244l4.5-4.5a4.5 4.5 0 016.364 6.364l-1.757 1.757" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l16 16" />
+                                                </>
+                                            )}
+                                        </svg>
+                                        {syncViews ? "Sincronizado" : "Independente"}
+                                    </button>
+
+                                    {/* Marquee zoom toggle (loupe) */}
+                                    {compareView === "sideBySide" && (
+                                        <button
+                                            onClick={() => setMarqueeActive(v => !v)}
+                                            className={`h-7 px-2.5 rounded-lg flex items-center gap-1.5 text-[10px] font-bold transition-all cursor-pointer border ${marqueeActive ? "text-blue-400 bg-blue-500/15 border-blue-500/30" : "text-zinc-600 hover:text-zinc-400 border-transparent hover:bg-[#2a2a40]"}`}
+                                            data-tip="Zoom de área (lupa)"
+                                        >
+                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
+                                            </svg>
+                                            Lupa
+                                        </button>
+                                    )}
+
+                                    {/* Divider */}
+                                    <div className="w-px h-5 bg-[#3a3a55]" />
+
+                                    {/* Version labels */}
                                     <div className="flex items-center gap-2 text-[10px]">
-                                        <span className="text-zinc-500 font-mono">V.{compareVersion?.version_number}</span>
-                                        <span className="text-zinc-600">vs</span>
-                                        <span className="text-emerald-400 font-mono">V.{selectedVersion.version_number}</span>
+                                        <span className="text-zinc-500 font-mono bg-[#15152a] px-2 py-0.5 rounded">V.{compareVersion?.version_number}</span>
+                                        <span className="text-zinc-600 font-bold">vs</span>
+                                        <span className="text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded">V.{selectedVersion.version_number}</span>
                                     </div>
                                 </div>
 
                                 {compareView === "sideBySide" ? (
-                                    /* ── SIDE BY SIDE ── */
+                                    /* ── SIDE BY SIDE (synchronized) ── */
                                     <div className="flex flex-1 h-0">
-                                        <div className="flex-1 flex items-center justify-center overflow-auto border-r border-[#3a3a55]">
-                                            <div style={{ transform: `scale(${zoom})` }} className="transition-transform duration-200">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={compareUrl} alt="Versão anterior" className="max-w-none shadow-2xl" draggable={false} />
+                                        {/* LEFT PANEL — previous version */}
+                                        <div className="flex-1 flex flex-col border-r border-[#3a3a55] min-w-0">
+                                            <div className="h-7 flex items-center px-3 bg-[#1a1a2e] border-b border-[#2a2a40] shrink-0">
+                                                <div className="h-2 w-2 rounded-full bg-zinc-600 mr-2" />
+                                                <span className="text-[10px] font-mono text-zinc-500">V.{compareVersion?.version_number}</span>
+                                                <span className="text-[9px] text-zinc-700 ml-2">(anterior)</span>
+                                            </div>
+                                            <div
+                                                ref={leftPanelRef}
+                                                className={`flex-1 overflow-auto relative ${marqueeActive ? "cursor-crosshair" : ""}`}
+                                                onScroll={() => handleSyncScroll("left")}
+                                                onMouseDown={e => handleMarqueeDown(e, "left")}
+                                                onMouseMove={e => handleMarqueeMove(e, "left")}
+                                                onMouseUp={e => handleMarqueeUp(e, "left")}
+                                            >
+                                                <div className="flex items-center justify-center min-h-full" style={{ width: "fit-content", minWidth: "100%" }}>
+                                                    <div style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }} className="transition-transform duration-200">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={compareUrl} alt="Versão anterior" className="max-w-none shadow-2xl" draggable={false} />
+                                                    </div>
+                                                </div>
+                                                {/* Marquee selection overlay */}
+                                                {marqueeRect && marqueeSourceRef.current === "left" && (
+                                                    <div className="absolute border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-sm pointer-events-none z-20" style={{
+                                                        left: marqueeRect.x, top: marqueeRect.y,
+                                                        width: marqueeRect.w, height: marqueeRect.h,
+                                                    }} />
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="flex-1 flex items-center justify-center overflow-auto relative">
-                                            <div style={{ transform: `scale(${zoom})` }} className="transition-transform duration-200 relative">
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img src={fileUrl} alt="Versão atual" className="max-w-none shadow-2xl" draggable={false} />
-                                                <AnnotationCanvas
-                                                    pins={allPins}
-                                                    isAnnotating={isAnnotating}
-                                                    activePinId={activePinId}
-                                                    onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
-                                                    onCanvasClick={handleCanvasClick}
-                                                />
+
+                                        {/* RIGHT PANEL — current version */}
+                                        <div className="flex-1 flex flex-col min-w-0">
+                                            <div className="h-7 flex items-center px-3 bg-[#1a1a2e] border-b border-[#2a2a40] shrink-0">
+                                                <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2 animate-pulse" />
+                                                <span className="text-[10px] font-mono text-emerald-400">V.{selectedVersion.version_number}</span>
+                                                <span className="text-[9px] text-emerald-600 ml-2">(atual)</span>
+                                            </div>
+                                            <div
+                                                ref={rightPanelRef}
+                                                className={`flex-1 overflow-auto relative ${marqueeActive ? "cursor-crosshair" : ""}`}
+                                                onScroll={() => handleSyncScroll("right")}
+                                                onMouseDown={e => handleMarqueeDown(e, "right")}
+                                                onMouseMove={e => handleMarqueeMove(e, "right")}
+                                                onMouseUp={e => handleMarqueeUp(e, "right")}
+                                            >
+                                                <div className="flex items-center justify-center min-h-full" style={{ width: "fit-content", minWidth: "100%" }}>
+                                                    <div style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }} className="transition-transform duration-200 relative">
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={fileUrl} alt="Versão atual" className="max-w-none shadow-2xl" draggable={false} />
+                                                        <AnnotationCanvas
+                                                            pins={allPins}
+                                                            isAnnotating={isAnnotating && !marqueeActive}
+                                                            activePinId={activePinId}
+                                                            onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                                            onCanvasClick={handleCanvasClick}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {/* Marquee selection overlay */}
+                                                {marqueeRect && marqueeSourceRef.current === "right" && (
+                                                    <div className="absolute border-2 border-dashed border-blue-400 bg-blue-500/10 rounded-sm pointer-events-none z-20" style={{
+                                                        left: marqueeRect.x, top: marqueeRect.y,
+                                                        width: marqueeRect.w, height: marqueeRect.h,
+                                                    }} />
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -1069,25 +1273,36 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     <div className="flex flex-col w-full h-full relative overflow-hidden">
                                         {/* Compare mode toggle bar (only in compare mode) */}
                                         {compareMode && compareUrl && (
-                                            <div className="h-8 flex items-center justify-center gap-4 bg-[#1e1e32] border-b border-[#2a2a40] shrink-0">
-                                                <div className="flex items-center bg-[#15152a] rounded-md p-0.5">
+                                            <div className="h-10 flex items-center justify-center gap-3 bg-[#1e1e32] border-b border-[#2a2a40] shrink-0 px-3">
+                                                <div className="flex items-center bg-[#15152a] rounded-lg p-0.5">
                                                     <button
                                                         onClick={() => setCompareView("sideBySide")}
-                                                        className={`px-3 py-1 text-[10px] font-bold rounded transition-colors cursor-pointer ${compareView === "sideBySide" ? "bg-[#2a2a40] text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${compareView === "sideBySide" ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
                                                     >
-                                                        Side by Side
+                                                        <span className="flex items-center gap-1.5">
+                                                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15M3.75 4.5h16.5" />
+                                                            </svg>
+                                                            Lado a Lado
+                                                        </span>
                                                     </button>
                                                     <button
                                                         onClick={() => setCompareView("overlay")}
-                                                        className={`px-3 py-1 text-[10px] font-bold rounded transition-colors cursor-pointer ${compareView === "overlay" ? "bg-[#2a2a40] text-white" : "text-zinc-500 hover:text-zinc-300"}`}
+                                                        className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${compareView === "overlay" ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
                                                     >
-                                                        Sobreposição
+                                                        <span className="flex items-center gap-1.5">
+                                                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                                            </svg>
+                                                            Sobreposição
+                                                        </span>
                                                     </button>
                                                 </div>
+                                                <div className="w-px h-5 bg-[#3a3a55]" />
                                                 <div className="flex items-center gap-2 text-[10px]">
-                                                    <span className="text-zinc-500 font-mono">V.{compareVersion?.version_number}</span>
-                                                    <span className="text-zinc-600">vs</span>
-                                                    <span className="text-emerald-400 font-mono">V.{selectedVersion.version_number}</span>
+                                                    <span className="text-zinc-500 font-mono bg-[#15152a] px-2 py-0.5 rounded">V.{compareVersion?.version_number}</span>
+                                                    <span className="text-zinc-600 font-bold">vs</span>
+                                                    <span className="text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded">V.{selectedVersion.version_number}</span>
                                                 </div>
                                             </div>
                                         )}
