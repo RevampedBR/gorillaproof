@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { GuestGate } from "@/components/review/guest-gate";
 import { registerGuest, createGuestComment, submitGuestDecision } from "@/lib/actions/guests";
-import { getSignedUrl, getFileCategory } from "@/lib/storage";
+import { getFileCategory } from "@/lib/storage";
 import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
@@ -18,6 +18,7 @@ interface ReviewPageClientProps {
     initialComments: any[];
     token: string;
     projectName: string;
+    signedUrls: Record<string, string>;
 }
 
 interface GuestInfo {
@@ -34,7 +35,7 @@ const FILE_TYPE_LABELS: Record<string, string> = {
     unknown: "FILE",
 };
 
-export function ReviewPageClient({ proof, versions, initialComments, token, projectName }: ReviewPageClientProps) {
+export function ReviewPageClient({ proof, versions, initialComments, token, projectName, signedUrls }: ReviewPageClientProps) {
     const { toast } = useToast();
     const [guestInfo, setGuestInfo] = useState<GuestInfo | null>(null);
     const [gateLoading, setGateLoading] = useState(false);
@@ -80,6 +81,7 @@ export function ReviewPageClient({ proof, versions, initialComments, token, proj
             initialComments={initialComments}
             guestInfo={guestInfo}
             projectName={projectName}
+            signedUrls={signedUrls}
         />
     );
 }
@@ -92,9 +94,10 @@ interface GuestViewerProps {
     initialComments: any[];
     guestInfo: GuestInfo;
     projectName: string;
+    signedUrls: Record<string, string>;
 }
 
-function GuestViewer({ proof, versions, initialComments, guestInfo, projectName }: GuestViewerProps) {
+function GuestViewer({ proof, versions, initialComments, guestInfo, projectName, signedUrls }: GuestViewerProps) {
     const { toast } = useToast();
 
     // Version state
@@ -155,10 +158,12 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName 
         return () => ro.disconnect();
     }, []);
 
-    // Load signed URL
+    // Use pre-signed URL from server
     useEffect(() => {
-        if (selectedVersion?.file_url) getSignedUrl(selectedVersion.file_url).then(setFileUrl);
-    }, [selectedVersion]);
+        if (selectedVersion?.id && signedUrls[selectedVersion.id]) {
+            setFileUrl(signedUrls[selectedVersion.id]);
+        }
+    }, [selectedVersion, signedUrls]);
 
     const fileCategory = selectedVersion ? getFileCategory(selectedVersion.file_type) : "unknown";
 

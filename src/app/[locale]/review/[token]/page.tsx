@@ -46,13 +46,26 @@ export default async function GuestReviewPage({ params }: Props) {
         initialComments = comments ?? [];
     }
 
+    // Pre-sign all version file URLs server-side (guests can't sign client-side)
+    const versionList = versions ?? [];
+    const signedUrls: Record<string, string> = {};
+    for (const v of versionList) {
+        if (v.file_url) {
+            const { data } = await supabaseAdmin.storage
+                .from("proofs")
+                .createSignedUrl(v.file_url, 60 * 60 * 24); // 24h
+            if (data?.signedUrl) signedUrls[v.id] = data.signedUrl;
+        }
+    }
+
     return (
         <ReviewPageClient
             proof={proof}
-            versions={versions ?? []}
+            versions={versionList}
             initialComments={initialComments}
             token={token}
             projectName={proof.projects?.name || ""}
+            signedUrls={signedUrls}
         />
     );
 }
