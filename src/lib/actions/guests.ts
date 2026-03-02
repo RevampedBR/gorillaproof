@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 interface ValidateResult {
     valid: boolean;
@@ -19,9 +20,8 @@ interface ValidateResult {
 export async function validateShareToken(token: string): Promise<ValidateResult> {
     if (!token) return { valid: false, error: "Token ausente" };
 
-    const supabase = await createClient();
-
-    const { data: proof, error } = await supabase
+    // Use service-role client to bypass RLS — the share token IS the auth
+    const { data: proof, error } = await supabaseAdmin
         .from("proofs")
         .select(`
             id, title, status, deadline, locked_at, project_id,
@@ -68,7 +68,7 @@ export async function registerGuest(
 ): Promise<{ guest: GuestInfo | null; error: string | null }> {
     if (!displayName?.trim()) return { guest: null, error: "Nome é obrigatório" };
 
-    const supabase = await createClient();
+    // Use service-role — guests have no auth session
 
     // Validate token first
     const validation = await validateShareToken(token);
@@ -76,7 +76,7 @@ export async function registerGuest(
 
     // Check if this guest already registered (by email or name+proof combo)
     if (email) {
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from("guest_reviewers")
             .select("id, display_name, email")
             .eq("proof_id", validation.proof!.id)
@@ -91,7 +91,7 @@ export async function registerGuest(
         }
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("guest_reviewers")
         .insert({
             proof_id: validation.proof!.id,
@@ -132,17 +132,17 @@ export async function createGuestComment(
     videoTimestamp?: number | null,
     parentCommentId?: string | null
 ) {
-    const supabase = await createClient();
+    // Use service-role — guests have no auth session
 
     // Check if proof is locked
-    const { data: proof } = await supabase
+    const { data: proof } = await supabaseAdmin
         .from("proofs")
         .select("locked_at")
         .eq("id", proofId)
         .single();
     if (proof?.locked_at) return { error: "Prova está travada", data: null };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("comments")
         .insert({
             version_id: versionId,
@@ -172,17 +172,17 @@ export async function submitGuestDecision(
     decision: string,
     guestId: string
 ) {
-    const supabase = await createClient();
+    // Use service-role — guests have no auth session
 
     // Check if proof is locked
-    const { data: proof } = await supabase
+    const { data: proof } = await supabaseAdmin
         .from("proofs")
         .select("locked_at")
         .eq("id", proofId)
         .single();
     if (proof?.locked_at) return { error: "Prova está travada" };
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
         .from("proof_decisions")
         .upsert({
             proof_id: proofId,

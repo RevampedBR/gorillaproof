@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { notFound } from "next/navigation";
 import { validateShareToken } from "@/lib/actions/guests";
 import { ReviewPageClient } from "./review-client";
@@ -18,10 +18,9 @@ export default async function GuestReviewPage({ params }: Props) {
     }
 
     const proof = validation.proof;
-    const supabase = await createClient();
 
-    // Fetch versions (no auth required — using service-level query)
-    const { data: versions } = await supabase
+    // Use service-role client — guests have no auth session, RLS would block
+    const { data: versions } = await supabaseAdmin
         .from("versions")
         .select("id, version_number, file_url, file_type, uploaded_by, created_at")
         .eq("proof_id", proof.id)
@@ -31,7 +30,7 @@ export default async function GuestReviewPage({ params }: Props) {
     const latestVersion = versions?.[0];
     let initialComments: any[] = [];
     if (latestVersion) {
-        const { data: comments } = await supabase
+        const { data: comments } = await supabaseAdmin
             .from("comments")
             .select(`
                 id, content, pos_x, pos_y, video_timestamp,

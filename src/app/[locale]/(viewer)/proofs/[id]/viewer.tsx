@@ -78,6 +78,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const [marqueeRect, setMarqueeRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
     const marqueeSourceRef = useRef<"left" | "right" | null>(null);
 
+    // ═══ PHOTOSHOP-STYLE PAN STATE ═══
+    const [isSpaceHeld, setIsSpaceHeld] = useState(false);
+    const isPanningRef = useRef(false);
+    const panStartRef = useRef<{ x: number; y: number; scrollLeft: number; scrollTop: number } | null>(null);
+    const panTargetRef = useRef<HTMLDivElement | null>(null);
+
     // Deadline state
     const [deadlineValue, setDeadlineValue] = useState<string | null>(proof.deadline || null);
     const [editingDeadline, setEditingDeadline] = useState(false);
@@ -143,6 +149,84 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         return () => ro.disconnect();
     }, []);
 
+    // ═══ PHOTOSHOP-STYLE SPACE+DRAG PAN ═══
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.code === "Space" && !(e.target as HTMLElement).matches("input, textarea, [contenteditable]")) {
+                e.preventDefault();
+                setIsSpaceHeld(true);
+            }
+        };
+        const onKeyUp = (e: KeyboardEvent) => {
+            if (e.code === "Space") {
+                setIsSpaceHeld(false);
+                isPanningRef.current = false;
+                panStartRef.current = null;
+                panTargetRef.current = null;
+            }
+        };
+        // Also cancel pan if window loses focus
+        const onBlur = () => {
+            setIsSpaceHeld(false);
+            isPanningRef.current = false;
+            panStartRef.current = null;
+            panTargetRef.current = null;
+        };
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        window.addEventListener("blur", onBlur);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
+            window.removeEventListener("blur", onBlur);
+        };
+    }, []);
+
+    // Pan mouse handlers (attached to scrollable containers)
+    const handlePanMouseDown = useCallback((e: React.MouseEvent, scrollEl: HTMLDivElement | null) => {
+        if (!isSpaceHeld || !scrollEl) return;
+        e.preventDefault();
+        e.stopPropagation();
+        isPanningRef.current = true;
+        panTargetRef.current = scrollEl;
+        panStartRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            scrollLeft: scrollEl.scrollLeft,
+            scrollTop: scrollEl.scrollTop,
+        };
+    }, [isSpaceHeld]);
+
+    useEffect(() => {
+        const onMouseMove = (e: MouseEvent) => {
+            if (!isPanningRef.current || !panStartRef.current || !panTargetRef.current) return;
+            e.preventDefault();
+            const dx = e.clientX - panStartRef.current.x;
+            const dy = e.clientY - panStartRef.current.y;
+            panTargetRef.current.scrollLeft = panStartRef.current.scrollLeft - dx;
+            panTargetRef.current.scrollTop = panStartRef.current.scrollTop - dy;
+            // Sync to other panel if in compare mode
+            if (syncViews && compareMode) {
+                const otherPanel = panTargetRef.current === leftPanelRef.current ? rightPanelRef.current : leftPanelRef.current;
+                if (otherPanel) {
+                    otherPanel.scrollLeft = panStartRef.current.scrollLeft - dx;
+                    otherPanel.scrollTop = panStartRef.current.scrollTop - dy;
+                }
+            }
+        };
+        const onMouseUp = () => {
+            isPanningRef.current = false;
+            panStartRef.current = null;
+            panTargetRef.current = null;
+        };
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("mouseup", onMouseUp);
+        return () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+        };
+    }, [syncViews, compareMode]);
+
     // ═══ UNIFIED KEYBOARD SHORTCUTS ═══
     // Ziflow/Frame.io standard: J/K/L, M, F, Shift+Arrow, 0-9, Space, +/-, Ctrl+Z/Y
     useEffect(() => {
@@ -169,10 +253,10 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             const v = videoRef.current;
             const dur = v && isFinite(v.duration) ? v.duration : 0;
 
-            // ── Space / K = Play/Pause ──
-            if (e.key === " " || e.code === "Space" || e.key === "k") {
+            // ── Space / K = Play/Pause (only for video — for images, Space is used for pan) ──
+            if (e.key === "k" || ((e.key === " " || e.code === "Space") && fileCategory === "video")) {
                 if (target.tagName === "BUTTON") return;
-                e.preventDefault();
+                if (e.key !== "k") e.preventDefault(); // Let Space pan handler manage preventDefault for non-video
                 if (v) {
                     if (v.paused) { v.play(); setIsPlaying(true); }
                     else { v.pause(); setIsPlaying(false); }
@@ -1027,7 +1111,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     )}
 
                     {/* Viewer Canvas */}
-                    <div ref={viewerContainerRef} className="flex-1 flex items-center justify-center overflow-hidden relative viewer-no-scrollbar">
+                    <div ref={viewerContainerRef} className={`flex-1 flex items-center justify-center overflow-auto relative viewer-no-scrollbar ${isSpaceHeld ? (isPanningRef.current ? "cursor-grabbing" : "cursor-grab") : ""}`}
+                        onMouseDown={e => handlePanMouseDown(e, viewerContainerRef.current)}
+                    >
                         {!selectedVersion ? (
                             <div className="text-center">
                                 <div className="h-16 w-16 rounded-2xl bg-[#2a2a40] flex items-center justify-center mb-4 mx-auto">
@@ -1129,9 +1215,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                             </div>
                                             <div
                                                 ref={leftPanelRef}
-                                                className={`flex-1 overflow-auto relative ${marqueeActive ? "cursor-crosshair" : ""}`}
+                                                className={`flex-1 overflow-auto relative ${isSpaceHeld ? (isPanningRef.current ? "cursor-grabbing" : "cursor-grab") : marqueeActive ? "cursor-crosshair" : ""}`}
                                                 onScroll={() => handleSyncScroll("left")}
-                                                onMouseDown={e => handleMarqueeDown(e, "left")}
+                                                onMouseDown={e => { handlePanMouseDown(e, leftPanelRef.current); if (!isSpaceHeld) handleMarqueeDown(e, "left"); }}
                                                 onMouseMove={e => handleMarqueeMove(e, "left")}
                                                 onMouseUp={e => handleMarqueeUp(e, "left")}
                                             >
@@ -1160,9 +1246,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                             </div>
                                             <div
                                                 ref={rightPanelRef}
-                                                className={`flex-1 overflow-auto relative ${marqueeActive ? "cursor-crosshair" : ""}`}
+                                                className={`flex-1 overflow-auto relative ${isSpaceHeld ? (isPanningRef.current ? "cursor-grabbing" : "cursor-grab") : marqueeActive ? "cursor-crosshair" : ""}`}
                                                 onScroll={() => handleSyncScroll("right")}
-                                                onMouseDown={e => handleMarqueeDown(e, "right")}
+                                                onMouseDown={e => { handlePanMouseDown(e, rightPanelRef.current); if (!isSpaceHeld) handleMarqueeDown(e, "right"); }}
                                                 onMouseMove={e => handleMarqueeMove(e, "right")}
                                                 onMouseUp={e => handleMarqueeUp(e, "right")}
                                             >
