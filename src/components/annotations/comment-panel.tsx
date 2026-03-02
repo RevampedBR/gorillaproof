@@ -509,7 +509,7 @@ export function CommentPanel({
     };
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col flex-1 min-h-0">
             {/* ═══ ZIFLOW-STYLE: Rich text input AT THE TOP ═══ */}
             <div className="p-3 border-b border-[#2a2a40]">
                 {/* Rich text toolbar — FUNCTIONAL */}

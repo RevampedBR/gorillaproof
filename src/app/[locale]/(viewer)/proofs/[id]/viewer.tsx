@@ -1923,7 +1923,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         </div>
 
                         {sidebarTab === "comments" ? (
-                            <>
+                            <div className="flex flex-col flex-1 min-h-0">
                                 {/* Carry comments forward button */}
                                 {selectedVersion && versionList.length > 1 && selectedVersion.id === versionList[0]?.id && (
                                     <div className="px-3 py-2 border-b border-[#2a2a40] bg-[#15152a]">
@@ -1963,7 +1963,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     onCancelPin={() => setPendingPin(null)}
                                     orgMembers={orgMembers}
                                 />
-                            </>
+                            </div>
                         ) : (
                             <ActivityLogPanel proofId={proof.id} />
                         )}
