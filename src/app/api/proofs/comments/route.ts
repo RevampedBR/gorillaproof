@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/utils/supabase/admin";
+import { createClient } from "@/utils/supabase/server";
 
 /**
- * Public API: Get comments for a version (used by guest mode)
+ * Get comments for a version.
+ * - Authenticated users: see all comments (including internal)
+ * - Guests: see only non-internal comments
  * GET /api/proofs/comments?versionId=<uuid>
  */
 export async function GET(request: NextRequest) {
@@ -13,8 +16,17 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        // Check if the requester is authenticated
+        let isAuthenticated = false;
+        try {
+            const supabase = await createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            isAuthenticated = !!user;
+        } catch {
+            isAuthenticated = false;
+        }
 
-        const { data, error } = await supabaseAdmin
+        let query = supabaseAdmin
             .from("comments")
             .select(`
                 id, content, pos_x, pos_y, video_timestamp,
@@ -24,8 +36,14 @@ export async function GET(request: NextRequest) {
                 guest_reviewers ( id, display_name, email )
             `)
             .eq("version_id", versionId)
-            .eq("is_internal", false)
             .order("created_at", { ascending: true });
+
+        // Guests only see non-internal comments
+        if (!isAuthenticated) {
+            query = query.eq("is_internal", false);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
             return NextResponse.json({ error: error.message }, { status: 500 });

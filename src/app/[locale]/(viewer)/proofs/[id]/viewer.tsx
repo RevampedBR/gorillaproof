@@ -385,8 +385,17 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     const refreshComments = useCallback(async () => {
         if (selectedVersion?.id) {
-            const { data } = await getComments(selectedVersion.id);
-            setComments(data);
+            try {
+                const res = await fetch(`/api/proofs/comments?versionId=${selectedVersion.id}`, { cache: "no-store" });
+                if (res.ok) {
+                    const data = await res.json();
+                    setComments(data);
+                }
+            } catch {
+                // Fallback to server action
+                const { data } = await getComments(selectedVersion.id);
+                setComments(data);
+            }
         }
     }, [selectedVersion]);
 
