@@ -8,6 +8,7 @@ import { logActivity } from "@/lib/actions/activity";
 import { notifyMention } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import DOMPurify from "dompurify";
+import { Lock, MapPin, Clock, Check, RefreshCw, X, Globe, RotateCcw } from "lucide-react";
 
 interface Comment {
     id: string;
@@ -683,7 +684,7 @@ export function CommentPanel({
                             className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors ml-auto cursor-pointer"
                             title="Remover pin"
                         >
-                            ✕
+                            <X className="h-3.5 w-3.5" />
                         </button>
                     </div>
                 )}
@@ -695,7 +696,9 @@ export function CommentPanel({
                     <div className="px-4 py-2.5 flex items-center gap-2 border-b border-[#2a2a40]/50">
                         <span className="text-[11px] text-zinc-500">Resumo IA</span>
                         <span className="text-[9px] text-zinc-600 bg-[#2a2a40] px-1.5 py-0.5 rounded-full">Gemini 2.0</span>
-                        <button onClick={() => setAiSummary(null)} className="ml-auto text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer">✕</button>
+                        <button onClick={() => setAiSummary(null)} className="ml-auto text-zinc-500 hover:text-zinc-300 cursor-pointer flex items-center">
+                            <X className="h-3.5 w-3.5" />
+                        </button>
                     </div>
                     <div className="px-4 py-3 text-[12px] text-zinc-300 leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto"
                         dangerouslySetInnerHTML={{

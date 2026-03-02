@@ -48,6 +48,7 @@ export async function createProject(formData: FormData) {
     if (!name || name.length === 0) return { error: "Nome é obrigatório" };
     if (name.length > 200) return { error: "Nome muito longo (máx 200)" };
     const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
+    const clientId = (formData.get("client_id") as string) || null;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 

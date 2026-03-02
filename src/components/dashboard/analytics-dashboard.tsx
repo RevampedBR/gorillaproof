@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAnalytics, type ProofAnalytics } from "@/lib/actions/analytics";
+import { Hash, FileText, CheckCircle2, Eye, AlertTriangle, XCircle, Clock, ArrowRight, TrendingUp, TrendingDown, ArrowRight as ArrowRightTrend } from "lucide-react";
 
 export function AnalyticsDashboard() {
     const [data, setData] = useState<ProofAnalytics | null>(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Tag, MessageSquare, CheckCircle2, RefreshCw, Upload, Calendar, CornerDownRight, Circle } from "lucide-react";
 
 interface NotificationEntry {
     id: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, createContext, useContext, type ReactNode } from "react";
+import { CheckCircle2, XCircle, Info, AlertTriangle, X } from "lucide-react";
 
 type ToastType = "success" | "error" | "info" | "warning";
 
@@ -49,13 +50,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             key={t.id}
                             className={`pointer-events-auto ${s.bg} ${s.border} border rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md flex items-start gap-3 animate-slide-in-right`}
                         >
-                            <span className="text-[16px] shrink-0 mt-0.5">{s.icon}</span>
+                            <s.Icon className={`h-[18px] w-[18px] shrink-0 mt-0.5 ${s.iconColor}`} />
                             <p className="text-[13px] text-zinc-200 leading-snug flex-1">{t.message}</p>
                             <button
                                 onClick={() => dismiss(t.id)}
-                                className="text-zinc-500 hover:text-zinc-300 text-[11px] shrink-0 cursor-pointer"
+                                className="text-zinc-500 hover:text-zinc-300 text-[11px] shrink-0 cursor-pointer flex items-center justify-center p-0.5"
                             >
-                                ✕
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     );

@@ -22,6 +22,7 @@ import { notifyStatusChange } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { submitDecision, getDecisions, lockProof, unlockProof, type ProofDecision } from "@/lib/actions/decisions";
+import { Lock, Unlock, MessageSquare, Clock } from "lucide-react";
 
 interface ProofViewerProps {
     proof: any;
@@ -1599,13 +1600,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         <div className="flex border-b border-[#2a2a40] shrink-0">
                             <button
                                 onClick={() => setSidebarTab("comments")}
-                                className={`flex-1 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "comments" ? "text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "comments" ? "text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
                                 Comentários
                             </button>
                             <button
                                 onClick={() => setSidebarTab("activity")}
-                                className={`flex-1 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "activity" ? "text-violet-400 border-b-2 border-violet-400 bg-violet-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "activity" ? "text-violet-400 border-b-2 border-violet-400 bg-violet-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
                                 Atividade
                             </button>

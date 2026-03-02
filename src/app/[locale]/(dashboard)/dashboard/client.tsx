@@ -128,6 +128,14 @@ export function DashboardHomeClient({ clients }: { clients: ClientData[] }) {
     const inReviewCount = statusCounts["in_review"] || 0;
     const changesCount = statusCounts["changes_requested"] || 0;
 
+    const today = useMemo(() => {
+        return new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+        });
+    }, []);
+
     return (
         <div className="flex flex-col h-full max-w-6xl mx-auto">
 
