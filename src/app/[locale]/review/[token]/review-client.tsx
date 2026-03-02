@@ -214,8 +214,11 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
 
     const openComments = comments.filter((c: any) => !c.parent_comment_id && c.status === "open").length;
 
+    const isDrawingTool = activeTool !== "pin" && activeTool !== "select";
+
     const drawingTools = [
         { id: "pin", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z", label: "Pin" },
+        { id: "select", icon: "M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59", label: "Selecionar" },
         { id: "rect", icon: "M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-8.25A2.25 2.25 0 017.5 18v-2.25", label: "Retângulo" },
         { id: "circle", icon: "M21 12a9 9 0 11-18 0 9 9 0 0118 0z", label: "Círculo" },
         { id: "arrow", icon: "M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25", label: "Seta" },
@@ -376,6 +379,26 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
 
                 <ColorPicker color={annotColor} onChange={setAnnotColor} />
 
+                {/* Delete selected shape */}
+                {activeTool === "select" && drawingShapes.length > 0 && (
+                    <>
+                        <div className="w-px h-4 bg-[#3a3a55] mx-1" />
+                        <button
+                            onClick={() => {
+                                drawingCanvasRef.current?.clearAll();
+                                toast("Formas removidas", "info");
+                            }}
+                            className="h-8 px-3 rounded-lg flex items-center gap-1.5 text-[12px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Limpar todas as formas"
+                        >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                            Limpar
+                        </button>
+                    </>
+                )}
+
                 {/* Spacer */}
                 <div className="flex-1" />
 
@@ -432,7 +455,7 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                                     }
                                 }}
                             />
-                            {isAnnotating && (
+                            {isAnnotating && activeTool === "pin" && (
                                 <AnnotationCanvas
                                     pins={allPins}
                                     isAnnotating={isAnnotating}
@@ -441,13 +464,14 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                                     onCanvasClick={handleCanvasClick}
                                 />
                             )}
-                            {activeTool !== "pin" && activeTool !== "select" && (
+                            {activeTool !== "pin" && (
                                 <DrawingCanvas
                                     ref={drawingCanvasRef}
                                     tool={activeTool as any}
                                     color={annotColor}
                                     containerWidth={viewerSize.width}
                                     containerHeight={viewerSize.height}
+                                    videoTimestamp={videoTime}
                                     onShapesChange={setDrawingShapes}
                                 />
                             )}
@@ -462,7 +486,7 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                                 style={{ transform: `scale(${zoom})`, transformOrigin: "center" }}
                                 draggable={false}
                             />
-                            {isAnnotating && (
+                            {isAnnotating && activeTool === "pin" && (
                                 <AnnotationCanvas
                                     pins={allPins}
                                     isAnnotating={isAnnotating}
@@ -471,7 +495,7 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                                     onCanvasClick={handleCanvasClick}
                                 />
                             )}
-                            {activeTool !== "pin" && activeTool !== "select" && (
+                            {activeTool !== "pin" && (
                                 <DrawingCanvas
                                     ref={drawingCanvasRef}
                                     tool={activeTool as any}
@@ -480,6 +504,22 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                                     containerHeight={viewerSize.height}
                                     onShapesChange={setDrawingShapes}
                                 />
+                            )}
+                            {/* Pins overlay (non-interactive, just display) when not in pin mode */}
+                            {activeTool !== "pin" && allPins.length > 0 && (
+                                <div className="absolute inset-0 z-20 pointer-events-none">
+                                    {allPins.map((pin) => (
+                                        <div
+                                            key={pin.id}
+                                            className="absolute -translate-x-1/2 -translate-y-1/2"
+                                            style={{ left: `${pin.posX}%`, top: `${pin.posY}%` }}
+                                        >
+                                            <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold shadow-lg border-2 ${pin.status === "open" ? "bg-emerald-500 text-white border-emerald-400" : "bg-zinc-600 text-zinc-300 border-zinc-500"}`}>
+                                                {pin.number}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     )}

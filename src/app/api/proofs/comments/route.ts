@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 
 /**
  * Public API: Get comments for a version (used by guest mode)
@@ -13,9 +13,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const supabase = await createClient();
 
-        const { data, error } = await supabase
+        const { data, error } = await supabaseAdmin
             .from("comments")
             .select(`
                 id, content, pos_x, pos_y, video_timestamp,
