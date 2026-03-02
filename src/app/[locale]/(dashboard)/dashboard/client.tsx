@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";

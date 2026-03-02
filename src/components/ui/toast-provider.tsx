@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             key={t.id}
                             className={`pointer-events-auto ${s.bg} ${s.border} border rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md flex items-start gap-3 animate-slide-in-right`}
                         >
-                            <s.Icon className={`h-[18px] w-[18px] shrink-0 mt-0.5 ${s.iconColor}`} />
+                            <span className="text-[16px] shrink-0 mt-0.5">{s.icon}</span>
                             <p className="text-[13px] text-zinc-200 leading-snug flex-1">{t.message}</p>
                             <button
                                 onClick={() => dismiss(t.id)}
