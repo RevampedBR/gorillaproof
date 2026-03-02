@@ -21,7 +21,7 @@ export default async function ProofViewerPage({ params }: Props) {
     const { data: proof, error } = await supabase
         .from("proofs")
         .select(`
-            id, title, status, created_at, updated_at, deadline,
+            id, title, status, created_at, updated_at, deadline, share_token,
             project_id,
             projects ( id, name, organization_id )
         `)

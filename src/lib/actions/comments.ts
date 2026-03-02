@@ -15,8 +15,9 @@ export async function getComments(versionId: string) {
             .select(`
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at, updated_at,
-                user_id, attachment_url, is_internal,
-                users ( id, full_name, avatar_url, email )
+                user_id, attachment_url, is_internal, guest_reviewer_id,
+                users ( id, full_name, avatar_url, email ),
+                guest_reviewers ( id, display_name, email )
             `)
             .eq("version_id", versionId)
             .order("created_at", { ascending: true });

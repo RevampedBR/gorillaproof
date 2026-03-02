@@ -53,7 +53,8 @@ export async function updateSession(request: NextRequest, response: NextResponse
     const pathWithoutLocale = path.replace(/^\/(pt)/, '');
     const cleanPath = pathWithoutLocale === "" ? "/" : pathWithoutLocale;
 
-    const isProtectRoute = cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings");
+    const isPublicReviewRoute = cleanPath.startsWith("/review");
+    const isProtectRoute = (cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings")) && !isPublicReviewRoute;
     const isAuthRoute = cleanPath.startsWith("/login") || cleanPath.startsWith("/register") || cleanPath.startsWith("/forgot-password") || cleanPath.startsWith("/reset-password");
 
     // Protect Dashboard

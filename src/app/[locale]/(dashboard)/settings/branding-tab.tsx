@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { updateOrgSettings } from "@/lib/actions/organization";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { LogoCropper } from "@/components/ui/logo-cropper";
-import { uploadProofFile } from "@/lib/storage";
+
 import { createClient } from "@/utils/supabase/client";
 
 interface BrandingTabProps {
@@ -24,13 +24,13 @@ export function BrandingTab({ orgId, initialColor, initialLogoUrl }: BrandingTab
     const handleLogoUpload = async (file: File) => {
         try {
             const supabase = createClient();
-            const path = `logos/${orgId}/${Date.now()}-${file.name}`;
-            const { error } = await supabase.storage.from("proofs").upload(path, file, {
+            const path = `${orgId}/logos/${Date.now()}-${file.name}`;
+            const { error } = await supabase.storage.from("brand-assets").upload(path, file, {
                 cacheControl: "3600",
                 upsert: true,
             });
             if (error) { toast("Erro ao enviar logo: " + error.message, "error"); return; }
-            const { data: urlData } = supabase.storage.from("proofs").getPublicUrl(path);
+            const { data: urlData } = supabase.storage.from("brand-assets").getPublicUrl(path);
             const newUrl = urlData.publicUrl;
             setLogoUrl(newUrl);
             await updateOrgSettings(orgId, { logo_url: newUrl });

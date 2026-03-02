@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { createComment, resolveComment, reopenComment, deleteComment } from "@/lib/actions/comments";
+import { createGuestComment } from "@/lib/actions/guests";
 import { summarizeComments } from "@/lib/actions/ai";
 import { logActivity } from "@/lib/actions/activity";
 import { notifyMention } from "@/lib/actions/email";
@@ -38,6 +39,11 @@ interface CommentPanelProps {
     onPinClick: (commentId: string) => void;
     onCancelPin: () => void;
     orgMembers?: any[];
+    isGuest?: boolean;
+    guestInfo?: { id: string; displayName: string; email?: string };
+    isLocked?: boolean;
+    onRefresh?: () => void;
+    onPendingPinClear?: () => void;
 }
 
 type FilterType = "all" | "open" | "resolved";
@@ -55,6 +61,11 @@ export function CommentPanel({
     onPinClick,
     onCancelPin,
     orgMembers = [],
+    isGuest = false,
+    guestInfo,
+    isLocked = false,
+    onRefresh,
+    onPendingPinClear,
 }: CommentPanelProps) {
     const t = useTranslations("dashboard.comments");
     const { toast } = useToast();
@@ -239,19 +250,32 @@ export function CommentPanel({
         const content = getEditorContent();
         const textContent = getEditorTextContent();
         if (!textContent) return;
+        if (isLocked) return;
         setSubmitting(true);
 
-        await createComment(
-            versionId,
-            content,
-            proofId,
-            pendingPin?.posX ?? null,
-            pendingPin?.posY ?? null,
-            videoTimestamp ?? null,
-            null,
-            null,
-            isInternal
-        );
+        if (isGuest && guestInfo) {
+            await createGuestComment(
+                versionId,
+                content,
+                proofId,
+                guestInfo.id,
+                pendingPin?.posX ?? null,
+                pendingPin?.posY ?? null,
+                videoTimestamp ?? null,
+            );
+        } else {
+            await createComment(
+                versionId,
+                content,
+                proofId,
+                pendingPin?.posX ?? null,
+                pendingPin?.posY ?? null,
+                videoTimestamp ?? null,
+                null,
+                null,
+                isInternal
+            );
+        }
 
         // Activity log
         logActivity({ proofId, action: "comment_added", metadata: { text: textContent.slice(0, 100) } });
@@ -364,13 +388,15 @@ export function CommentPanel({
                 >
                     {/* Author + Time */}
                     <div className="flex items-center gap-2 mb-1.5">
-                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center shrink-0">
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${(comment as any).guest_reviewer_id ? "bg-gradient-to-br from-indigo-500 to-fuchsia-600" : "bg-gradient-to-br from-emerald-500 to-blue-600"}`}>
                             <span className="text-[9px] font-bold text-white">
-                                {getInitials(comment.users?.full_name ?? null, comment.users?.email ?? "?")}
+                                {(comment as any).guest_reviewers?.display_name
+                                    ? getInitials((comment as any).guest_reviewers.display_name, (comment as any).guest_reviewers.email || "G")
+                                    : getInitials(comment.users?.full_name ?? null, comment.users?.email ?? "?")}
                             </span>
                         </div>
                         <span className="text-[13px] font-semibold text-white truncate flex-1">
-                            {comment.users?.full_name || comment.users?.email || "Usuário"}
+                            {(comment as any).guest_reviewers?.display_name || comment.users?.full_name || comment.users?.email || "Usuário"}
                         </span>
                         <span className="text-[11px] text-zinc-500 shrink-0">{formatTime(comment.created_at)}</span>
                     </div>

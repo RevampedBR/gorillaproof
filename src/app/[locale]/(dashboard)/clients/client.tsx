@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import { CreateClientDialog } from "@/components/clients/create-client-dialog";
+import { getGradient } from "@/utils/gradient-utils";
 
 interface ProofItem {
     id: string;
@@ -181,50 +182,62 @@ export function ClientsListClient({ clients }: { clients: ClientItem[] }) {
                 </div>
             ) : view === "grid" ? (
                 /* ━━━ Grid View ━━━ */
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((client) => {
                         const config = STATUS_CONFIG[client.status] || STATUS_CONFIG.active;
                         const projectCount = client.projects?.length || 0;
-                        const proofCount = client.projects?.reduce((acc, p) => acc + (p.proofs?.length || 0), 0) || 0;
+                        const gradient = getGradient(client.name + client.id);
 
                         return (
                             <Link
                                 key={client.id}
                                 href={`/clients/${client.id}`}
-                                className="group rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl p-5 hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-all"
+                                className="group rounded-2xl border border-white/5 bg-zinc-950/40 overflow-hidden hover:border-zinc-700/60 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20"
                             >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="h-10 w-10 border border-white/5 rounded-full bg-zinc-900 flex items-center justify-center shrink-0 overflow-hidden relative shadow-md">
-                                        {client.logo_url ? (
-                                            <img src={client.logo_url} alt={client.name} className="h-full w-full object-cover" />
-                                        ) : (
-                                            <span className="text-[13px] font-semibold text-zinc-300">
-                                                {client.name.charAt(0).toUpperCase()}
-                                            </span>
-                                        )}
+                                {/* ── Gradient Banner ── */}
+                                <div className={`relative h-28 bg-gradient-to-br ${gradient}`}>
+                                    {/* Status Badge */}
+                                    <div className="absolute top-3 right-3">
+                                        <Badge variant="outline" className="text-[10px] px-2 py-0.5 bg-black/30 backdrop-blur-md border-white/20 text-white font-medium">
+                                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 mr-1.5" />
+                                            {config.label}
+                                        </Badge>
                                     </div>
-                                    <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${config.color}`}>
-                                        {config.label}
-                                    </Badge>
+
+                                    {/* Avatar overlapping the banner bottom */}
+                                    <div className="absolute bottom-0 left-4 translate-y-1/2">
+                                        <div className="h-12 w-12 rounded-full border-[3px] border-zinc-950 bg-zinc-900 flex items-center justify-center overflow-hidden shadow-lg">
+                                            {client.logo_url ? (
+                                                <img src={client.logo_url} alt={client.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <span className="text-[16px] font-bold text-zinc-200">
+                                                    {client.name.charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <h3 className="text-[14px] font-semibold text-zinc-200 group-hover:text-white mb-1 truncate">
-                                    {client.name}
-                                </h3>
+                                {/* ── Card Body ── */}
+                                <div className="px-4 pt-8 pb-4">
+                                    <h3 className="text-[14px] font-semibold text-zinc-200 group-hover:text-white truncate">
+                                        {client.name}
+                                    </h3>
 
-                                {client.description && (
-                                    <p className="text-[12px] text-zinc-500 line-clamp-2 mb-3">
-                                        {client.description}
-                                    </p>
-                                )}
+                                    {client.description && (
+                                        <p className="text-[12px] text-zinc-500 line-clamp-1 mt-0.5">
+                                            {client.description}
+                                        </p>
+                                    )}
 
-                                <div className="flex items-center justify-between mt-auto pt-3 border-t border-zinc-800/40">
-                                    <span className="text-[11px] text-zinc-500">
-                                        {projectCount} projeto{projectCount !== 1 ? "s" : ""} · {proofCount} prova{proofCount !== 1 ? "s" : ""}
-                                    </span>
-                                    <span className="text-[11px] text-zinc-600">
-                                        {new Date(client.updated_at).toLocaleDateString("pt-BR", { month: "short", day: "numeric" })}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 mt-3 text-zinc-500">
+                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                                        </svg>
+                                        <span className="text-[11px]">
+                                            {projectCount} projeto{projectCount !== 1 ? "s" : ""}
+                                        </span>
+                                    </div>
                                 </div>
                             </Link>
                         );

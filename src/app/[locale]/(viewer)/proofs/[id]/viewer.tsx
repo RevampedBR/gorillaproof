@@ -1672,6 +1672,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 onClose={() => setShowShareDialog(false)}
                 proofId={proof.id}
                 proofTitle={proof.title}
+                projectId={proof.project_id}
+                existingToken={proof.share_token || null}
             />
 
             {/* ═══ KEYBOARD SHORTCUTS OVERLAY ═══ */}

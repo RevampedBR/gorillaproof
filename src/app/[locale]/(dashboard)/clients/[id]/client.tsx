@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { CreateProofDialog } from "@/components/proofs/create-proof-dialog";
+import { getGradient } from "@/utils/gradient-utils";
 
 interface ClientDetailProps {
     client: {
@@ -46,9 +46,6 @@ const PROOF_STATUS: Record<string, { label: string; dot: string }> = {
 };
 
 export function ClientDetailClient({ client }: ClientDetailProps) {
-    const [expandedProject, setExpandedProject] = useState<string | null>(
-        client.projects.length === 1 ? client.projects[0].id : null
-    );
 
     const totalProjects = client.projects.length;
     const totalProofs = client.projects.reduce((acc, p) => acc + (p.proofs?.length || 0), 0);
@@ -159,8 +156,8 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                 </div>
             </div>
 
-            {/* ═══ PROJECTS LIST ═══ */}
-            <div className="space-y-3">
+            {/* ═══ PROJECTS ═══ */}
+            <div className="space-y-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                     <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
@@ -177,95 +174,81 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                         <p className="text-[12px] text-zinc-500 mt-1">Crie o primeiro projeto para este cliente.</p>
                     </div>
                 ) : (
-                    client.projects.map((project) => {
-                        const config = PROJECT_STATUS[project.status] || PROJECT_STATUS.active;
-                        const proofCount = project.proofs?.length || 0;
-                        const isExpanded = expandedProject === project.id;
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {client.projects.map((project) => {
+                            const config = PROJECT_STATUS[project.status] || PROJECT_STATUS.active;
+                            const proofCount = project.proofs?.length || 0;
+                            const gradient = getGradient(project.name + project.id);
 
-                        return (
-                            <div key={project.id} className="rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl overflow-hidden shadow-sm transition-colors hover:bg-zinc-900/40">
-                                {/* Project Header (clickable) */}
-                                <button
-                                    onClick={() => setExpandedProject(isExpanded ? null : project.id)}
-                                    className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors cursor-pointer"
-                                >
-                                    <div className="flex items-center gap-4 min-w-0">
-                                        <div className="h-10 w-10 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center shrink-0 shadow-inner text-zinc-400">
-                                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                                            </svg>
-                                        </div>
-                                        <div className="text-left min-w-0">
-                                            <p className="text-[14px] font-semibold text-zinc-200 truncate">{project.name}</p>
-                                            <p className="text-[11px] text-zinc-500">
-                                                {proofCount} prova{proofCount !== 1 ? "s" : ""}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        <Badge variant="outline" className={`text-[10px] px-2 py-0.5 ${config.color}`}>
-                                            {config.label}
-                                        </Badge>
-                                        <svg className={`h-4 w-4 text-zinc-500 transition-transform ${isExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                        </svg>
-                                    </div>
-                                </button>
+                            return (
+                                <div key={project.id} className="group rounded-2xl border border-white/5 bg-zinc-950/40 overflow-hidden hover:border-zinc-700/60 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20">
+                                    {/* ── Gradient Banner ── */}
+                                    <Link href={`/clients/${client.id}/projects/${project.id}`} className="block">
+                                        <div className={`relative h-20 bg-gradient-to-br ${gradient}`}>
+                                            {/* Status Badge */}
+                                            <div className="absolute top-3 right-3">
+                                                <Badge variant="outline" className={`text-[10px] px-2 py-0.5 bg-black/30 backdrop-blur-md border-white/20 text-white font-medium`}>
+                                                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 mr-1.5" />
+                                                    {config.label}
+                                                </Badge>
+                                            </div>
 
-                                {/* Expanded: proofs list */}
-                                {isExpanded && (
-                                    <div className="border-t border-white/5">
-                                        {project.proofs.length === 0 ? (
-                                            <div className="px-4 py-6 text-center">
-                                                <p className="text-[12px] text-zinc-500">Nenhuma prova neste projeto.</p>
-                                            </div>
-                                        ) : (
-                                            <div className="divide-y divide-white/5">
-                                                {project.proofs.map((proof) => {
-                                                    const ps = PROOF_STATUS[proof.status] || PROOF_STATUS.draft;
-                                                    return (
-                                                        <Link
-                                                            key={proof.id}
-                                                            href={`/proofs/${proof.id}`}
-                                                            className="flex items-center justify-between px-4 py-3.5 pl-[4.5rem] hover:bg-white/5 transition-colors group"
-                                                        >
-                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                <div className={`h-2 w-2 rounded-full ${ps.dot} shrink-0`} />
-                                                                <span className="text-[13px] text-zinc-300 group-hover:text-white truncate">{proof.title}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                <span className="text-[10px] text-zinc-500">{ps.label}</span>
-                                                                <svg className="h-3.5 w-3.5 text-zinc-700 group-hover:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                                                </svg>
-                                                            </div>
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                        {/* Footer: Nova Prova + Ver projeto */}
-                                        <div className="px-4 py-3 border-t border-white/5 bg-black/20 flex items-center justify-between">
-                                            <CreateProofDialog projectId={project.id} clientName={client.name} projectName={project.name}>
-                                                <button className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">
-                                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            {/* Folder icon overlapping bottom */}
+                                            <div className="absolute bottom-0 left-4 translate-y-1/2">
+                                                <div className="h-10 w-10 rounded-xl border-[3px] border-zinc-950 bg-zinc-900 flex items-center justify-center shadow-lg text-zinc-400">
+                                                    <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                                                     </svg>
-                                                    Nova Prova
-                                                </button>
-                                            </CreateProofDialog>
-                                            <Link
-                                                href={`/clients/${client.id}/projects/${project.id}`}
-                                                className="text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
-                                            >
-                                                Ver projeto completo →
-                                            </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Link>
+
+                                    {/* ── Card Body ── */}
+                                    <div className="px-4 pt-7 pb-3">
+                                        <Link href={`/clients/${client.id}/projects/${project.id}`}>
+                                            <h3 className="text-[14px] font-semibold text-zinc-200 group-hover:text-white truncate">
+                                                {project.name}
+                                            </h3>
+                                        </Link>
+
+                                        {project.description && (
+                                            <p className="text-[12px] text-zinc-500 line-clamp-1 mt-0.5">
+                                                {project.description}
+                                            </p>
+                                        )}
+
+                                        <div className="flex items-center gap-1.5 mt-2 text-zinc-500">
+                                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                            </svg>
+                                            <span className="text-[11px]">
+                                                {proofCount} prova{proofCount !== 1 ? "s" : ""}
+                                            </span>
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })
+
+                                    {/* ── Card Footer ── */}
+                                    <div className="px-4 py-2.5 border-t border-white/5 bg-black/20 flex items-center justify-between">
+                                        <CreateProofDialog projectId={project.id} clientName={client.name} projectName={project.name}>
+                                            <button className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">
+                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                </svg>
+                                                Nova Prova
+                                            </button>
+                                        </CreateProofDialog>
+                                        <Link
+                                            href={`/clients/${client.id}/projects/${project.id}`}
+                                            className="text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                        >
+                                            Ver projeto →
+                                        </Link>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 )}
             </div>
         </div>
