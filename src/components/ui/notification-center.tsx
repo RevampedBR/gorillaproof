@@ -12,14 +12,15 @@ interface NotificationEntry {
     users: { id: string; full_name: string | null; email: string } | null;
 }
 
-const ACTION_LABELS: Record<string, { icon: string; label: string }> = {
-    status_changed: { icon: "🏷️", label: "alterou status" },
-    comment_added: { icon: "💬", label: "comentou" },
-    comment_resolved: { icon: "✓", label: "resolveu comentário" },
-    comment_reopened: { icon: "🔄", label: "reabriu comentário" },
-    version_uploaded: { icon: "📤", label: "enviou nova versão" },
-    deadline_set: { icon: "📅", label: "definiu prazo" },
-    comments_carried: { icon: "↳", label: "copiou comentários" },
+const ACTION_LABELS: Record<string, { iconPath: string; label: string; color: string }> = {
+    status_changed: { iconPath: "M1 4v6h6 M23 20v-6h-6 M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15", label: "alterou status", color: "text-amber-400" },
+    comment_added: { iconPath: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", label: "comentou", color: "text-indigo-400" },
+    comment_resolved: { iconPath: "M22 11.08V12a10 10 0 11-5.93-9.14 M22 4L12 14.01l-3-3", label: "resolveu comentário", color: "text-emerald-400" },
+    comment_reopened: { iconPath: "M1 4v6h6 M3.51 15a9 9 0 1014.85-3.36L23 4", label: "reabriu comentário", color: "text-orange-400" },
+    version_uploaded: { iconPath: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M17 8l-5-5-5 5 M12 3v12", label: "enviou nova versão", color: "text-teal-400" },
+    deadline_set: { iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20z M12 6v6l4 2", label: "definiu prazo", color: "text-red-400" },
+    comments_carried: { iconPath: "M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2 M15 2H9a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1z", label: "copiou comentários", color: "text-zinc-400" },
+    proof_created: { iconPath: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6", label: "criou prova", color: "text-blue-400" },
 };
 
 export function NotificationCenter({ userId }: { userId: string }) {
@@ -120,7 +121,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
                                 .filter((e) => e.user_id !== userId)
                                 .slice(0, 15)
                                 .map((entry) => {
-                                    const config = ACTION_LABELS[entry.action] || { icon: "•", label: entry.action };
+                                    const config = ACTION_LABELS[entry.action] || { iconPath: "M12 2a10 10 0 100 20 10 10 0 000-20z", label: entry.action, color: "text-zinc-400" };
                                     const isNew = lastSeen ? new Date(entry.created_at) > new Date(lastSeen) : true;
                                     const userName = entry.users?.full_name || entry.users?.email || "Alguém";
 
@@ -130,7 +131,11 @@ export function NotificationCenter({ userId }: { userId: string }) {
                                             className={`px-4 py-3 border-b border-zinc-800/40 hover:bg-zinc-800/30 transition-colors ${isNew ? "bg-emerald-500/5" : ""}`}
                                         >
                                             <div className="flex items-start gap-2.5">
-                                                <span className="text-[14px] mt-0.5">{config.icon}</span>
+                                                <div className={`h-6 w-6 rounded-md bg-zinc-800/80 flex items-center justify-center shrink-0 mt-0.5 ${config.color}`}>
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d={config.iconPath} />
+                                                    </svg>
+                                                </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[12px] text-zinc-300 leading-snug">
                                                         <strong className="text-zinc-100">{userName}</strong>{" "}

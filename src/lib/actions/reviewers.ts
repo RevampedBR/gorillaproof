@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 export async function getReviewers(proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -19,15 +19,15 @@ export async function getReviewers(proofId: string) {
             .order("assigned_at", { ascending: true });
 
         return { data: data ?? [], error: error?.message ?? null };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch reviewers" };
+    } catch {
+        return { data: [], error: "Falha ao buscar revisores" };
     }
 }
 
 export async function assignReviewer(proofId: string, userId: string, role: string = "reviewer") {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -42,15 +42,15 @@ export async function assignReviewer(proofId: string, userId: string, role: stri
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to assign reviewer" };
+    } catch {
+        return { error: "Falha ao atribuir revisor" };
     }
 }
 
 export async function removeReviewer(proofId: string, userId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -63,7 +63,7 @@ export async function removeReviewer(proofId: string, userId: string) {
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to remove reviewer" };
+    } catch {
+        return { error: "Falha ao remover revisor" };
     }
 }

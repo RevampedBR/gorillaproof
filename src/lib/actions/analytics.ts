@@ -15,6 +15,8 @@ export interface ProofAnalytics {
     completionRate: number;
     proofsThisWeek: number;
     proofsLastWeek: number;
+    // volume por dia nos últimos 7 dias (índice 0 = 7 dias atrás, índice 6 = hoje)
+    dailyVolume: number[];
 }
 
 /**
@@ -23,7 +25,7 @@ export interface ProofAnalytics {
 export async function getAnalytics(): Promise<{ data: ProofAnalytics | null; error: string | null }> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: null, error: "Not authenticated" };
+    if (!user) return { data: null, error: "Não autenticado" };
 
     // Get user's org
     const { data: membership } = await supabase
@@ -33,7 +35,7 @@ export async function getAnalytics(): Promise<{ data: ProofAnalytics | null; err
         .limit(1)
         .single();
 
-    if (!membership) return { data: null, error: "No organization" };
+    if (!membership) return { data: null, error: "Nenhuma organização" };
 
     // Get all projects in org
     const { data: projects } = await supabase
@@ -48,6 +50,7 @@ export async function getAnalytics(): Promise<{ data: ProofAnalytics | null; err
                 changesRequestedCount: 0, rejectedCount: 0, completedCount: 0,
                 avgTurnaroundDays: null, lateProofs: 0, completionRate: 0,
                 proofsThisWeek: 0, proofsLastWeek: 0,
+                dailyVolume: [0, 0, 0, 0, 0, 0, 0],
             },
             error: null,
         };
@@ -61,14 +64,14 @@ export async function getAnalytics(): Promise<{ data: ProofAnalytics | null; err
         .select("id, status, deadline, created_at, updated_at, versions ( id )")
         .in("project_id", projectIds);
 
-    if (!proofs) return { data: null, error: "Failed to fetch proofs" };
+    if (!proofs) return { data: null, error: "Falha ao buscar provas" };
 
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 86400000);
     const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000);
 
     const totalProofs = proofs.length;
-    const totalVersions = proofs.reduce((acc, p: any) => acc + (p.versions?.length || 0), 0);
+    const totalVersions = proofs.reduce((acc, p: { versions?: unknown[] }) => acc + (p.versions?.length || 0), 0);
     const approvedCount = proofs.filter((p) => p.status === "approved").length;
     const inReviewCount = proofs.filter((p) => p.status === "in_review").length;
     const changesRequestedCount = proofs.filter((p) => p.status === "changes_requested").length;
@@ -103,12 +106,26 @@ export async function getAnalytics(): Promise<{ data: ProofAnalytics | null; err
         return d >= twoWeeksAgo && d < weekAgo;
     }).length;
 
+    // Daily volume: count proofs created each day for the last 7 days
+    // Index 0 = 6 days ago, index 6 = today
+    const dailyVolume = Array.from({ length: 7 }, (_, i) => {
+        const dayStart = new Date(now);
+        dayStart.setHours(0, 0, 0, 0);
+        dayStart.setDate(dayStart.getDate() - (6 - i));
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        return proofs.filter((p) => {
+            const d = new Date(p.created_at);
+            return d >= dayStart && d < dayEnd;
+        }).length;
+    });
+
     return {
         data: {
             totalProofs, totalVersions, approvedCount, inReviewCount,
             changesRequestedCount, rejectedCount, completedCount,
             avgTurnaroundDays, lateProofs, completionRate,
-            proofsThisWeek, proofsLastWeek,
+            proofsThisWeek, proofsLastWeek, dailyVolume,
         },
         error: null,
     };

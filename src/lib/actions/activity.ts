@@ -3,6 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 
 export type ActivityAction =
+    | "proof_created"
     | "version_uploaded"
     | "comment_added"
     | "comment_resolved"

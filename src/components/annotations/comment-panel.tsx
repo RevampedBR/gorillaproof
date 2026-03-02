@@ -147,7 +147,7 @@ export function CommentPanel({
             case "UL": document.execCommand("insertUnorderedList"); break;
             case "OL": document.execCommand("insertOrderedList"); break;
             case "LINK": {
-                const url = prompt("Enter URL:");
+                const url = prompt("Insira a URL:");
                 if (url) document.execCommand("createLink", false, url);
                 break;
             }
@@ -308,7 +308,7 @@ export function CommentPanel({
     };
 
     const handleDelete = async (commentId: string) => {
-        if (!confirm("Delete this comment? This cannot be undone.")) return;
+        if (!confirm("Excluir este comentário? Esta ação não pode ser desfeita.")) return;
         await deleteComment(commentId, proofId);
         onCommentCreated();
     };
@@ -369,7 +369,7 @@ export function CommentPanel({
                             </span>
                         </div>
                         <span className="text-[13px] font-semibold text-white truncate flex-1">
-                            {comment.users?.full_name || comment.users?.email || "User"}
+                            {comment.users?.full_name || comment.users?.email || "Usuário"}
                         </span>
                         <span className="text-[11px] text-zinc-500 shrink-0">{formatTime(comment.created_at)}</span>
                     </div>
@@ -379,17 +379,17 @@ export function CommentPanel({
                         <div className="flex items-center gap-2 mb-1.5 ml-8">
                             {pinNum && (
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${comment.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-[#2a2a40] text-zinc-500"}`}>
-                                    📍 {pinNum}
+                                    ● {pinNum}
                                 </span>
                             )}
                             {comment.video_timestamp != null && (
-                                <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-500/20 transition-colors" title="Jump to this timestamp">
+                                <span className="text-[10px] font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded cursor-pointer hover:bg-blue-500/20 transition-colors" title="Ir para este timestamp">
                                     ⏱ {formatVideoTime(comment.video_timestamp)}
                                 </span>
                             )}
                             {comment.is_internal && (
                                 <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title="Visível apenas para sua equipe">
-                                    🔒 INTERNAL
+                                    INTERNO
                                 </span>
                             )}
                         </div>
@@ -410,35 +410,35 @@ export function CommentPanel({
                             <button
                                 onClick={(e) => { e.stopPropagation(); setReplyTo(replyTo === comment.id ? null : comment.id); }}
                                 className="text-[11px] font-medium text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
-                                title="Reply to this comment"
+                                title="Responder a este comentário"
                             >
-                                Reply
+                                Responder
                             </button>
                         )}
                         {comment.status === "open" ? (
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleResolve(comment.id); }}
                                 className="text-[11px] font-medium text-zinc-500 hover:text-emerald-400 transition-colors cursor-pointer"
-                                title="Mark as resolved"
+                                title="Marcar como resolvido"
                             >
-                                ✓ Resolve
+                                ✓ Resolver
                             </button>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleReopen(comment.id); }}
                                 className="text-[11px] font-medium text-zinc-500 hover:text-amber-400 transition-colors cursor-pointer"
-                                title="Reopen this comment"
+                                title="Reabrir este comentário"
                             >
-                                ↩ Reopen
+                                ↩ Reabrir
                             </button>
                         )}
                         {comment.user_id === currentUserId && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleDelete(comment.id); }}
                                 className="text-[11px] font-medium text-zinc-600 hover:text-red-400 transition-colors ml-auto cursor-pointer"
-                                title="Delete this comment"
+                                title="Excluir este comentário"
                             >
-                                Delete
+                                Excluir
                             </button>
                         )}
                     </div>
@@ -469,7 +469,7 @@ export function CommentPanel({
                                     onClick={() => handleReply(comment.id)}
                                     disabled={submitting || !replyText.trim()}
                                     className="h-7 w-7 rounded bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 text-white flex items-center justify-center transition-colors cursor-pointer"
-                                    title="Send reply"
+                                    title="Enviar resposta"
                                 >
                                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg>
                                 </button>
@@ -487,22 +487,22 @@ export function CommentPanel({
             <div className="p-3 border-b border-[#2a2a40]">
                 {/* Rich text toolbar — FUNCTIONAL */}
                 <div className="flex items-center gap-0.5 mb-2 flex-wrap">
-                    <button onClick={() => applyFormat("B")} className="h-7 w-7 rounded text-[13px] font-bold text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Bold (**text**)">B</button>
-                    <button onClick={() => applyFormat("I")} className="h-7 w-7 rounded text-[13px] italic text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Italic (*text*)">I</button>
-                    <button onClick={() => applyFormat("U")} className="h-7 w-7 rounded text-[13px] underline text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Underline (__text__)">U</button>
-                    <button onClick={() => applyFormat("S")} className="h-7 w-7 rounded text-[13px] line-through text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Strikethrough (~~text~~)">S</button>
+                    <button onClick={() => applyFormat("B")} className="h-7 w-7 rounded text-[13px] font-bold text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Negrito">B</button>
+                    <button onClick={() => applyFormat("I")} className="h-7 w-7 rounded text-[13px] italic text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Itálico">I</button>
+                    <button onClick={() => applyFormat("U")} className="h-7 w-7 rounded text-[13px] underline text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Sublinhado">U</button>
+                    <button onClick={() => applyFormat("S")} className="h-7 w-7 rounded text-[13px] line-through text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors cursor-pointer" title="Tachado">S</button>
                     <div className="w-px h-4 bg-[#3a3a55] mx-1" />
                     {/* Unordered list */}
-                    <button onClick={() => applyFormat("UL")} className="h-7 w-7 rounded text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors flex items-center justify-center cursor-pointer" title="Bullet list">
+                    <button onClick={() => applyFormat("UL")} className="h-7 w-7 rounded text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors flex items-center justify-center cursor-pointer" title="Lista com marcadores">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
                     </button>
                     {/* Ordered list */}
-                    <button onClick={() => applyFormat("OL")} className="h-7 w-7 rounded text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors flex items-center justify-center cursor-pointer" title="Numbered list">
+                    <button onClick={() => applyFormat("OL")} className="h-7 w-7 rounded text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors flex items-center justify-center cursor-pointer" title="Lista numerada">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.242 5.992h12m-12 6.003H20.24m-12 5.999h12M4.117 7.495v-3.75H2.99m1.125 3.75H2.99m1.125 0H5.24m-1.92 2.577a1.125 1.125 0 11-1.087 0m0 0v-.003" /></svg>
                     </button>
                     <div className="w-px h-4 bg-[#3a3a55] mx-1" />
                     {/* Link */}
-                    <button onClick={() => applyFormat("LINK")} className="h-7 w-7 rounded text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors flex items-center justify-center cursor-pointer" title="Insert link">
+                    <button onClick={() => applyFormat("LINK")} className="h-7 w-7 rounded text-zinc-500 hover:text-white hover:bg-[#3a3a55] transition-colors flex items-center justify-center cursor-pointer" title="Inserir link">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-6.364-6.364L4.5 8.257" /></svg>
                     </button>
                     <div className="flex-1" />
@@ -512,7 +512,7 @@ export function CommentPanel({
                             if (aiSummary) { setAiSummary(null); return; }
                             setAiLoading(true);
                             const commentData = rootComments.map((c) => ({
-                                author: c.users?.full_name || c.users?.email || "User",
+                                author: c.users?.full_name || c.users?.email || "Usuário",
                                 content: c.content,
                                 status: c.status,
                                 hasPin: c.pos_x != null,
@@ -529,7 +529,7 @@ export function CommentPanel({
                     >
                         {aiLoading ? (
                             <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /></span>
-                        ) : aiSummary ? "Close" : "Ask AI"}
+                        ) : aiSummary ? "Fechar" : "Perguntar IA"}
                     </button>
                 </div>
 
@@ -628,14 +628,14 @@ export function CommentPanel({
 
                 {/* Time badge + attachments */}
                 <div className="flex items-center justify-between mt-2">
-                    <span className="text-[10px] text-zinc-500 font-mono" title="Video timestamp for this comment">
+                    <span className="text-[10px] text-zinc-500 font-mono" title="Timestamp do vídeo">
                         Time {videoTimestamp != null ? formatVideoTime(videoTimestamp) : "00:00.000"}
                     </span>
                     <div className="flex items-center gap-1">
-                        <button className="h-6 w-6 rounded text-zinc-500 hover:text-zinc-300 transition-colors flex items-center justify-center cursor-pointer" title="Attach file">
+                        <button className="h-6 w-6 rounded text-zinc-500 hover:text-zinc-300 transition-colors flex items-center justify-center cursor-pointer" title="Anexar arquivo">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" /></svg>
                         </button>
-                        <button onClick={() => applyFormat("LINK")} className="h-6 w-6 rounded text-zinc-500 hover:text-zinc-300 transition-colors flex items-center justify-center cursor-pointer" title="Insert link">
+                        <button onClick={() => applyFormat("LINK")} className="h-6 w-6 rounded text-zinc-500 hover:text-zinc-300 transition-colors flex items-center justify-center cursor-pointer" title="Inserir link">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-6.364-6.364L4.5 8.257" /></svg>
                         </button>
                     </div>
@@ -647,16 +647,16 @@ export function CommentPanel({
                         onClick={handleSubmit}
                         disabled={submitting || !newComment}
                         className="h-8 px-4 rounded-md text-[12px] font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-30 text-white transition-colors cursor-pointer"
-                        title="Post comment (Ctrl+Enter)"
+                        title="Publicar (Ctrl+Enter)"
                     >
-                        Post
+                        Publicar
                     </button>
                     <button
                         onClick={() => { clearEditor(); onCancelPin(); }}
                         className="h-8 px-4 rounded-md text-[12px] font-medium text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors cursor-pointer"
-                        title="Cancel and clear"
+                        title="Cancelar e limpar"
                     >
-                        Cancel
+                        Cancelar
                     </button>
                     <div className="flex-1" />
                     <button
@@ -667,7 +667,7 @@ export function CommentPanel({
                             }`}
                         title={isInternal ? "Visível apenas para sua equipe" : "Visível para todos"}
                     >
-                        {isInternal ? "🔒 Internal" : "🌐 All"}
+                        {isInternal ? "Interno" : "Todos"}
                     </button>
                 </div>
 
@@ -681,7 +681,7 @@ export function CommentPanel({
                         <button
                             onClick={onCancelPin}
                             className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors ml-auto cursor-pointer"
-                            title="Remove pin"
+                            title="Remover pin"
                         >
                             ✕
                         </button>
@@ -693,7 +693,7 @@ export function CommentPanel({
             {aiSummary && (
                 <div className="border-b border-[#2a2a40] bg-gradient-to-r from-[#e91e8c]/5 to-[#7c3aed]/5">
                     <div className="px-4 py-2.5 flex items-center gap-2 border-b border-[#2a2a40]/50">
-                        <span className="text-[11px] font-bold text-[#e91e8c]">AI Summary</span>
+                        <span className="text-[11px] text-zinc-500">Resumo IA</span>
                         <span className="text-[9px] text-zinc-600 bg-[#2a2a40] px-1.5 py-0.5 rounded-full">Gemini 2.0</span>
                         <button onClick={() => setAiSummary(null)} className="ml-auto text-[10px] text-zinc-500 hover:text-zinc-300 cursor-pointer">✕</button>
                     </div>
@@ -713,16 +713,16 @@ export function CommentPanel({
             {/* ═══ Sort / Filter bar ═══ */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-[#2a2a40]">
                 <div className="flex items-center gap-1">
-                    <span className="text-[11px] text-zinc-400">Date ↑</span>
-                    <span className="text-[10px] text-zinc-600 ml-1">{openCount} open · {resolvedCount} resolved</span>
+                    <span className="text-[11px] text-zinc-400">Data ↑</span>
+                    <span className="text-[10px] text-zinc-600 ml-1">{openCount} abertos · {resolvedCount} resolvidos</span>
                 </div>
                 <div className="flex items-center gap-1 relative">
                     {/* Search */}
-                    <button onClick={() => setShowSearch(!showSearch)} className="h-7 w-7 rounded text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors flex items-center justify-center cursor-pointer" title="Search comments">
+                    <button onClick={() => setShowSearch(!showSearch)} className="h-7 w-7 rounded text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors flex items-center justify-center cursor-pointer" title="Buscar comentários">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
                     </button>
                     {/* Filter */}
-                    <button onClick={() => setShowFilterMenu(!showFilterMenu)} className={`h-7 w-7 rounded transition-colors flex items-center justify-center cursor-pointer ${filter !== "all" ? "text-blue-400 bg-blue-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`} title="Filter comments">
+                    <button onClick={() => setShowFilterMenu(!showFilterMenu)} className={`h-7 w-7 rounded transition-colors flex items-center justify-center cursor-pointer ${filter !== "all" ? "text-blue-400 bg-blue-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`} title="Filtrar comentários">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" /></svg>
                     </button>
                     {/* Filter dropdown */}
@@ -734,18 +734,18 @@ export function CommentPanel({
                                     onClick={() => { setFilter(f); setShowFilterMenu(false); }}
                                     className={`w-full text-left px-3 py-1.5 text-[12px] transition-colors cursor-pointer ${filter === f ? "text-blue-400 bg-blue-500/10" : "text-zinc-400 hover:bg-[#2a2a40]"}`}
                                 >
-                                    {f === "all" ? `All (${rootComments.length})` : f === "open" ? `Open (${openCount})` : `Resolved (${resolvedCount})`}
+                                    {f === "all" ? `Todos (${rootComments.length})` : f === "open" ? `Abertos (${openCount})` : `Resolvidos (${resolvedCount})`}
                                 </button>
                             ))}
                         </div>
                     )}
                     {/* Sort */}
-                    <button onClick={() => setShowSortMenu(!showSortMenu)} className={`h-7 w-7 rounded transition-colors flex items-center justify-center cursor-pointer ${sortBy !== "date" ? "text-emerald-400 bg-emerald-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`} title="Sort comments">
+                    <button onClick={() => setShowSortMenu(!showSortMenu)} className={`h-7 w-7 rounded transition-colors flex items-center justify-center cursor-pointer ${sortBy !== "date" ? "text-emerald-400 bg-emerald-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`} title="Ordenar comentários">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" /></svg>
                     </button>
                     {showSortMenu && (
                         <div className="absolute top-full right-0 mt-1 bg-[#1e1e32] border border-[#3a3a55] rounded-lg shadow-2xl py-1 min-w-[120px] z-50">
-                            {([{ key: "date", label: "Date" }, { key: "status", label: "Status" }, { key: "author", label: "Author" }] as const).map((s) => (
+                            {([{ key: "date", label: "Data" }, { key: "status", label: "Status" }, { key: "author", label: "Autor" }] as const).map((s) => (
                                 <button
                                     key={s.key}
                                     onClick={() => { setSortBy(s.key); setShowSortMenu(false); }}
@@ -766,7 +766,7 @@ export function CommentPanel({
                         autoFocus
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search comments..."
+                        placeholder="Buscar comentários..."
                         className="w-full bg-[#1e1e32] border border-[#3a3a55] rounded-lg px-3 py-2 text-[12px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500/50"
                     />
                 </div>

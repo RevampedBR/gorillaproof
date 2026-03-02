@@ -39,7 +39,7 @@ export function KeyboardShortcutsPanel({ isOpen, onClose }: { isOpen: boolean; o
             <div className="bg-[#1a1a2e] border border-zinc-700/60 rounded-2xl shadow-2xl w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800/50">
                     <h2 className="text-[16px] font-bold text-white flex items-center gap-2">
-                        ⌨️ Atalhos do teclado
+                        Atalhos do teclado
                     </h2>
                     <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 cursor-pointer">✕</button>
                 </div>

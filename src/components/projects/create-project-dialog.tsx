@@ -17,9 +17,10 @@ import { createProject } from "@/lib/actions/projects";
 
 interface CreateProjectDialogProps {
     children: React.ReactNode;
+    clientId?: string;
 }
 
-export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
+export function CreateProjectDialog({ children, clientId }: CreateProjectDialogProps) {
     const t = useTranslations("dashboard.projects");
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export function CreateProjectDialog({ children }: CreateProjectDialogProps) {
         const formData = new FormData(e.currentTarget);
 
         startTransition(async () => {
+            if (clientId) formData.set("client_id", clientId);
             const result = await createProject(formData);
             if (result?.error) {
                 setError(result.error);

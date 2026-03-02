@@ -21,7 +21,7 @@ export async function summarizeComments(
 
     // Build context
     const commentList = comments.map((c, i) => {
-        const pin = c.hasPin ? " [📍 pinned]" : "";
+        const pin = c.hasPin ? " [pinned]" : "";
         const status = c.status === "resolved" ? " [resolved]" : "";
         const time = c.timestamp ? ` [⏱ ${c.timestamp}]` : "";
         // Strip HTML

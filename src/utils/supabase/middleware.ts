@@ -50,24 +50,23 @@ export async function updateSession(request: NextRequest, response: NextResponse
 
     // We need to strip the locale prefix to match core paths securely
     // e.g., /pt/dashboard becomes /dashboard
-    const pathWithoutLocale = path.replace(/^\/(pt|en)/, '');
+    const pathWithoutLocale = path.replace(/^\/(pt)/, '');
     const cleanPath = pathWithoutLocale === "" ? "/" : pathWithoutLocale;
 
-    const isProtectRoute = cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs");
+    const isProtectRoute = cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings");
     const isAuthRoute = cleanPath.startsWith("/login") || cleanPath.startsWith("/register") || cleanPath.startsWith("/forgot-password") || cleanPath.startsWith("/reset-password");
 
     // Protect Dashboard
     if (isProtectRoute && !user) {
         const url = request.nextUrl.clone();
-        // Keep locale context
-        url.pathname = path.startsWith('/pt') ? '/pt/login' : '/en/login';
+        url.pathname = '/pt/login';
         return NextResponse.redirect(url);
     }
 
     // Prevent logged in users from seeing login pages
     if (isAuthRoute && user) {
         const url = request.nextUrl.clone();
-        url.pathname = path.startsWith('/pt') ? '/pt/dashboard' : '/en/dashboard';
+        url.pathname = '/pt/dashboard';
         return NextResponse.redirect(url);
     }
 

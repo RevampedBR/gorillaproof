@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 export async function getWebhooks(orgId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -18,17 +18,17 @@ export async function getWebhooks(orgId: string) {
             .order("created_at", { ascending: false });
 
         return { data: data ?? [], error: error?.message ?? null };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch webhooks" };
+    } catch {
+        return { data: [], error: "Falha ao buscar webhooks" };
     }
 }
 
 export async function createWebhook(orgId: string, url: string, events: string[]) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
-    if (!url || !url.startsWith("https://")) return { error: "URL must start with https://" };
+    if (!url || !url.startsWith("https://")) return { error: "URL deve começar com https://" };
 
     try {
         const secret = crypto.randomUUID().replace(/-/g, "");
@@ -41,36 +41,36 @@ export async function createWebhook(orgId: string, url: string, events: string[]
 
         if (error) return { error: error.message };
         return { error: null, secret };
-    } catch (err) {
-        return { error: "Failed to create webhook" };
+    } catch {
+        return { error: "Falha ao criar webhook" };
     }
 }
 
 export async function deleteWebhook(webhookId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase.from("webhooks").delete().eq("id", webhookId);
         if (error) return { error: error.message };
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to delete webhook" };
+    } catch {
+        return { error: "Falha ao excluir webhook" };
     }
 }
 
 export async function toggleWebhook(webhookId: string, isActive: boolean) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase.from("webhooks").update({ is_active: isActive }).eq("id", webhookId);
         if (error) return { error: error.message };
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to toggle webhook" };
+    } catch {
+        return { error: "Falha ao alternar webhook" };
     }
 }
 

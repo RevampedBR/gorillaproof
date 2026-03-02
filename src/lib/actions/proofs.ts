@@ -2,11 +2,12 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/actions/activity";
 
 export async function getAllProofs() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         // Get user's organization(s)
@@ -35,7 +36,7 @@ export async function getAllProofs() {
                     project_id,
                     created_at,
                     updated_at,
-                    versions ( id, comments ( id, status ) )
+                    versions ( id, file_url, comments ( id, status ) )
                 )
             `)
             .in("organization_id", orgIds);
@@ -43,7 +44,9 @@ export async function getAllProofs() {
         if (error) return { data: [], error: error.message };
 
         // Flatten: extract proofs from each project and attach project_name
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const allProofs = (projects ?? []).flatMap((project: any) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (project.proofs || []).map((proof: any) => ({
                 ...proof,
                 project_name: project.name,
@@ -51,13 +54,14 @@ export async function getAllProofs() {
         );
 
         // Sort by updated_at descending
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         allProofs.sort((a: any, b: any) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
 
         return { data: allProofs, error: null };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch proofs" };
+    } catch {
+        return { data: [], error: "Falha ao buscar provas" };
     }
 }
 
@@ -65,7 +69,7 @@ export async function getAllProofs() {
 export async function getProofs(projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -81,7 +85,7 @@ export async function getProofs(projectId: string) {
                 share_token,
                 created_at,
                 updated_at,
-                versions ( id, comments ( id, status ) )
+                versions ( id, file_url, comments ( id, status ) )
             `)
             .eq("project_id", projectId)
             .order("updated_at", { ascending: false });
@@ -90,45 +94,83 @@ export async function getProofs(projectId: string) {
             data: data ?? [],
             error: error?.message ?? null,
         };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch proofs" };
+    } catch {
+        return { data: [], error: "Falha ao buscar provas" };
     }
 }
 
 export async function createProof(projectId: string, formData: FormData) {
     const title = (formData.get("title") as string)?.trim();
-    if (!title || title.length === 0) return { error: "Title is required" };
-    if (title.length > 200) return { error: "Title too long (max 200)" };
+    if (!title || title.length === 0) return { error: "Título é obrigatório" };
+    if (title.length > 200) return { error: "Título muito longo (máx 200)" };
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
-        const { error } = await supabase.from("proofs").insert({
+        // 1. Get org_id for storage path
+        const { data: project } = await supabase
+            .from("projects")
+            .select("organization_id")
+            .eq("id", projectId)
+            .single();
+
+        if (!project) return { error: "Projeto não encontrado" };
+        const orgId = project.organization_id;
+
+        // 2. Create the proof
+        const { data: proof, error: proofError } = await supabase.from("proofs").insert({
             title: title.replace(/<[^>]+>/g, ""),
             project_id: projectId,
             status: "draft",
-        });
+        }).select("id").single();
 
-        if (error) return { error: error.message };
+        if (proofError) return { error: proofError.message };
+        if (!proof) return { error: "Erro ao criar prova" };
 
-        revalidatePath(`/projects/${projectId}`);
-        return { error: null };
-    } catch (err) {
-        return { error: "Failed to create proof" };
+        await logActivity({ proofId: proof.id, action: "proof_created", metadata: { title: title.replace(/<[^>]+>/g, "") } });
+
+        // 3. Upload files and create version rows
+        const files = formData.getAll("files") as File[];
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+                const storagePath = `${orgId}/${projectId}/${proof.id}/v${i + 1}-${Date.now()}.${ext}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from("proofs")
+                    .upload(storagePath, file, { cacheControl: "3600", upsert: true });
+
+                if (!uploadError) {
+                    await supabase.from("versions").insert({
+                        proof_id: proof.id,
+                        version_number: i + 1,
+                        file_url: storagePath,
+                        file_type: file.type || "application/octet-stream",
+                        uploaded_by: user.id,
+                    });
+                }
+            }
+        }
+
+        revalidatePath("/clients");
+        return { id: proof.id, error: null };
+    } catch {
+        return { error: "Falha ao criar prova" };
     }
 }
 
 export async function updateProofStatus(id: string, status: string, projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         // Check if proof is locked
         const { data: proof } = await supabase.from("proofs").select("locked_at").eq("id", id).single();
-        if (proof?.locked_at) return { error: "Proof is locked" };
+        if (proof?.locked_at) return { error: "Prova está travada" };
 
         const { error } = await supabase
             .from("proofs")
@@ -137,17 +179,19 @@ export async function updateProofStatus(id: string, status: string, projectId: s
 
         if (error) return { error: error.message };
 
-        revalidatePath(`/projects/${projectId}`);
+        await logActivity({ proofId: id, action: "status_changed", metadata: { status } });
+
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to update status" };
+    } catch {
+        return { error: "Falha ao atualizar status" };
     }
 }
 
 export async function deleteProof(id: string, projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -157,17 +201,17 @@ export async function deleteProof(id: string, projectId: string) {
 
         if (error) return { error: error.message };
 
-        revalidatePath(`/projects/${projectId}`);
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to delete proof" };
+    } catch {
+        return { error: "Falha ao excluir prova" };
     }
 }
 
 export async function updateProofDeadline(id: string, deadline: string | null, projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -177,17 +221,17 @@ export async function updateProofDeadline(id: string, deadline: string | null, p
 
         if (error) return { error: error.message };
 
-        revalidatePath(`/projects/${projectId}`);
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to update deadline" };
+    } catch {
+        return { error: "Falha ao atualizar prazo" };
     }
 }
 
 export async function getOrgMembers(orgId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -203,15 +247,15 @@ export async function getOrgMembers(orgId: string) {
             data: data ?? [],
             error: error?.message ?? null,
         };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch members" };
+    } catch {
+        return { data: [], error: "Falha ao buscar membros" };
     }
 }
 
 export async function updateProofTags(id: string, tags: string[], projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -221,17 +265,17 @@ export async function updateProofTags(id: string, tags: string[], projectId: str
 
         if (error) return { error: error.message };
 
-        revalidatePath(`/projects/${projectId}`);
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to update tags" };
+    } catch {
+        return { error: "Falha ao atualizar tags" };
     }
 }
 
 export async function bulkUpdateProofStatus(ids: string[], status: string, projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -242,17 +286,21 @@ export async function bulkUpdateProofStatus(ids: string[], status: string, proje
 
         if (error) return { error: error.message };
 
-        revalidatePath(`/projects/${projectId}`);
+        for (const proofId of ids) {
+            await logActivity({ proofId, action: "status_changed", metadata: { status, bulk: true } });
+        }
+
+        revalidatePath("/clients");
         return { error: null, count: ids.length };
-    } catch (err) {
-        return { error: "Failed to bulk update" };
+    } catch {
+        return { error: "Falha ao atualizar em lote" };
     }
 }
 
 export async function generateShareToken(proofId: string, projectId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated", token: null };
+    if (!user) return { error: "Não autenticado", token: null };
 
     try {
         const token = crypto.randomUUID().replace(/-/g, "");
@@ -263,9 +311,9 @@ export async function generateShareToken(proofId: string, projectId: string) {
 
         if (error) return { error: error.message, token: null };
 
-        revalidatePath(`/projects/${projectId}`);
+        revalidatePath("/clients");
         return { error: null, token };
-    } catch (err) {
-        return { error: "Failed to generate share token", token: null };
+    } catch {
+        return { error: "Falha ao gerar link de compartilhamento", token: null };
     }
 }

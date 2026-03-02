@@ -22,8 +22,8 @@ let nextId = 0;
 const TYPE_STYLES: Record<ToastType, { bg: string; border: string; icon: string }> = {
     success: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", icon: "✓" },
     error: { bg: "bg-red-500/10", border: "border-red-500/30", icon: "✗" },
-    info: { bg: "bg-blue-500/10", border: "border-blue-500/30", icon: "ℹ️" },
-    warning: { bg: "bg-amber-500/10", border: "border-amber-500/30", icon: "⚠️" },
+    info: { bg: "bg-blue-500/10", border: "border-blue-500/30", icon: "ℹ" },
+    warning: { bg: "bg-amber-500/10", border: "border-amber-500/30", icon: "⚠" },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {

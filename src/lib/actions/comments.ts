@@ -2,11 +2,12 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/actions/activity";
 
 export async function getComments(versionId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -21,8 +22,8 @@ export async function getComments(versionId: string) {
             .order("created_at", { ascending: true });
 
         return { data: data ?? [], error: error?.message ?? null };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch comments" };
+    } catch {
+        return { data: [], error: "Falha ao buscar comentários" };
     }
 }
 
@@ -40,7 +41,7 @@ export async function createComment(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { error: "Not authenticated", data: null };
+    if (!user) return { error: "Não autenticado", data: null };
 
     // Check if proof is locked
     const { data: proof } = await supabase
@@ -48,7 +49,7 @@ export async function createComment(
         .select("locked_at")
         .eq("id", proofId)
         .single();
-    if (proof?.locked_at) return { error: "Proof is locked", data: null };
+    if (proof?.locked_at) return { error: "Prova está travada", data: null };
 
     try {
         const { data, error } = await supabase
@@ -74,17 +75,19 @@ export async function createComment(
 
         if (error) return { error: error.message, data: null };
 
+        await logActivity({ proofId, action: "comment_added", metadata: { commentId: data.id, hasAnnotation: !!(posX && posY) } });
+
         revalidatePath(`/proofs/${proofId}`);
         return { error: null, data };
-    } catch (err) {
-        return { error: "Failed to create comment", data: null };
+    } catch {
+        return { error: "Falha ao criar comentário", data: null };
     }
 }
 
 export async function resolveComment(commentId: string, proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -94,17 +97,19 @@ export async function resolveComment(commentId: string, proofId: string) {
 
         if (error) return { error: error.message };
 
+        await logActivity({ proofId, action: "comment_resolved", metadata: { commentId } });
+
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to resolve comment" };
+    } catch {
+        return { error: "Falha ao resolver comentário" };
     }
 }
 
 export async function reopenComment(commentId: string, proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -116,15 +121,15 @@ export async function reopenComment(commentId: string, proofId: string) {
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to reopen comment" };
+    } catch {
+        return { error: "Falha ao reabrir comentário" };
     }
 }
 
 export async function deleteComment(commentId: string, proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -136,15 +141,15 @@ export async function deleteComment(commentId: string, proofId: string) {
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to delete comment" };
+    } catch {
+        return { error: "Falha ao excluir comentário" };
     }
 }
 
 export async function carryCommentsForward(fromVersionId: string, toVersionId: string, proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { count: 0, error: "Not authenticated" };
+    if (!user) return { count: 0, error: "Não autenticado" };
 
     try {
         // Get open comments from the previous version
@@ -173,7 +178,7 @@ export async function carryCommentsForward(fromVersionId: string, toVersionId: s
 
         revalidatePath(`/proofs/${proofId}`);
         return { count: newComments.length, error: null };
-    } catch (err) {
-        return { count: 0, error: "Failed to carry comments" };
+    } catch {
+        return { count: 0, error: "Falha ao transferir comentários" };
     }
 }

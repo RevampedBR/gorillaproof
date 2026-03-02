@@ -12,7 +12,7 @@ export interface NotificationPrefs {
 export async function getNotificationPrefs(): Promise<{ data: NotificationPrefs | null; error: string | null }> {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: null, error: "Not authenticated" };
+    if (!user) return { data: null, error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -28,15 +28,15 @@ export async function getNotificationPrefs(): Promise<{ data: NotificationPrefs 
             data: data || { email_on_comment: true, email_on_decision: true, email_on_mention: true, email_on_deadline: true },
             error: null,
         };
-    } catch (err) {
-        return { data: null, error: "Failed to fetch preferences" };
+    } catch {
+        return { data: null, error: "Falha ao buscar preferências" };
     }
 }
 
 export async function updateNotificationPrefs(prefs: Partial<NotificationPrefs>) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -49,7 +49,7 @@ export async function updateNotificationPrefs(prefs: Partial<NotificationPrefs>)
 
         if (error) return { error: error.message };
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to update preferences" };
+    } catch {
+        return { error: "Falha ao atualizar preferências" };
     }
 }

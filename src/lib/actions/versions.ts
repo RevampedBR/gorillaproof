@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "@/lib/actions/activity";
 
 export async function createVersion(
     proofId: string,
@@ -12,7 +13,7 @@ export async function createVersion(
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { error: "Not authenticated", data: null };
+    if (!user) return { error: "Não autenticado", data: null };
 
     // Get the next version number
     const { data: existingVersions } = await supabase
@@ -45,7 +46,9 @@ export async function createVersion(
         .eq("id", proofId)
         .eq("status", "draft");
 
-    revalidatePath(`/projects/${projectId}`);
+    await logActivity({ proofId, action: "version_uploaded", metadata: { version: data.version_number, fileType } });
+
+    revalidatePath("/clients");
     revalidatePath(`/proofs/${proofId}`);
 
     return { error: null, data };
@@ -54,7 +57,7 @@ export async function createVersion(
 export async function getVersions(proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -64,7 +67,7 @@ export async function getVersions(proofId: string) {
             .order("version_number", { ascending: false });
 
         return { data: data ?? [], error: error?.message ?? null };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch versions" };
+    } catch {
+        return { data: [], error: "Falha ao buscar versões" };
     }
 }

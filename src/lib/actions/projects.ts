@@ -7,7 +7,7 @@ export async function getProjects() {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     // Get user's organization(s)
     const { data: memberships } = await supabase
@@ -28,10 +28,11 @@ export async function getProjects() {
             name,
             description,
             status,
+            client_id,
             organization_id,
             created_at,
             updated_at,
-            proofs ( id )
+            proofs ( id, title, status, tags, updated_at )
         `)
         .in("organization_id", orgIds)
         .order("updated_at", { ascending: false });
@@ -44,13 +45,13 @@ export async function getProjects() {
 
 export async function createProject(formData: FormData) {
     const name = (formData.get("name") as string)?.trim();
-    if (!name || name.length === 0) return { error: "Name is required" };
-    if (name.length > 200) return { error: "Name too long (max 200)" };
+    if (!name || name.length === 0) return { error: "Nome é obrigatório" };
+    if (name.length > 200) return { error: "Nome muito longo (máx 200)" };
     const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { data: membership } = await supabase
@@ -60,30 +61,36 @@ export async function createProject(formData: FormData) {
             .limit(1)
             .single();
 
-        if (!membership) return { error: "No organization found" };
+        if (!membership) return { error: "Nenhuma organização encontrada" };
+
+        // clientId é obrigatório — projetos devem pertencer a um cliente
+        const clientId = (formData.get("client_id") as string)?.trim() || null;
+        if (!clientId) return { error: "Selecione um cliente para o projeto" };
 
         const { error } = await supabase.from("projects").insert({
             name: name.replace(/<[^>]+>/g, ""),
             description: description.replace(/<[^>]+>/g, ""),
             organization_id: membership.organization_id,
+            client_id: clientId,
         });
 
         if (error) return { error: error.message };
 
         revalidatePath("/dashboard");
+        revalidatePath("/clients");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to create project" };
+    } catch {
+        return { error: "Falha ao criar projeto" };
     }
 }
 
 export async function updateProject(id: string, formData: FormData) {
     const name = (formData.get("name") as string)?.trim();
-    if (!name || name.length === 0) return { error: "Name is required" };
+    if (!name || name.length === 0) return { error: "Nome é obrigatório" };
     const description = ((formData.get("description") as string) || "").trim().slice(0, 1000);
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -95,15 +102,15 @@ export async function updateProject(id: string, formData: FormData) {
 
         revalidatePath("/dashboard");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to update project" };
+    } catch {
+        return { error: "Falha ao atualizar projeto" };
     }
 }
 
 export async function deleteProject(id: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -115,7 +122,7 @@ export async function deleteProject(id: string) {
 
         revalidatePath("/dashboard");
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to archive project" };
+    } catch {
+        return { error: "Falha ao arquivar projeto" };
     }
 }

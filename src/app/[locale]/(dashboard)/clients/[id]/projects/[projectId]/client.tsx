@@ -13,6 +13,8 @@ import { useToast } from "@/components/ui/toast-provider";
 interface ProjectDetailClientProps {
     project: any;
     proofs: any[];
+    clientName: string;
+    clientId: string;
 }
 
 const PROOF_STATUS_COLORS: Record<string, string> = {
@@ -37,7 +39,7 @@ const FILE_TYPE_ICON: Record<string, string> = {
     pdf: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z",
 };
 
-export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProps) {
+export function ProjectDetailClient({ project, proofs, clientName, clientId }: ProjectDetailClientProps) {
     const t = useTranslations("dashboard.projects");
 
     const totalVersions = proofs.reduce((acc: number, p: any) => acc + (p.versions?.length || 0), 0);
@@ -47,11 +49,11 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
     // Status filter tabs
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const STATUS_TABS = [
-        { key: "all", label: "All", count: proofs.length },
-        { key: "active", label: "Active", count: proofs.filter((p: any) => ["in_review", "changes_requested"].includes(p.status)).length },
-        { key: "approved", label: "Approved", count: approvedCount },
-        { key: "changes_requested", label: "Changes", count: proofs.filter((p: any) => p.status === "changes_requested").length },
-        { key: "completed", label: "Completed", count: proofs.filter((p: any) => ["approved", "rejected", "not_relevant"].includes(p.status)).length },
+        { key: "all", label: "Todas", count: proofs.length },
+        { key: "active", label: "Ativas", count: proofs.filter((p: any) => ["in_review", "changes_requested"].includes(p.status)).length },
+        { key: "approved", label: "Aprovadas", count: approvedCount },
+        { key: "changes_requested", label: "Ajustes", count: proofs.filter((p: any) => p.status === "changes_requested").length },
+        { key: "completed", label: "Concluídas", count: proofs.filter((p: any) => ["approved", "rejected", "not_relevant"].includes(p.status)).length },
     ];
     const filteredProofs = statusFilter === "all" ? proofs
         : statusFilter === "active" ? proofs.filter((p: any) => ["in_review", "changes_requested"].includes(p.status))
@@ -80,7 +82,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
         if (result.error) {
             toast(result.error, "error");
         } else {
-            toast(`${ids.length} proof(s) atualizados para ${action}`, "success");
+            toast(`${ids.length} prova(s) atualizada(s) para ${action}`, "success");
             setSelectedIds(new Set());
         }
     };
@@ -105,11 +107,17 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                 <div className="relative z-10 px-8 py-8">
                     {/* Breadcrumb */}
                     <div className="flex items-center gap-2 text-[13px] text-zinc-400 mb-5">
-                        <Link href="/dashboard" className="hover:text-white transition-colors flex items-center gap-1.5">
+                        <Link href="/clients" className="hover:text-white transition-colors flex items-center gap-1.5">
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                             </svg>
-                            {t("backToDashboard")}
+                            Clientes
+                        </Link>
+                        <svg className="h-3 w-3 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                        <Link href={`/clients/${clientId}`} className="hover:text-white transition-colors">
+                            {clientName}
                         </Link>
                         <svg className="h-3 w-3 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -131,7 +139,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                                 {new Date(project.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
                             </p>
                         </div>
-                        <CreateProofDialog projectId={project.id}>
+                        <CreateProofDialog projectId={project.id} clientName={clientName} projectName={project.name}>
                             <Button
                                 size="lg"
                                 className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[14px] h-11 px-6 rounded-xl shadow-lg shadow-emerald-500/20 font-semibold transition-all hover:shadow-emerald-500/30 hover:scale-[1.02]"
@@ -147,10 +155,10 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                     {/* Stats Row */}
                     <div className="flex items-center gap-6 mt-7">
                         {[
-                            { label: "Proofs", value: proofs.length, color: "from-blue-500 to-indigo-500", icon: "M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" },
-                            { label: "Versions", value: totalVersions, color: "from-violet-500 to-purple-500", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
-                            { label: "Approved", value: approvedCount, color: "from-emerald-500 to-teal-500", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-                            { label: "In Review", value: inReviewCount, color: "from-amber-500 to-orange-500", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
+                            { label: "Provas", value: proofs.length, color: "from-blue-500 to-indigo-500", icon: "M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" },
+                            { label: "Versões", value: totalVersions, color: "from-violet-500 to-purple-500", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
+                            { label: "Aprovadas", value: approvedCount, color: "from-emerald-500 to-teal-500", icon: "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+                            { label: "Em Revisão", value: inReviewCount, color: "from-amber-500 to-orange-500", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
                         ].map((stat) => (
                             <div key={stat.label} className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
                                 <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
@@ -183,7 +191,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                 </div>
 
                 {/* ═══ STATUS FILTER TABS ═══ */}
-                <div className="flex items-center gap-1 mb-5 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-1">
+                <div className="flex flex-wrap items-center gap-1 mb-5 bg-zinc-950/40 backdrop-blur-xl border border-white/5 rounded-2xl p-1.5 w-fit">
                     {STATUS_TABS.map((tab) => (
                         <button
                             key={tab.key}
@@ -203,16 +211,16 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                 </div>
 
                 {proofs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border-2 border-dashed border-zinc-800/60 bg-zinc-900/20">
+                    <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl shadow-sm">
                         <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center mb-5 border border-emerald-500/20">
                             <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
                         <h3 className="text-[16px] font-semibold text-zinc-200">{t("noProofs")}</h3>
-                        <p className="text-[13px] text-zinc-500 mt-2 max-w-sm">Upload your first proof to start collecting feedback and approvals from your team.</p>
+                        <p className="text-[13px] text-zinc-500 mt-2 max-w-sm">Envie sua primeira prova e comece a coletar feedback e aprovações da sua equipe.</p>
                         <div className="mt-6">
-                            <CreateProofDialog projectId={project.id}>
+                            <CreateProofDialog projectId={project.id} clientName={clientName} projectName={project.name}>
                                 <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[13px] h-10 px-6 rounded-xl shadow-lg shadow-emerald-500/15">
                                     + {t("createProof")}
                                 </Button>
@@ -241,7 +249,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                                 <div key={proof.id} className="relative">
                                     <Link
                                         href={`/proofs/${proof.id}`}
-                                        className="group relative flex items-center gap-4 px-5 py-4 rounded-xl border border-zinc-800/60 bg-gradient-to-r from-zinc-900/80 to-zinc-900/40 hover:from-[#1a1a2e] hover:to-[#16213e] hover:border-zinc-700/60 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
+                                        className="group relative flex items-center gap-4 px-5 py-4 rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
                                     >
                                         {/* Hover glow */}
                                         <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-emerald-500/0 to-blue-500/0 group-hover:from-emerald-500/5 group-hover:to-blue-500/5 transition-all duration-300" />
@@ -261,12 +269,23 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                                             {index + 1}
                                         </div>
 
-                                        {/* File Type Icon */}
-                                        <div className="relative z-10 h-11 w-11 rounded-xl bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center shrink-0 group-hover:border-zinc-600/50 transition-colors">
-                                            <svg className="h-5 w-5 text-zinc-500 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d={ftIcon} />
-                                            </svg>
-                                        </div>
+                                        {/* Thumbnail / File Type Icon */}
+                                        {(() => {
+                                            const latestVersion = proof.versions?.[0];
+                                            const thumbUrl = latestVersion?.file_url;
+                                            const isImage = ft === "image" && thumbUrl;
+                                            return (
+                                                <div className="relative z-10 h-11 w-11 rounded-xl bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center shrink-0 group-hover:border-zinc-600/50 transition-colors overflow-hidden">
+                                                    {isImage ? (
+                                                        <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <svg className="h-5 w-5 text-zinc-500 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d={ftIcon} />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Content */}
                                         <div className="relative z-10 flex-1 min-w-0">
@@ -282,7 +301,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                                                     <>
                                                         <span>·</span>
                                                         <span className={`flex items-center gap-1 ${openComments > 0 ? "text-amber-400" : "text-emerald-400"}`}>
-                                                            💬 {openComments > 0 ? `${openComments} aberto${openComments > 1 ? "s" : ""}` : `${totalComments} ✓`}
+                                                            ✎ {openComments > 0 ? `${openComments} aberto${openComments > 1 ? "s" : ""}` : `${totalComments} ✓`}
                                                         </span>
                                                     </>
                                                 )}
@@ -307,7 +326,7 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
                                         <div className="relative z-10 flex items-center gap-2">
                                             {deadline && (
                                                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${deadlineColor}`}>
-                                                    {msLeft < 0 ? "⏰ " : "📅 "}
+                                                    {msLeft < 0 ? "◷ " : "◷ "}
                                                     {deadline.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                                                 </span>
                                             )}
@@ -330,11 +349,11 @@ export function ProjectDetailClient({ project, proofs }: ProjectDetailClientProp
 
                 {/* ═══ BULK ACTION BAR ═══ */}
                 {selectedIds.size > 0 && (
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-[#1a1a2e] border border-zinc-700/60 rounded-xl px-5 py-3 shadow-2xl shadow-black/40">
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-wrap items-center justify-center gap-3 bg-zinc-950/80 backdrop-blur-2xl border border-white/10 rounded-2xl px-5 py-3 shadow-2xl shadow-black/80">
                         <span className="text-[13px] font-semibold text-white">{selectedIds.size} selecionado(s)</span>
                         <div className="h-5 w-px bg-zinc-700" />
                         <button onClick={() => handleBulkAction("approved")} className="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 text-[12px] font-semibold hover:bg-emerald-500/30 transition-colors cursor-pointer">Aprovar</button>
-                        <button onClick={() => handleBulkAction("changes_requested")} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[12px] font-semibold hover:bg-amber-500/30 transition-colors cursor-pointer">🔄 Alterações</button>
+                        <button onClick={() => handleBulkAction("changes_requested")} className="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 text-[12px] font-semibold hover:bg-amber-500/30 transition-colors cursor-pointer">↺ Alterações</button>
                         <button onClick={() => handleBulkAction("rejected")} className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-[12px] font-semibold hover:bg-red-500/30 transition-colors cursor-pointer">Rejeitar</button>
                         <div className="h-5 w-px bg-zinc-700" />
                         <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1.5 rounded-lg bg-zinc-700/50 text-zinc-400 text-[12px] font-medium hover:bg-zinc-700 transition-colors cursor-pointer">Limpar</button>

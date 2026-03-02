@@ -8,11 +8,11 @@ export type ProofDecision = "approved" | "approved_with_changes" | "changes_requ
 export async function submitDecision(proofId: string, decision: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     // Check if proof is locked
     const { data: proof } = await supabase.from("proofs").select("locked_at").eq("id", proofId).single();
-    if (proof?.locked_at) return { error: "Proof is locked" };
+    if (proof?.locked_at) return { error: "Prova está travada" };
 
     try {
         const { error } = await supabase
@@ -28,15 +28,15 @@ export async function submitDecision(proofId: string, decision: string) {
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to submit decision" };
+    } catch {
+        return { error: "Falha ao enviar decisão" };
     }
 }
 
 export async function getDecisions(proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { data: [], error: "Not authenticated" };
+    if (!user) return { data: [], error: "Não autenticado" };
 
     try {
         const { data, error } = await supabase
@@ -49,15 +49,15 @@ export async function getDecisions(proofId: string) {
             .order("decided_at", { ascending: false });
 
         return { data: data ?? [], error: error?.message ?? null };
-    } catch (err) {
-        return { data: [], error: "Failed to fetch decisions" };
+    } catch {
+        return { data: [], error: "Falha ao buscar decisões" };
     }
 }
 
 export async function lockProof(proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -69,15 +69,15 @@ export async function lockProof(proofId: string) {
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to lock proof" };
+    } catch {
+        return { error: "Falha ao travar prova" };
     }
 }
 
 export async function unlockProof(proofId: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: "Not authenticated" };
+    if (!user) return { error: "Não autenticado" };
 
     try {
         const { error } = await supabase
@@ -89,7 +89,7 @@ export async function unlockProof(proofId: string) {
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null };
-    } catch (err) {
-        return { error: "Failed to unlock proof" };
+    } catch {
+        return { error: "Falha ao destravar prova" };
     }
 }

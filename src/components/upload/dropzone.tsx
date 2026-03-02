@@ -166,13 +166,13 @@ export function UploadDropzone({
         const cat = getFileCategory(file.type);
         switch (cat) {
             case "image":
-                return "🖼️";
+                return "▣";
             case "video":
-                return "🎬";
+                return "▶";
             case "pdf":
-                return "📄";
+                return "▤";
             case "design":
-                return "🎨";
+                return "◎";
             default:
                 return "";
         }

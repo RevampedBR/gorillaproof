@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { UploadDropzone } from "@/components/upload/dropzone";
+import { getVersions } from "@/lib/actions/versions";
 import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
+import { PdfViewer } from "@/components/viewer/pdf-viewer";
 import { ColorPicker } from "@/components/viewer/color-picker";
 import { ShareDialog } from "@/components/viewer/share-dialog";
 import { getSignedUrl, getFileCategory } from "@/lib/storage";
@@ -45,7 +47,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const router = useRouter();
     const { toast } = useToast();
 
-    // Version state
+    // Version state — keep a local copy so we can update it after uploads
+    const [versionList, setVersionList] = useState<any[]>(versions);
     const [selectedVersion, setSelectedVersion] = useState<any>(versions[0] || null);
     const [fileUrl, setFileUrl] = useState<string>("");
     const [showUploadZone, setShowUploadZone] = useState(versions.length === 0);
@@ -274,10 +277,16 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     const fileCategory = selectedVersion ? getFileCategory(selectedVersion.file_type) : "unknown";
 
-    const handleUploadComplete = useCallback(() => {
-        router.refresh();
+    const handleUploadComplete = useCallback(async () => {
+        // Re-fetch versions client-side so the UI updates immediately
+        const { data: freshVersions } = await getVersions(proof.id);
+        if (freshVersions && freshVersions.length > 0) {
+            setVersionList(freshVersions);
+            setSelectedVersion(freshVersions[0]);
+        }
         setShowUploadZone(false);
-    }, [router]);
+        router.refresh();
+    }, [router, proof.id]);
 
     const refreshComments = useCallback(async () => {
         if (selectedVersion?.id) {
@@ -336,10 +345,10 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const handleToggleLock = async () => {
         if (isLocked) {
             await unlockProof(proof.id);
-            toast("🔓 Prova destravada", "success");
+            toast("Prova destravada", "success");
         } else {
             await lockProof(proof.id);
-            toast("🔒 Prova travada — sem mais comentários ou decisões", "info");
+            toast("Prova travada — sem mais comentários ou decisões", "info");
         }
         router.refresh();
     };
@@ -426,13 +435,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     /* ─────────────── DRAWING TOOLS CONFIG ─────────────── */
     const drawingTools = [
-        { id: "select", icon: "M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59", label: "Select" },
+        { id: "select", icon: "M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59", label: "Selecionar" },
         { id: "pin", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z", label: "Pin" },
-        { id: "rect", icon: "M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-8.25A2.25 2.25 0 017.5 18v-2.25", label: "Rectangle" },
-        { id: "circle", icon: "M21 12a9 9 0 11-18 0 9 9 0 0118 0z", label: "Circle" },
-        { id: "arrow", icon: "M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25", label: "Arrow" },
-        { id: "line", icon: "M4.5 19.5l15-15", label: "Line" },
-        { id: "pen", icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z", label: "Draw" },
+        { id: "rect", icon: "M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-8.25A2.25 2.25 0 017.5 18v-2.25", label: "Retângulo" },
+        { id: "circle", icon: "M21 12a9 9 0 11-18 0 9 9 0 0118 0z", label: "Círculo" },
+        { id: "arrow", icon: "M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25", label: "Seta" },
+        { id: "line", icon: "M4.5 19.5l15-15", label: "Linha" },
+        { id: "pen", icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z", label: "Desenhar" },
     ];
 
     return (
@@ -445,7 +454,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 {/* LEFT */}
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <Link
-                        href={`/projects/${proof.project_id}`}
+                        href="/dashboard"
                         className="h-9 w-9 rounded-lg flex items-center justify-center text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors shrink-0"
                         data-tip="Voltar ao projeto"
                     >
@@ -473,9 +482,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
                         </button>
-                        {showVersionDropdown && versions.length > 0 && (
+                        {showVersionDropdown && versionList.length > 0 && (
                             <div className="absolute top-full left-0 mt-1 bg-[#1e1e32] border border-[#3a3a55] rounded-lg shadow-2xl py-1 min-w-[160px] z-50">
-                                {versions.map((v: any) => (
+                                {versionList.map((v: any) => (
                                     <button
                                         key={v.id}
                                         onClick={() => { setSelectedVersion(v); setShowVersionDropdown(false); }}
@@ -494,15 +503,15 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     </div>
 
                     {/* Compare toggle */}
-                    {versions.length > 1 && (
+                    {versionList.length > 1 && (
                         <button
                             onClick={() => {
                                 const entering = !compareMode;
                                 setCompareMode(entering);
                                 if (entering) {
                                     // Auto-select previous version
-                                    const currentIdx = versions.findIndex((v: any) => v.id === selectedVersion?.id);
-                                    const prevVersion = versions[currentIdx + 1] || versions[versions.length - 1];
+                                    const currentIdx = versionList.findIndex((v: any) => v.id === selectedVersion?.id);
+                                    const prevVersion = versionList[currentIdx + 1] || versionList[versionList.length - 1];
                                     if (prevVersion && prevVersion.id !== selectedVersion?.id) {
                                         setCompareVersion(prevVersion);
                                     }
@@ -527,7 +536,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                         </svg>
-                        + Version
+                        + Versão
                     </button>
 
                     {/* Deadline chip */}
@@ -598,7 +607,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 <div className="relative" ref={decisionRef}>
                     {isLocked && (
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1 rounded-md bg-red-500/10 border border-red-500/25 text-red-400 text-[10px] font-medium">
-                            🔒 Prova travada
+                            Prova travada
                         </div>
                     )}
                     <button
@@ -609,7 +618,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                             }`}
                         data-tip="Definir status (aprovar, solicitar alterações, etc.)"
                     >
-                        {isLocked ? "🔒 Locked" : t("makeDecision")}
+                        {isLocked ? "Travada" : t("makeDecision")}
                     </button>
 
                     {showDecisionMenu && (
@@ -663,7 +672,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     onClick={handleToggleLock}
                                     className="w-full flex items-center gap-2 px-2 py-2 text-[12px] text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors"
                                 >
-                                    {isLocked ? "🔓 Destravar prova" : "🔒 Travar prova"}
+                                    {isLocked ? "Destravar prova" : "Travar prova"}
                                 </button>
                             </div>
                         </div>
@@ -681,15 +690,15 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                         </svg>
-                        Share
+                        Compartilhar
                     </button>
-                    {/* Download Original */}
+                    {/* Baixar Original */}
                     {fileUrl && (
                         <a href={fileUrl} target="_blank" rel="noopener noreferrer" download className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2 cursor-pointer no-underline">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                             </svg>
-                            Download
+                            Baixar
                         </a>
                     )}
                     <button
@@ -783,9 +792,20 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
                     </svg>
                 </button>
-                <button className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer" data-tip="Recorte / Área de foco">
+                <button
+                    onClick={() => {
+                        const container = viewerContainerRef.current;
+                        if (!container) return;
+                        const cw = container.clientWidth - 40;
+                        const ch = container.clientHeight - 40;
+                        const fitZoom = Math.min(cw / viewerSize.width, ch / viewerSize.height, 2);
+                        setZoom(Math.round(fitZoom * 100) / 100);
+                    }}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer"
+                    data-tip="Ajustar ao conteúdo"
+                >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.848 8.25l1.536.887M7.848 8.25a3 3 0 11-5.196-3 3 3 0 015.196 3zm1.536.887a2.165 2.165 0 011.083 1.839c.005.351.054.695.14 1.024M9.384 9.137l2.077 1.199M7.848 15.75l1.536-.887m-1.536.887a3 3 0 11-5.196 3 3 3 0 015.196-3zm1.536-.887a2.165 2.165 0 001.083-1.838c.005-.352.054-.695.14-1.025m-1.223 2.863l2.077-1.199m0-3.328a4.323 4.323 0 012.068-1.379l5.325-1.628a4.5 4.5 0 012.48-.044l.803.215-7.794 4.5m-2.882-1.664A4.331 4.331 0 0010.607 12m3.736 0l7.794 4.5-.802.215a4.5 4.5 0 01-2.48-.043l-5.326-1.629a4.324 4.324 0 01-2.068-1.379M14.343 12l-2.882 1.664" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
                     </svg>
                 </button>
 
@@ -793,7 +813,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 <div className="flex-1" />
 
                 {/* RIGHT: Drawing tools (Ziflow puts these on the right side of row 2) */}
-                {(fileCategory === "image" || fileCategory === "video") && (
+                {(fileCategory === "image" || fileCategory === "video" || fileCategory === "pdf") && (
                     <>
                         {/* Undo / Redo */}
                         <button onClick={() => drawingCanvasRef.current?.undo()} className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors cursor-pointer" data-tip="Desfazer (Ctrl+Z)">
@@ -843,7 +863,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                         <button
                             onClick={() => setSidebarLayout(sidebarLayout === "right" ? "bottom" : "right")}
                             className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${sidebarLayout === "bottom" ? "text-blue-400 bg-blue-500/15" : "text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40]"}`}
-                            data-tip={`Layout: ${sidebarLayout === "right" ? "Sidebar right" : "Panel bottom"} (click to toggle)`}
+                            data-tip={`Layout: ${sidebarLayout === "right" ? "Lateral direita" : "Painel inferior"}`}
                         >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -864,7 +884,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                     </svg>
-                    Comment
+                    Comentários
                     {openComments > 0 && (
                         <span className="px-1 py-0 text-[9px] rounded-full bg-emerald-500/20 text-emerald-400 font-mono">
                             {openComments}
@@ -897,7 +917,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 orgId={orgId}
                                 projectId={proof.project_id}
                                 proofId={proof.id}
-                                currentVersionNumber={versions[0]?.version_number || 0}
+                                currentVersionNumber={versionList[0]?.version_number || 0}
                                 onUploadComplete={handleUploadComplete}
                             />
                         </div>
@@ -1537,7 +1557,21 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     </div>
                                 )}
                                 {fileCategory === "pdf" && (
-                                    <iframe src={fileUrl} className="w-full h-full rounded border border-[#2a2a40]" title={proof.title} />
+                                    <PdfViewer
+                                        fileUrl={fileUrl}
+                                        zoom={zoom}
+                                        pins={allPins}
+                                        isAnnotating={isAnnotating}
+                                        activePinId={activePinId}
+                                        activeTool={activeTool}
+                                        annotColor={annotColor}
+                                        drawingShapes={drawingShapes}
+                                        drawingCanvasRef={drawingCanvasRef}
+                                        viewerSize={viewerSize}
+                                        onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                        onCanvasClick={handleCanvasClick}
+                                        onShapesChange={setDrawingShapes}
+                                    />
                                 )}
                                 {(fileCategory === "design" || fileCategory === "unknown") && (
                                     <div className="text-center">
@@ -1567,24 +1601,24 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 onClick={() => setSidebarTab("comments")}
                                 className={`flex-1 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "comments" ? "text-emerald-400 border-b-2 border-emerald-400 bg-emerald-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
-                                💬 Comentários
+                                Comentários
                             </button>
                             <button
                                 onClick={() => setSidebarTab("activity")}
                                 className={`flex-1 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "activity" ? "text-violet-400 border-b-2 border-violet-400 bg-violet-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
-                                🕐 Atividade
+                                Atividade
                             </button>
                         </div>
 
                         {sidebarTab === "comments" ? (
                             <>
                                 {/* Carry comments forward button */}
-                                {selectedVersion && versions.length > 1 && selectedVersion.id === versions[0]?.id && (
+                                {selectedVersion && versionList.length > 1 && selectedVersion.id === versionList[0]?.id && (
                                     <div className="px-3 py-2 border-b border-[#2a2a40] bg-[#15152a]">
                                         <button
                                             onClick={async () => {
-                                                const prevVersion = versions[1];
+                                                const prevVersion = versionList[1];
                                                 if (!prevVersion) return;
                                                 const result = await carryCommentsForward(prevVersion.id, selectedVersion.id, proof.id);
                                                 if (result.count > 0) {
@@ -1600,7 +1634,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
                                             </svg>
-                                            Copiar comentários da V.{versions[1]?.version_number}
+                                            Copiar comentários da V.{versionList[1]?.version_number}
                                         </button>
                                     </div>
                                 )}

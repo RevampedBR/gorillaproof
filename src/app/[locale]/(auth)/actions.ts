@@ -28,10 +28,10 @@ export async function signup(formData: FormData) {
     const agencyName = formData.get("agencyName") as string;
 
     if (!email?.trim() || !password?.trim() || !fullName?.trim()) {
-        return { error: "All fields are required" };
+        return { error: "Todos os campos são obrigatórios" };
     }
     if (password.length < 6) {
-        return { error: "Password must be at least 6 characters" };
+        return { error: "A senha deve ter pelo menos 6 caracteres" };
     }
 
     const supabase = await createClient();
@@ -64,9 +64,9 @@ export async function signup(formData: FormData) {
         const { data: org, error: orgError } = await supabaseAdmin
             .from("organizations")
             .insert({
-                name: agencyName || "My Agency",
+                name: agencyName || "Minha Agência",
                 slug:
-                    (agencyName || "My Agency").toLowerCase().replace(/[^a-z0-9]+/g, "-") +
+                    (agencyName || "Minha Agência").toLowerCase().replace(/[^a-z0-9]+/g, "-") +
                     "-" +
                     Math.random().toString(36).substring(2, 7),
             })
@@ -106,7 +106,7 @@ export async function recoverPassword(formData: FormData) {
         return { error: error.message };
     }
 
-    redirect("/login?message=Check your email for the password reset link");
+    redirect("/login?message=Verifique seu email para o link de recuperação");
 }
 
 export async function updatePassword(formData: FormData) {

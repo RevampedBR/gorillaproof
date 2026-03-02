@@ -43,7 +43,7 @@ export function RegisterForm() {
                         <Input
                             id="fullName"
                             name="fullName"
-                            placeholder="Jane Doe"
+                            placeholder="Maria Silva"
                             type="text"
                             autoCapitalize="words"
                             disabled={isPending}
@@ -59,7 +59,7 @@ export function RegisterForm() {
                         <Input
                             id="agencyName"
                             name="agencyName"
-                            placeholder="Acme Agency"
+                            placeholder="Minha Agência"
                             type="text"
                             disabled={isPending}
                             required
@@ -74,7 +74,7 @@ export function RegisterForm() {
                         <Input
                             id="email"
                             name="email"
-                            placeholder="name@agency.com"
+                            placeholder="nome@agencia.com"
                             type="email"
                             autoCapitalize="none"
                             autoComplete="email"

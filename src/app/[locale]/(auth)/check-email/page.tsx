@@ -9,21 +9,21 @@ export default function CheckEmailPage() {
                 </svg>
             </div>
             <h1 className="text-2xl font-bold text-zinc-100">
-                Check your email
+                Verifique seu e-mail
             </h1>
             <p className="text-[15px] text-zinc-400 max-w-sm leading-relaxed">
-                We sent a confirmation link to your email address. Click the link to activate your account and start using GorillaProof.
+                Enviamos um link de confirmação para o seu e-mail. Clique no link para ativar sua conta e começar a usar o GorillaProof.
             </p>
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 max-w-sm">
                 <p className="text-[13px] text-amber-300">
-                    Don&apos;t see the email? Check your <strong>spam folder</strong> or wait a few minutes.
+                    Não encontrou o e-mail? Verifique sua <strong>caixa de spam</strong> ou aguarde alguns minutos.
                 </p>
             </div>
             <Link
                 href="/login"
                 className="mt-4 text-[14px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
             >
-                ← Back to Sign In
+                Voltar para o Login
             </Link>
         </div>
     );

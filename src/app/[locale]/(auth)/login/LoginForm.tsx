@@ -43,7 +43,7 @@ export function LoginForm() {
                         <Input
                             id="email"
                             name="email"
-                            placeholder="name@agency.com"
+                            placeholder="nome@agencia.com"
                             type="email"
                             autoCapitalize="none"
                             autoComplete="email"

@@ -16,5 +16,11 @@ export default async function SettingsPage() {
 
     if (!membership) redirect("/dashboard");
 
-    return <SettingsClient orgId={membership.organization_id} />;
+    return (
+        <SettingsClient
+            orgId={membership.organization_id}
+            userEmail={user.email || ""}
+            userName={user.user_metadata?.full_name || user.email?.split("@")[0] || ""}
+        />
+    );
 }

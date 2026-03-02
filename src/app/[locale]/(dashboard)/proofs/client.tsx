@@ -19,21 +19,21 @@ interface Proof {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
-    draft: { label: "Draft", color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30", dot: "bg-zinc-400" },
-    active: { label: "Active", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
-    in_review: { label: "In Review", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", dot: "bg-amber-400" },
-    approved: { label: "Approved", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", dot: "bg-blue-400" },
-    changes_required: { label: "Changes Required", color: "bg-rose-500/20 text-rose-400 border-rose-500/30", dot: "bg-rose-400" },
-    completed: { label: "Completed", color: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30", dot: "bg-indigo-400" },
+    draft: { label: "Rascunho", color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30", dot: "bg-zinc-400" },
+    active: { label: "Ativa", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
+    in_review: { label: "Em Revisão", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", dot: "bg-amber-400" },
+    approved: { label: "Aprovada", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", dot: "bg-blue-400" },
+    changes_required: { label: "Ajustes", color: "bg-rose-500/20 text-rose-400 border-rose-500/30", dot: "bg-rose-400" },
+    completed: { label: "Concluída", color: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30", dot: "bg-indigo-400" },
 };
 
 const STATUS_TABS = [
-    { key: "all", label: "All" },
-    { key: "draft", label: "Draft" },
-    { key: "active", label: "Active" },
-    { key: "in_review", label: "In Review" },
-    { key: "approved", label: "Approved" },
-    { key: "changes_required", label: "Changes" },
+    { key: "all", label: "Todas" },
+    { key: "draft", label: "Rascunho" },
+    { key: "active", label: "Ativa" },
+    { key: "in_review", label: "Em Revisão" },
+    { key: "approved", label: "Aprovada" },
+    { key: "changes_required", label: "Ajustes" },
 ];
 
 export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
@@ -73,9 +73,9 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
             {/* Header */}
             <div className="flex items-end justify-between mb-6">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight text-zinc-100">All Proofs</h1>
+                    <h1 className="text-xl font-bold tracking-tight text-zinc-100">Todas as Provas</h1>
                     <p className="text-[12px] text-zinc-500 mt-0.5">
-                        {proofs.length} total across all projects
+                        {proofs.length} no total em todos os clientes
                     </p>
                 </div>
 
@@ -112,7 +112,7 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Filter by name or project..."
+                        placeholder="Filtrar por nome ou cliente..."
                         className="w-full h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     />
                 </div>
@@ -146,24 +146,24 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
 
             {/* Results */}
             {filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="h-11 w-11 rounded-xl bg-zinc-800/60 flex items-center justify-center mb-3">
-                        <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl shadow-sm">
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mb-5 border border-indigo-500/20">
+                        <svg className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
-                    <p className="text-[14px] font-medium text-zinc-300">
-                        {search || statusFilter !== "all" ? "No proofs match your filters" : "No proofs yet"}
+                    <p className="text-[16px] font-semibold text-zinc-200">
+                        {search || statusFilter !== "all" ? "Nenhuma prova encontrada" : "Nenhuma prova ainda"}
                     </p>
-                    <p className="text-[12px] text-zinc-500 mt-1">
+                    <p className="text-[13px] text-zinc-500 mt-2 max-w-sm">
                         {search || statusFilter !== "all"
-                            ? "Try adjusting your search or status filter."
-                            : "Create your first proof using the '+ New Proof' button."}
+                            ? "Tente ajustar sua busca ou filtro de status."
+                            : "Crie sua primeira prova dentro de algum projeto para vê-la aqui."}
                     </p>
                 </div>
             ) : view === "list" ? (
-                <div className="rounded-xl border border-zinc-800/60 bg-zinc-900/20 overflow-hidden">
-                    <div className="divide-y divide-zinc-800/40">
+                <div className="rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl overflow-hidden shadow-sm">
+                    <div className="divide-y divide-white/5">
                         {filtered.map((proof) => {
                             const config = STATUS_CONFIG[proof.status] || STATUS_CONFIG.draft;
                             const commentCount = proof.versions?.reduce(
@@ -174,9 +174,9 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                                 <Link
                                     key={proof.id}
                                     href={`/proofs/${proof.id}`}
-                                    className="flex items-center justify-between p-4 hover:bg-zinc-800/20 transition-colors group"
+                                    className="flex items-center justify-between p-4 hover:bg-zinc-900/40 transition-colors group"
                                 >
-                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="flex items-center gap-4 min-w-0 flex-1">
                                         <div className="h-9 w-9 rounded-lg bg-zinc-800/60 border border-zinc-700/30 flex items-center justify-center shrink-0">
                                             <svg className="h-4 w-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -190,12 +190,12 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                                                 <span className="text-[11px] text-zinc-500">{proof.project_name}</span>
                                                 {commentCount > 0 && (
                                                     <span className="text-[11px] text-zinc-600">
-                                                        {commentCount} comment{commentCount !== 1 ? "s" : ""}
+                                                        {commentCount} comentário{commentCount !== 1 ? "s" : ""}
                                                     </span>
                                                 )}
                                                 {proof.deadline && (
                                                     <span className="text-[11px] text-zinc-600">
-                                                        Due {new Date(proof.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                                        Prazo {new Date(proof.deadline).toLocaleDateString("pt-BR", { month: "short", day: "numeric" })}
                                                     </span>
                                                 )}
                                             </div>
@@ -216,7 +216,7 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                                             {config.label}
                                         </Badge>
                                         <span className="text-[11px] text-zinc-600 hidden sm:block w-16 text-right">
-                                            {new Date(proof.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                            {new Date(proof.updated_at).toLocaleDateString("pt-BR", { month: "short", day: "numeric" })}
                                         </span>
                                         <svg className="h-4 w-4 text-zinc-700 group-hover:text-zinc-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -236,15 +236,16 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                             <Link
                                 key={proof.id}
                                 href={`/proofs/${proof.id}`}
-                                className="group rounded-xl border border-zinc-800/60 bg-zinc-900/20 overflow-hidden hover:bg-zinc-900/50 hover:border-zinc-700/60 transition-all"
+                                className="group rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl overflow-hidden hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 cursor-pointer relative"
                             >
-                                <div className="aspect-[4/3] bg-zinc-800/30 flex items-center justify-center border-b border-zinc-800/40">
+                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/5 group-hover:to-purple-500/5 transition-all duration-300" />
+                                <div className="aspect-[4/3] bg-zinc-900 flex items-center justify-center border-b border-white/5 relative z-10 overflow-hidden">
                                     <svg className="h-8 w-8 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                 </div>
-                                <div className="p-3 space-y-2">
-                                    <p className="text-[13px] font-medium text-zinc-200 group-hover:text-white truncate">
+                                <div className="p-4 space-y-2 relative z-10">
+                                    <p className="text-[14px] font-semibold text-zinc-200 group-hover:text-white truncate">
                                         {proof.title}
                                     </p>
                                     <div className="flex items-center justify-between">
