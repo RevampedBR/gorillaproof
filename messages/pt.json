@@ -1,17 +1,17 @@
 {
     "landing": {
         "badge": "GorillaProof Plataforma v1.0",
-        "headline1": "Pare de correr atrás de feedback.",
-        "headline2": "Comece a aprovar mais rápido.",
-        "description": "O espaço definitivo de revisão online para agências criativas. Centralize arquivos, gerencie versões e colete feedback preciso sem o caos de emails.",
-        "ctaPrimary": "Comece Grátis",
+        "headline1": "Chega de caçar feedback na selva de e-mails.",
+        "headline2": "Aprove no ritmo do primata evoluído.",
+        "description": "Seu território de revisão criativa. Centralize arquivos, domine versões e colete feedback sem bagunça.",
+        "ctaPrimary": "Entrar na Selva",
         "ctaSecondary": "Entrar",
         "mockupLabel": "Interface do Painel — Em breve"
     },
     "auth": {
         "login": {
-            "title": "Bem-vindo de volta",
-            "subtitle": "Insira seu email para acessar seu espaço de trabalho",
+            "title": "O gorila voltou",
+            "subtitle": "Entre no seu território de trabalho.",
             "email": "Email",
             "password": "Senha",
             "forgotPassword": "Esqueceu a senha?",
@@ -34,16 +34,16 @@
         },
         "forgotPassword": {
             "title": "Esqueceu a senha?",
-            "subtitle": "Digite seu e-mail e enviaremos um link de recuperação.",
+            "subtitle": "Manda teu e-mail que a gente envia um sinal de resgate.",
             "email": "E-mail",
-            "submit": "Enviar Link de Recuperação",
-            "backToLogin": "Lembrou? Volte ao Login"
+            "submit": "Enviar Sinal de Resgate",
+            "backToLogin": "Lembrou? Volta pro habitat"
         },
         "resetPassword": {
-            "title": "Redefinir Senha",
-            "subtitle": "Digite sua nova senha abaixo para acessar a plataforma.",
+            "title": "Nova Senha",
+            "subtitle": "Escolha uma nova senha pra voltar à selva.",
             "newPassword": "Nova Senha",
-            "submit": "Atualizar Senha"
+            "submit": "Atualizar e Voltar"
         }
     },
     "dashboard": {
@@ -54,8 +54,8 @@
             "clients": "Clientes",
             "allProofs": "Todas as Provas",
             "projects": "Clientes",
-            "notifications": "Notificacoes",
-            "settings": "Configuracoes"
+            "notifications": "Notificações",
+            "settings": "Configurações"
         },
         "header": {
             "search": "Buscar provas e clientes...",
@@ -66,7 +66,7 @@
             "freePlan": "Plano Gratuito"
         },
         "home": {
-            "welcome": "Bom dia, Gorilla",
+            "welcome": "E aí, primata evoluído",
             "overview": "Visão Geral",
             "assigned": "Atribuído a mim",
             "recent": "Recentes",
@@ -74,18 +74,18 @@
             "urgentProofs": "Provas Urgentes",
             "pendingComments": "Comentários Pendentes",
             "myWork": "Meu Trabalho",
-            "noWork": "Tudo limpo! Nenhuma prova pendente para você no momento.",
+            "noWork": "Selva tranquila! Nenhuma revisão pendente. Hora de bater no peito.",
             "createFirst": "Criar Nova Prova",
-            "subtitle": "Visualize suas demandas de revisão com agilidade e clareza.",
+            "subtitle": "Domine suas demandas de revisão com agilidade e instinto.",
             "approvedToday": "Aprovadas Hoje",
             "proofs": "provas",
-            "noProjects": "Nenhum cliente por aqui. Crie o primeiro!",
+            "noProjects": "Selva vazia! Traga seu primeiro cliente pro bando.",
             "lastUpdated": "Atualizado",
-            "recentlyViewed": "Nenhum cliente visualizado recentemente."
+            "recentlyViewed": "Nenhum cliente rastreado recentemente."
         },
         "projects": {
             "createTitle": "Novo Cliente",
-            "createSubtitle": "Dê um nome ao cliente para começar a organizar suas provas.",
+            "createSubtitle": "Dê um nome ao cliente e comece a organizar suas provas.",
             "name": "Nome do Cliente",
             "namePlaceholder": "Ex: Zara — Campanha Verão 2026",
             "description": "Descrição (opcional)",
@@ -97,7 +97,7 @@
             "statusCompleted": "Concluído",
             "backToDashboard": "Voltar ao Dashboard",
             "proofsTitle": "Provas",
-            "noProofs": "Nenhuma prova neste cliente ainda.",
+            "noProofs": "Nenhuma prova neste cliente. Mande a primeira!",
             "createProof": "Nova Prova",
             "proofTitle": "Título da Prova",
             "proofTitlePlaceholder": "Ex: Banner Principal - v1",
@@ -110,10 +110,10 @@
         },
         "upload": {
             "dragOrClick": "Arraste arquivos aqui ou clique para selecionar",
-            "dropHere": "Solte para enviar!",
+            "dropHere": "Solte pra enviar!",
             "supportedFormats": "JPG, PNG, GIF, WEBP, SVG, TIFF, PSD, MP4, MOV, WEBM, PDF",
             "maxSize": "Máximo 250MB por arquivo",
-            "fileTooLarge": "Arquivo muito grande (máx 250MB)",
+            "fileTooLarge": "Arquivo pesado demais (máx 250MB)",
             "unsupportedFormat": "Formato não suportado",
             "waiting": "Aguardando..."
         },
@@ -122,8 +122,8 @@
             "compare": "Comparar",
             "uploadVersion": "Nova Versão",
             "noVersions": "Sem versões",
-            "uploadFirst": "Envie o primeiro arquivo",
-            "uploadFirstSub": "Arraste uma imagem, vídeo ou PDF para começar a revisão.",
+            "uploadFirst": "Mande o primeiro arquivo",
+            "uploadFirstSub": "Arraste uma imagem, vídeo ou PDF pra começar a revisão.",
             "previewUnavailable": "Prévia indisponível para este formato",
             "downloadFile": "Baixar arquivo original",
             "annotate": "Anotar",
@@ -131,25 +131,25 @@
             "approve": "Aprovar",
             "requestChanges": "Pedir Ajustes",
             "reject": "Rejeitar",
-            "commentsTab": "Coment\u00e1rios",
-            "versionsTab": "Vers\u00f5es",
-            "makeDecision": "Tomar decis\u00e3o",
-            "decisionPending": "Decis\u00e3o pendente",
+            "commentsTab": "Comentários",
+            "versionsTab": "Versões",
+            "makeDecision": "Tomar decisão",
+            "decisionPending": "Decisão pendente",
             "decisionApproved": "Aprovado",
-            "decisionApprovedChanges": "Aprovado com altera\u00e7\u00f5es",
-            "decisionChanges": "Altera\u00e7\u00f5es necess\u00e1rias",
-            "decisionNotRelevant": "N\u00e3o relevante",
+            "decisionApprovedChanges": "Aprovado com alterações",
+            "decisionChanges": "Alterações necessárias",
+            "decisionNotRelevant": "Não relevante",
             "decisionRejected": "Rejeitado",
             "proofLocked": "Esta prova está travada. Nenhum comentário ou decisão permitidos."
         },
         "comments": {
-            "title": "Coment\u00e1rios",
+            "title": "Comentários",
             "open": "abertos",
             "resolved": "resolvidos",
             "all": "Todos",
-            "noComments": "Nenhum coment\u00e1rio ainda",
-            "noCommentsSub": "Clique na imagem para fixar um pin e comentar.",
-            "addComment": "Adicionar coment\u00e1rio...",
+            "noComments": "Silêncio na selva",
+            "noCommentsSub": "Marque seu território: clique na imagem e deixe seu feedback.",
+            "addComment": "Adicionar comentário...",
             "commentOnPin": "Comente sobre este ponto...",
             "pinPlaced": "Pin posicionado",
             "cancelPin": "Cancelar",
@@ -163,15 +163,15 @@
         "clients": {
             "title": "Clientes",
             "createTitle": "Novo Cliente",
-            "createSubtitle": "Adicione um cliente para organizar seus projetos.",
+            "createSubtitle": "Adicione um cliente e monte seu bando.",
             "name": "Nome do Cliente",
             "namePlaceholder": "Ex: Acme Publicidade",
             "description": "Descrição (opcional)",
             "descriptionPlaceholder": "Descreva brevemente este cliente...",
             "submit": "Criar Cliente",
             "cancel": "Cancelar",
-            "noClients": "Nenhum cliente ainda. Crie o primeiro!",
-            "noClientsDesc": "Organize seus projetos por cliente para ter mais controle.",
+            "noClients": "Bando vazio! Traga seu primeiro cliente.",
+            "noClientsDesc": "Monte sua tribo: organize projetos por cliente e domine cada entrega.",
             "createFirst": "Novo Cliente",
             "projectsCount": "projetos",
             "projectsTitle": "Projetos",
@@ -184,7 +184,7 @@
         }
     },
     "metadata": {
-        "title": "GorillaProof | Revisão Criativa Simplificada",
-        "description": "A plataforma definitiva de revisão online para equipes criativas e agências. Centralize, revise e aprove sem esforço."
+        "title": "GorillaProof | Revisão Criativa de Primata Evoluído",
+        "description": "O território definitivo de revisão online. Centralize, revise e aprove com instinto de gorila."
     }
 }

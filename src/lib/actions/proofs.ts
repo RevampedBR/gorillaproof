@@ -10,7 +10,6 @@ export async function getAllProofs() {
     if (!user) return { data: [], error: "Não autenticado" };
 
     try {
-        // Get user's organization(s)
         const { data: memberships } = await supabase
             .from("organization_members")
             .select("organization_id")
@@ -20,22 +19,15 @@ export async function getAllProofs() {
 
         const orgIds = memberships.map((m) => m.organization_id);
 
-        // Fetch projects with nested proofs
+        // 1. Proofs inside projects
         const { data: projects, error } = await supabase
             .from("projects")
             .select(`
                 id,
                 name,
                 proofs (
-                    id,
-                    title,
-                    status,
-                    deadline,
-                    locked_at,
-                    tags,
-                    project_id,
-                    created_at,
-                    updated_at,
+                    id, title, status, deadline, locked_at, tags,
+                    project_id, client_id, created_at, updated_at,
                     versions ( id, file_url, comments ( id, status ) )
                 )
             `)
@@ -43,9 +35,8 @@ export async function getAllProofs() {
 
         if (error) return { data: [], error: error.message };
 
-        // Flatten: extract proofs from each project and attach project_name
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const allProofs = (projects ?? []).flatMap((project: any) =>
+        const projectProofs = (projects ?? []).flatMap((project: any) =>
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (project.proofs || []).map((proof: any) => ({
                 ...proof,
@@ -53,7 +44,30 @@ export async function getAllProofs() {
             }))
         );
 
-        // Sort by updated_at descending
+        // 2. Loose proofs (no project)
+        const { data: clients } = await supabase
+            .from("clients")
+            .select(`
+                id, name,
+                proofs!proofs_client_id_fkey (
+                    id, title, status, deadline, locked_at, tags,
+                    project_id, client_id, created_at, updated_at,
+                    versions ( id, file_url, comments ( id, status ) )
+                )
+            `)
+            .in("organization_id", orgIds);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const looseProofs = (clients ?? []).flatMap((client: any) =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (client.proofs || []).filter((p: any) => !p.project_id).map((proof: any) => ({
+                ...proof,
+                project_name: null,
+                client_name: client.name,
+            }))
+        );
+
+        const allProofs = [...projectProofs, ...looseProofs];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         allProofs.sort((a: any, b: any) =>
             new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
@@ -99,7 +113,7 @@ export async function getProofs(projectId: string) {
     }
 }
 
-export async function createProof(projectId: string, formData: FormData) {
+export async function createProof(clientId: string, formData: FormData, projectId?: string | null) {
     const title = (formData.get("title") as string)?.trim();
     if (!title || title.length === 0) return { error: "Título é obrigatório" };
     if (title.length > 200) return { error: "Título muito longo (máx 200)" };
@@ -109,20 +123,31 @@ export async function createProof(projectId: string, formData: FormData) {
     if (!user) return { error: "Não autenticado" };
 
     try {
-        // 1. Get org_id for storage path
-        const { data: project } = await supabase
-            .from("projects")
-            .select("organization_id")
-            .eq("id", projectId)
-            .single();
-
-        if (!project) return { error: "Projeto não encontrado" };
-        const orgId = project.organization_id;
+        // 1. Get org_id for storage path (from client or project)
+        let orgId: string;
+        if (projectId) {
+            const { data: project } = await supabase
+                .from("projects")
+                .select("organization_id")
+                .eq("id", projectId)
+                .single();
+            if (!project) return { error: "Projeto não encontrado" };
+            orgId = project.organization_id;
+        } else {
+            const { data: client } = await supabase
+                .from("clients")
+                .select("organization_id")
+                .eq("id", clientId)
+                .single();
+            if (!client) return { error: "Cliente não encontrado" };
+            orgId = client.organization_id;
+        }
 
         // 2. Create the proof
         const { data: proof, error: proofError } = await supabase.from("proofs").insert({
             title: title.replace(/<[^>]+>/g, ""),
-            project_id: projectId,
+            client_id: clientId,
+            project_id: projectId || null,
             status: "draft",
         }).select("id").single();
 
@@ -133,11 +158,12 @@ export async function createProof(projectId: string, formData: FormData) {
 
         // 3. Upload files and create version rows
         const files = formData.getAll("files") as File[];
+        const storageBucket = projectId || clientId;
         if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-                const storagePath = `${orgId}/${projectId}/${proof.id}/v${i + 1}-${Date.now()}.${ext}`;
+                const storagePath = `${orgId}/${storageBucket}/${proof.id}/v${i + 1}-${Date.now()}.${ext}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from("proofs")
@@ -315,5 +341,28 @@ export async function generateShareToken(proofId: string, projectId: string) {
         return { error: null, token };
     } catch {
         return { error: "Falha ao gerar link de compartilhamento", token: null };
+    }
+}
+
+export async function getClientProofs(clientId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "Não autenticado" };
+
+    try {
+        const { data, error } = await supabase
+            .from("proofs")
+            .select(`
+                id, title, status, file_type, deadline, locked_at, tags,
+                share_token, created_at, updated_at,
+                versions ( id, file_url, comments ( id, status ) )
+            `)
+            .eq("client_id", clientId)
+            .is("project_id", null)
+            .order("updated_at", { ascending: false });
+
+        return { data: data ?? [], error: error?.message ?? null };
+    } catch {
+        return { data: [], error: "Falha ao buscar provas do cliente" };
     }
 }

@@ -130,7 +130,8 @@ export async function createGuestComment(
     posX?: number | null,
     posY?: number | null,
     videoTimestamp?: number | null,
-    parentCommentId?: string | null
+    parentCommentId?: string | null,
+    annotationShape?: Record<string, unknown> | null
 ) {
     // Use service-role — guests have no auth session
 
@@ -154,11 +155,13 @@ export async function createGuestComment(
             video_timestamp: videoTimestamp ?? null,
             parent_comment_id: parentCommentId ?? null,
             is_internal: false,
+            annotation_shape: annotationShape ?? null,
         })
         .select(`
             id, content, pos_x, pos_y, video_timestamp,
             status, parent_comment_id, created_at,
             user_id, guest_reviewer_id, is_internal,
+            annotation_shape,
             guest_reviewers ( id, display_name, email )
         `)
         .single();

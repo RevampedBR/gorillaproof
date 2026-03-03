@@ -31,6 +31,7 @@ interface ClientItem {
     created_at: string;
     updated_at: string;
     projects: ProjectItem[];
+    proofs?: { id: string; title: string; status: string; tags: string[] | null; updated_at: string; project_id: string | null }[];
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -249,7 +250,8 @@ export function ClientsListClient({ clients }: { clients: ClientItem[] }) {
                     {filtered.map((client) => {
                         const isExpanded = expandedClients.has(client.id);
                         const projectCount = client.projects?.length || 0;
-                        const proofCount = client.projects?.reduce((acc, p) => acc + (p.proofs?.length || 0), 0) || 0;
+                        const looseProofs = (client.proofs || []).filter(p => !p.project_id);
+                        const proofCount = (client.projects?.reduce((acc, p) => acc + (p.proofs?.length || 0), 0) || 0) + looseProofs.length;
 
                         return (
                             <div key={client.id}>
@@ -295,85 +297,113 @@ export function ClientsListClient({ clients }: { clients: ClientItem[] }) {
                                 {/* Projects (expanded) */}
                                 {isExpanded && (
                                     <div className="bg-zinc-950/30">
-                                        {(!client.projects || client.projects.length === 0) ? (
+                                        {(!client.projects || client.projects.length === 0) && looseProofs.length === 0 ? (
                                             <div className="pl-16 pr-4 py-2.5">
-                                                <span className="text-[11px] text-zinc-600 italic">Nenhum projeto</span>
+                                                <span className="text-[11px] text-zinc-600 italic">Nenhum projeto ou prova</span>
                                             </div>
                                         ) : (
-                                            client.projects.map((project) => {
-                                                const projExpanded = expandedProjects.has(project.id);
-                                                const proofCount = project.proofs?.length || 0;
-
-                                                return (
-                                                    <div key={project.id}>
-                                                        {/* Project row */}
-                                                        <div className="flex items-center gap-3 pl-10 pr-4 py-2 hover:bg-zinc-800/40 transition-colors group/proj">
-                                                            <button
-                                                                onClick={() => toggleProject(project.id)}
-                                                                className="h-6 w-6 rounded-full flex items-center justify-center text-zinc-600 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
-                                                            >
-                                                                <svg className={`h-3 w-3 transition-transform ${projExpanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                                                </svg>
-                                                            </button>
-
-                                                            <div className="h-6 w-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                                                                <svg className="h-3 w-3 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            <>
+                                                {/* Loose proofs (without project) */}
+                                                {looseProofs.map((proof) => {
+                                                    const proofStatus = PROOF_STATUS[proof.status] || PROOF_STATUS.draft;
+                                                    return (
+                                                        <Link
+                                                            key={proof.id}
+                                                            href={`/proofs/${proof.id}`}
+                                                            className="flex items-center gap-3 pl-16 pr-4 py-2 hover:bg-zinc-800/20 transition-colors group/proof"
+                                                        >
+                                                            <div className="h-1.5 w-1.5 rounded-full bg-zinc-700 shrink-0" />
+                                                            <div className="h-5 w-5 rounded bg-zinc-800/60 flex items-center justify-center shrink-0">
+                                                                <svg className="h-2.5 w-2.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                                                 </svg>
                                                             </div>
-
-                                                            <Link href={`/clients/${client.id}/projects/${project.id}`} className="flex-1 min-w-0">
-                                                                <span className="text-[12px] font-medium text-zinc-300 group-hover/proj:text-white truncate block">
-                                                                    {project.name}
-                                                                </span>
-                                                            </Link>
-
-                                                            <span className="text-[10px] text-zinc-600 shrink-0">
-                                                                {proofCount} prova{proofCount !== 1 ? "s" : ""}
+                                                            <span className="text-[11px] text-zinc-400 group-hover/proof:text-zinc-200 truncate flex-1 transition-colors">
+                                                                {proof.title}
                                                             </span>
-                                                        </div>
+                                                            <span className={`text-[10px] ${proofStatus.color} shrink-0`}>
+                                                                {proofStatus.label}
+                                                            </span>
+                                                        </Link>
+                                                    );
+                                                })}
 
-                                                        {/* Proofs (expanded) */}
-                                                        {projExpanded && (
-                                                            <div className="bg-zinc-950/20">
-                                                                {(!project.proofs || project.proofs.length === 0) ? (
-                                                                    <div className="pl-24 pr-4 py-2">
-                                                                        <span className="text-[11px] text-zinc-600 italic">Nenhuma prova</span>
-                                                                    </div>
-                                                                ) : (
-                                                                    project.proofs.map((proof) => {
-                                                                        const proofStatus = PROOF_STATUS[proof.status] || PROOF_STATUS.draft;
-                                                                        return (
-                                                                            <Link
-                                                                                key={proof.id}
-                                                                                href={`/proofs/${proof.id}`}
-                                                                                className="flex items-center gap-3 pl-20 pr-4 py-2 hover:bg-zinc-800/20 transition-colors group/proof"
-                                                                            >
-                                                                                <div className="h-1.5 w-1.5 rounded-full bg-zinc-700 shrink-0" />
+                                                {/* Projects */}
+                                                {client.projects.map((project) => {
+                                                    const projExpanded = expandedProjects.has(project.id);
+                                                    const proofCount = project.proofs?.length || 0;
 
-                                                                                <div className="h-5 w-5 rounded bg-zinc-800/60 flex items-center justify-center shrink-0">
-                                                                                    <svg className="h-2.5 w-2.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                                                                    </svg>
-                                                                                </div>
+                                                    return (
+                                                        <div key={project.id}>
+                                                            {/* Project row */}
+                                                            <div className="flex items-center gap-3 pl-10 pr-4 py-2 hover:bg-zinc-800/40 transition-colors group/proj">
+                                                                <button
+                                                                    onClick={() => toggleProject(project.id)}
+                                                                    className="h-6 w-6 rounded-full flex items-center justify-center text-zinc-600 hover:text-white hover:bg-white/5 transition-colors cursor-pointer shrink-0"
+                                                                >
+                                                                    <svg className={`h-3 w-3 transition-transform ${projExpanded ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                                    </svg>
+                                                                </button>
 
-                                                                                <span className="text-[11px] text-zinc-400 group-hover/proof:text-zinc-200 truncate flex-1 transition-colors">
-                                                                                    {proof.title}
-                                                                                </span>
+                                                                <div className="h-6 w-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                                                                    <svg className="h-3 w-3 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                                    </svg>
+                                                                </div>
 
-                                                                                <span className={`text-[10px] ${proofStatus.color} shrink-0`}>
-                                                                                    {proofStatus.label}
-                                                                                </span>
-                                                                            </Link>
-                                                                        );
-                                                                    })
-                                                                )}
+                                                                <Link href={`/clients/${client.id}/projects/${project.id}`} className="flex-1 min-w-0">
+                                                                    <span className="text-[12px] font-medium text-zinc-300 group-hover/proj:text-white truncate block">
+                                                                        {project.name}
+                                                                    </span>
+                                                                </Link>
+
+                                                                <span className="text-[10px] text-zinc-600 shrink-0">
+                                                                    {proofCount} prova{proofCount !== 1 ? "s" : ""}
+                                                                </span>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })
+
+                                                            {/* Proofs (expanded) */}
+                                                            {projExpanded && (
+                                                                <div className="bg-zinc-950/20">
+                                                                    {(!project.proofs || project.proofs.length === 0) ? (
+                                                                        <div className="pl-24 pr-4 py-2">
+                                                                            <span className="text-[11px] text-zinc-600 italic">Nenhuma prova</span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        project.proofs.map((proof) => {
+                                                                            const proofStatus = PROOF_STATUS[proof.status] || PROOF_STATUS.draft;
+                                                                            return (
+                                                                                <Link
+                                                                                    key={proof.id}
+                                                                                    href={`/proofs/${proof.id}`}
+                                                                                    className="flex items-center gap-3 pl-20 pr-4 py-2 hover:bg-zinc-800/20 transition-colors group/proof"
+                                                                                >
+                                                                                    <div className="h-1.5 w-1.5 rounded-full bg-zinc-700 shrink-0" />
+
+                                                                                    <div className="h-5 w-5 rounded bg-zinc-800/60 flex items-center justify-center shrink-0">
+                                                                                        <svg className="h-2.5 w-2.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                                                                        </svg>
+                                                                                    </div>
+
+                                                                                    <span className="text-[11px] text-zinc-400 group-hover/proof:text-zinc-200 truncate flex-1 transition-colors">
+                                                                                        {proof.title}
+                                                                                    </span>
+
+                                                                                    <span className={`text-[10px] ${proofStatus.color} shrink-0`}>
+                                                                                        {proofStatus.label}
+                                                                                    </span>
+                                                                                </Link>
+                                                                            );
+                                                                        })
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </>
                                         )}
                                     </div>
                                 )}

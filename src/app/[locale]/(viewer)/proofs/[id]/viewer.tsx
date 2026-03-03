@@ -6,7 +6,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { UploadDropzone } from "@/components/upload/dropzone";
 import { getVersions } from "@/lib/actions/versions";
-import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
+import { AnnotationCanvas, AnnotationShape } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
 import { PdfViewer } from "@/components/viewer/pdf-viewer";
@@ -107,6 +107,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const viewerContainerRef = useRef<HTMLDivElement>(null);
     const [viewerSize, setViewerSize] = useState({ width: 800, height: 600 });
     const [drawingShapes, setDrawingShapes] = useState<DrawnShape[]>([]);
+
+    // Shape annotation state (links drawing shapes to comments)
+    const [pendingShape, setPendingShape] = useState<Record<string, unknown> | null>(null);
 
     // Video state
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -409,6 +412,153 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         }
     }, [isAnnotating, fileCategory]);
 
+    // ═══ SHAPE ANNOTATION HANDLER ═══
+    // When a drawing tool completes a shape on the DrawingCanvas, convert it to
+    // a percentage-based annotation shape and open the comment panel
+    const handleShapeDrawnForAnnotation = useCallback((shapes: DrawnShape[]) => {
+        setDrawingShapes(shapes);
+        // Only intercept if a drawing tool is active (not pin/select)
+        if (activeTool === "pin" || activeTool === "select") return;
+        if (shapes.length === 0) return;
+
+        const lastShape = shapes[shapes.length - 1];
+        const container = viewerContainerRef.current;
+        if (!container) return;
+
+        // Get the image/content element dimensions for percentage conversion
+        const img = container.querySelector("img, canvas, video");
+        if (!img) return;
+        const imgRect = img.getBoundingClientRect();
+        const imgW = imgRect.width;
+        const imgH = imgRect.height;
+
+        // Convert pixel coordinates to percentage
+        const toPctX = (px: number) => (px / imgW) * 100;
+        const toPctY = (py: number) => (py / imgH) * 100;
+
+        let annotShape: Record<string, unknown> | null = null;
+
+        switch (lastShape.type) {
+            case "rect":
+                annotShape = {
+                    type: "rect",
+                    color: lastShape.color,
+                    x: toPctX(lastShape.x),
+                    y: toPctY(lastShape.y),
+                    width: toPctX(lastShape.width),
+                    height: toPctY(lastShape.height),
+                };
+                break;
+            case "circle":
+                annotShape = {
+                    type: "circle",
+                    color: lastShape.color,
+                    x: toPctX(lastShape.x),
+                    y: toPctY(lastShape.y),
+                    width: toPctX(lastShape.width),
+                    height: toPctY(lastShape.height),
+                };
+                break;
+            case "arrow":
+                annotShape = {
+                    type: "arrow",
+                    color: lastShape.color,
+                    x: toPctX(lastShape.x),
+                    y: toPctY(lastShape.y),
+                    x2: toPctX(lastShape.x2),
+                    y2: toPctY(lastShape.y2),
+                };
+                break;
+            case "line":
+                annotShape = {
+                    type: "line",
+                    color: lastShape.color,
+                    x: toPctX(lastShape.x),
+                    y: toPctY(lastShape.y),
+                    x2: toPctX(lastShape.x2),
+                    y2: toPctY(lastShape.y2),
+                };
+                break;
+            case "pen":
+                if (lastShape.points && lastShape.points.length >= 2) {
+                    annotShape = {
+                        type: "pen",
+                        color: lastShape.color,
+                        points: lastShape.points.map((p) => ({
+                            x: toPctX(p.x),
+                            y: toPctY(p.y),
+                        })),
+                    };
+                }
+                break;
+        }
+
+        if (annotShape) {
+            setPendingShape(annotShape);
+            setShowSidebar(true);
+            // Remove the shape from DrawingCanvas since it'll be persisted with the comment
+            drawingCanvasRef.current?.undo();
+        }
+    }, [activeTool]);
+
+    // ═══ CLICK-TO-NAVIGATE for shape comments ═══
+    const handleCommentPinClick = useCallback((commentId: string) => {
+        setActivePinId(commentId);
+        setShowSidebar(true);
+
+        // Find comment and scroll to its annotation region
+        const comment = comments.find((c: any) => c.id === commentId);
+        if (!comment) return;
+
+        const container = viewerContainerRef.current;
+        if (!container) return;
+
+        if (comment.annotation_shape) {
+            const shape = comment.annotation_shape as any;
+            const img = container.querySelector("img, canvas, video");
+            if (!img) return;
+            const imgRect = img.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            // Get the bounding box of the shape in percentage
+            let cx = 0, cy = 0;
+            switch (shape.type) {
+                case "rect":
+                case "circle":
+                    cx = (shape.x + (shape.width || 0) / 2);
+                    cy = (shape.y + (shape.height || 0) / 2);
+                    break;
+                case "arrow":
+                case "line":
+                    cx = ((shape.x || 0) + (shape.x2 || 0)) / 2;
+                    cy = ((shape.y || 0) + (shape.y2 || 0)) / 2;
+                    break;
+                case "pen":
+                    if (shape.points?.length) {
+                        const xs = shape.points.map((p: any) => p.x);
+                        const ys = shape.points.map((p: any) => p.y);
+                        cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+                        cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+                    }
+                    break;
+            }
+
+            // Convert percentage to pixel position relative to the image
+            const pxX = (cx / 100) * imgRect.width;
+            const pxY = (cy / 100) * imgRect.height;
+
+            // Calculate scroll position to center the shape in the viewport
+            const imgOffsetLeft = imgRect.left - containerRect.left + container.scrollLeft;
+            const imgOffsetTop = imgRect.top - containerRect.top + container.scrollTop;
+
+            container.scrollTo({
+                left: imgOffsetLeft + pxX - containerRect.width / 2,
+                top: imgOffsetTop + pxY - containerRect.height / 2,
+                behavior: "smooth",
+            });
+        }
+    }, [comments]);
+
     const [reviewerDecisions, setReviewerDecisions] = useState<any[]>([]);
     const isLocked = !!proof.locked_at;
 
@@ -626,6 +776,42 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const allPins = pendingPin
         ? [...pins, { id: "pending", number: rootComments.length + 1, posX: pendingPin.posX, posY: pendingPin.posY, status: "open" as const, preview: "..." }]
         : pins;
+
+    // Build annotation shapes from comments
+    const annotationShapes: AnnotationShape[] = comments
+        .filter((c: any) => !c.parent_comment_id && c.annotation_shape)
+        .map((c: any) => ({
+            id: `shape-${c.id}`,
+            commentId: c.id,
+            type: c.annotation_shape.type,
+            color: c.annotation_shape.color || "#ef4444",
+            status: c.status as "open" | "resolved",
+            x: c.annotation_shape.x,
+            y: c.annotation_shape.y,
+            width: c.annotation_shape.width,
+            height: c.annotation_shape.height,
+            x2: c.annotation_shape.x2,
+            y2: c.annotation_shape.y2,
+            points: c.annotation_shape.points,
+        }));
+
+    // Add pending shape preview
+    const allShapes = pendingShape
+        ? [...annotationShapes, {
+            id: "pending-shape",
+            commentId: "pending",
+            type: (pendingShape as any).type,
+            color: (pendingShape as any).color || "#ef4444",
+            status: "open" as const,
+            x: (pendingShape as any).x,
+            y: (pendingShape as any).y,
+            width: (pendingShape as any).width,
+            height: (pendingShape as any).height,
+            x2: (pendingShape as any).x2,
+            y2: (pendingShape as any).y2,
+            points: (pendingShape as any).points,
+        }]
+        : annotationShapes;
     const videoBookmarks = comments.filter((c: any) => !c.parent_comment_id && c.video_timestamp != null);
     const openComments = comments.filter((c: any) => !c.parent_comment_id && c.status === "open").length;
 
@@ -1103,7 +1289,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             {/* ═══════════════════════════════════════════════════
                 MAIN CONTENT + SIDEBAR
             ═══════════════════════════════════════════════════ */}
-            <div className="flex flex-1 overflow-hidden viewer-no-scrollbar">
+            <div className="flex flex-1 overflow-hidden viewer-styled-scrollbar">
                 {/* Viewer Area */}
                 <div className="flex-1 flex flex-col overflow-hidden bg-[#15152a]">
                     {/* Upload Zone */}
@@ -1120,7 +1306,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     )}
 
                     {/* Viewer Canvas */}
-                    <div ref={viewerContainerRef} className={`flex-1 flex items-center justify-center overflow-auto relative viewer-no-scrollbar ${isSpaceHeld ? (isPanningRef.current ? "cursor-grabbing" : "cursor-grab") : ""}`}
+                    <div ref={viewerContainerRef} className={`flex-1 flex items-center justify-center overflow-auto relative viewer-styled-scrollbar ${isSpaceHeld ? (isPanningRef.current ? "cursor-grabbing" : "cursor-grab") : ""}`}
                         onMouseDown={e => handlePanMouseDown(e, viewerContainerRef.current)}
                     >
                         {!selectedVersion ? (
@@ -1267,9 +1453,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                         <img src={fileUrl} alt="Versão atual" className="max-w-none shadow-2xl" draggable={false} />
                                                         <AnnotationCanvas
                                                             pins={allPins}
+                                                            shapes={allShapes}
                                                             isAnnotating={isAnnotating && !marqueeActive}
                                                             activePinId={activePinId}
-                                                            onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                                            activeShapeId={activePinId}
+                                                            onPinClick={(id) => handleCommentPinClick(id)}
+                                                            onShapeClick={(id) => handleCommentPinClick(id)}
                                                             onCanvasClick={handleCanvasClick}
                                                         />
                                                     </div>
@@ -1349,9 +1538,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                         <img src={fileUrl} alt={proof.title} className="max-w-none rounded shadow-2xl" draggable={false} />
                                         <AnnotationCanvas
                                             pins={allPins}
+                                            shapes={allShapes}
                                             isAnnotating={isAnnotating}
                                             activePinId={activePinId}
-                                            onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                            activeShapeId={activePinId}
+                                            onPinClick={(id) => handleCommentPinClick(id)}
+                                            onShapeClick={(id) => handleCommentPinClick(id)}
                                             onCanvasClick={handleCanvasClick}
                                         />
                                         <DrawingCanvas
@@ -1360,7 +1552,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                             color={annotColor}
                                             containerWidth={viewerSize.width}
                                             containerHeight={viewerSize.height}
-                                            onShapesChange={setDrawingShapes}
+                                            onShapesChange={handleShapeDrawnForAnnotation}
                                         />
                                     </div>
                                 )}
@@ -1872,16 +2064,19 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                         fileUrl={fileUrl}
                                         zoom={zoom}
                                         pins={allPins}
+                                        shapes={allShapes}
                                         isAnnotating={isAnnotating}
                                         activePinId={activePinId}
+                                        activeShapeId={activePinId}
                                         activeTool={activeTool}
                                         annotColor={annotColor}
                                         drawingShapes={drawingShapes}
                                         drawingCanvasRef={drawingCanvasRef}
                                         viewerSize={viewerSize}
-                                        onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                        onPinClick={(id) => handleCommentPinClick(id)}
+                                        onShapeClick={(id) => handleCommentPinClick(id)}
                                         onCanvasClick={handleCanvasClick}
-                                        onShapesChange={setDrawingShapes}
+                                        onShapesChange={handleShapeDrawnForAnnotation}
                                     />
                                 )}
                                 {(fileCategory === "design" || fileCategory === "unknown") && (
@@ -1957,10 +2152,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     currentUserId={currentUserId}
                                     activePinId={activePinId}
                                     pendingPin={pendingPin}
+                                    pendingShape={pendingShape}
                                     videoTimestamp={fileCategory === "video" ? videoTime : null}
                                     onCommentCreated={refreshComments}
-                                    onPinClick={(id) => setActivePinId(id)}
+                                    onPinClick={(id) => handleCommentPinClick(id)}
                                     onCancelPin={() => setPendingPin(null)}
+                                    onPendingShapeClear={() => setPendingShape(null)}
                                     orgMembers={orgMembers}
                                 />
                             </div>

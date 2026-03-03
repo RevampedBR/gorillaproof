@@ -155,7 +155,7 @@ export function ProjectDetailClient({ project, proofs, clientName, clientId }: P
                             </div>
                         </div>
                         <div className="shrink-0">
-                            <CreateProofDialog projectId={project.id} clientName={clientName} projectName={project.name}>
+                            <CreateProofDialog clientId={clientId} projectId={project.id} clientName={clientName} projectName={project.name}>
                                 <Button
                                     size="lg"
                                     className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[14px] h-11 px-6 rounded-xl shadow-lg shadow-emerald-500/20 font-semibold transition-all hover:shadow-emerald-500/30 hover:scale-[1.02]"
@@ -236,7 +236,7 @@ export function ProjectDetailClient({ project, proofs, clientName, clientId }: P
                         <h3 className="text-[16px] font-semibold text-zinc-200">{t("noProofs")}</h3>
                         <p className="text-[13px] text-zinc-500 mt-2 max-w-sm">Envie sua primeira prova e comece a coletar feedback e aprovações da sua equipe.</p>
                         <div className="mt-6">
-                            <CreateProofDialog projectId={project.id} clientName={clientName} projectName={project.name}>
+                            <CreateProofDialog clientId={clientId} projectId={project.id} clientName={clientName} projectName={project.name}>
                                 <Button className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[13px] h-10 px-6 rounded-xl shadow-lg shadow-emerald-500/15">
                                     + {t("createProof")}
                                 </Button>

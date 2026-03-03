@@ -13,6 +13,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             projects (
                 id, name, description, status, created_at, updated_at,
                 proofs ( id, title, status, tags, updated_at )
+            ),
+            proofs!proofs_client_id_fkey (
+                id, title, status, tags, updated_at, project_id
             )
         `)
         .eq("id", id)

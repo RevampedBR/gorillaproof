@@ -5,7 +5,7 @@ import Image from "next/image";
 import { GuestGate } from "@/components/review/guest-gate";
 import { registerGuest, createGuestComment, submitGuestDecision } from "@/lib/actions/guests";
 import { getFileCategory } from "@/lib/storage";
-import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
+import { AnnotationCanvas, AnnotationShape } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
 import { PdfViewer } from "@/components/viewer/pdf-viewer";
@@ -126,6 +126,9 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
     const [viewerSize, setViewerSize] = useState({ width: 800, height: 600 });
     const [drawingShapes, setDrawingShapes] = useState<DrawnShape[]>([]);
 
+    // Shape annotation
+    const [pendingShape, setPendingShape] = useState<Record<string, unknown> | null>(null);
+
     // Video state
     const videoRef = useRef<HTMLVideoElement>(null);
     const [videoTime, setVideoTime] = useState(0);
@@ -211,6 +214,41 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
     const allPins = pendingPin
         ? [...pins, { id: "pending", number: rootComments.length + 1, posX: pendingPin.posX, posY: pendingPin.posY, status: "open" as const, preview: "..." }]
         : pins;
+
+    // Build annotation shapes from comments
+    const annotationShapes: AnnotationShape[] = comments
+        .filter((c: any) => !c.parent_comment_id && c.annotation_shape)
+        .map((c: any) => ({
+            id: `shape-${c.id}`,
+            commentId: c.id,
+            type: c.annotation_shape.type,
+            color: c.annotation_shape.color || "#ef4444",
+            status: c.status as "open" | "resolved",
+            x: c.annotation_shape.x,
+            y: c.annotation_shape.y,
+            width: c.annotation_shape.width,
+            height: c.annotation_shape.height,
+            x2: c.annotation_shape.x2,
+            y2: c.annotation_shape.y2,
+            points: c.annotation_shape.points,
+        }));
+
+    const allShapes = pendingShape
+        ? [...annotationShapes, {
+            id: "pending-shape",
+            commentId: "pending",
+            type: (pendingShape as any).type,
+            color: (pendingShape as any).color || "#ef4444",
+            status: "open" as const,
+            x: (pendingShape as any).x,
+            y: (pendingShape as any).y,
+            width: (pendingShape as any).width,
+            height: (pendingShape as any).height,
+            x2: (pendingShape as any).x2,
+            y2: (pendingShape as any).y2,
+            points: (pendingShape as any).points,
+        }]
+        : annotationShapes;
 
     const openComments = comments.filter((c: any) => !c.parent_comment_id && c.status === "open").length;
 
@@ -458,9 +496,12 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                             {isAnnotating && activeTool === "pin" && (
                                 <AnnotationCanvas
                                     pins={allPins}
+                                    shapes={allShapes}
                                     isAnnotating={isAnnotating}
                                     activePinId={activePinId}
-                                    onPinClick={(id) => setActivePinId(id)}
+                                    activeShapeId={activePinId}
+                                    onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                    onShapeClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
                                     onCanvasClick={handleCanvasClick}
                                 />
                             )}
@@ -489,9 +530,12 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                             {isAnnotating && activeTool === "pin" && (
                                 <AnnotationCanvas
                                     pins={allPins}
+                                    shapes={allShapes}
                                     isAnnotating={isAnnotating}
                                     activePinId={activePinId}
-                                    onPinClick={(id) => setActivePinId(id)}
+                                    activeShapeId={activePinId}
+                                    onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
+                                    onShapeClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
                                     onCanvasClick={handleCanvasClick}
                                 />
                             )}
@@ -534,9 +578,11 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                             proofId={proof.id}
                             currentUserId={`guest:${guestInfo.id}`}
                             pendingPin={pendingPin}
+                            pendingShape={pendingShape}
                             activePinId={activePinId}
-                            onPinClick={(id) => setActivePinId(id)}
+                            onPinClick={(id) => { setActivePinId(id); setShowSidebar(true); }}
                             onCancelPin={() => setPendingPin(null)}
+                            onPendingShapeClear={() => setPendingShape(null)}
                             onCommentCreated={refreshComments}
                             isLocked={isLocked}
                             videoTimestamp={fileCategory === "video" ? videoTime : undefined}

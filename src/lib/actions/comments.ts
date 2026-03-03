@@ -16,6 +16,7 @@ export async function getComments(versionId: string) {
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at, updated_at,
                 user_id, attachment_url, is_internal, guest_reviewer_id,
+                annotation_shape,
                 users ( id, full_name, avatar_url, email ),
                 guest_reviewers ( id, display_name, email )
             `)
@@ -37,7 +38,8 @@ export async function createComment(
     videoTimestamp?: number | null,
     parentCommentId?: string | null,
     attachmentUrl?: string | null,
-    isInternal?: boolean
+    isInternal?: boolean,
+    annotationShape?: Record<string, unknown> | null
 ) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -65,11 +67,13 @@ export async function createComment(
                 parent_comment_id: parentCommentId ?? null,
                 attachment_url: attachmentUrl ?? null,
                 is_internal: isInternal ?? false,
+                annotation_shape: annotationShape ?? null,
             })
             .select(`
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at,
                 user_id, attachment_url, is_internal,
+                annotation_shape,
                 users ( id, full_name, avatar_url, email )
             `)
             .single();
@@ -156,7 +160,7 @@ export async function carryCommentsForward(fromVersionId: string, toVersionId: s
         // Get open comments from the previous version
         const { data: oldComments } = await supabase
             .from("comments")
-            .select("content, pos_x, pos_y, video_timestamp, user_id, is_internal")
+            .select("content, pos_x, pos_y, video_timestamp, user_id, is_internal, annotation_shape")
             .eq("version_id", fromVersionId)
             .eq("status", "open")
             .is("parent_comment_id", null);
@@ -172,6 +176,7 @@ export async function carryCommentsForward(fromVersionId: string, toVersionId: s
             pos_y: c.pos_y,
             video_timestamp: c.video_timestamp,
             is_internal: c.is_internal ?? false,
+            annotation_shape: c.annotation_shape ?? null,
         }));
 
         const { error } = await supabase.from("comments").insert(newComments);

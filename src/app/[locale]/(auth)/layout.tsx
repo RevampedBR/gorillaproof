@@ -33,11 +33,11 @@ export default function AuthLayout({
 
                 <div className="relative z-10 space-y-4">
                     <h1 className="text-4xl font-bold tracking-tight text-zinc-100">
-                        Simplifique seu processo de revisão criativa.
+                        Domine suas revisões como um primata evoluído.
                     </h1>
                     <p className="text-lg text-zinc-400">
-                        Centenas de agências gerenciam feedbacks, versões e aprovações
-                        em um espaço de trabalho centralizado.
+                        Agências inteligentes já revisam no habitat certo — feedback
+                        centralizado, sem caos.
                     </p>
                 </div>
             </div>

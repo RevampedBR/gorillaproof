@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import {
     Dialog,
@@ -16,14 +17,16 @@ import { Label } from "@/components/ui/label";
 import { createProof } from "@/lib/actions/proofs";
 
 interface CreateProofDialogProps {
-    projectId: string;
+    clientId: string;
+    projectId?: string;
     clientName?: string;
     projectName?: string;
     children: React.ReactNode;
 }
 
-export function CreateProofDialog({ projectId, clientName, projectName, children }: CreateProofDialogProps) {
+export function CreateProofDialog({ clientId, projectId, clientName, projectName, children }: CreateProofDialogProps) {
     const t = useTranslations("dashboard.projects");
+    const router = useRouter();
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isPending, startTransition] = useTransition();
@@ -34,11 +37,12 @@ export function CreateProofDialog({ projectId, clientName, projectName, children
         const formData = new FormData(e.currentTarget);
 
         startTransition(async () => {
-            const result = await createProof(projectId, formData);
+            const result = await createProof(clientId, formData, projectId || null);
             if (result?.error) {
                 setError(result.error);
             } else {
                 setOpen(false);
+                if (result.id) router.push(`/proofs/${result.id}`);
             }
         });
     };

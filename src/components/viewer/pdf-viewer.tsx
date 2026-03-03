@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { AnnotationCanvas } from "@/components/annotations/annotation-canvas";
+import { AnnotationCanvas, AnnotationShape } from "@/components/annotations/annotation-canvas";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
 
 interface AnnotationPin {
@@ -17,14 +17,17 @@ interface PdfViewerProps {
     fileUrl: string;
     zoom: number;
     pins: AnnotationPin[];
+    shapes?: AnnotationShape[];
     isAnnotating: boolean;
     activePinId: string | null;
+    activeShapeId?: string | null;
     activeTool: string;
     annotColor: string;
     drawingShapes: DrawnShape[];
     drawingCanvasRef: React.RefObject<DrawingCanvasHandle | null>;
     viewerSize: { width: number; height: number };
     onPinClick: (pinId: string) => void;
+    onShapeClick?: (commentId: string) => void;
     onCanvasClick: (posX: number, posY: number) => void;
     onShapesChange: (shapes: DrawnShape[]) => void;
 }
@@ -33,14 +36,17 @@ export function PdfViewer({
     fileUrl,
     zoom,
     pins,
+    shapes = [],
     isAnnotating,
     activePinId,
+    activeShapeId,
     activeTool,
     annotColor,
     drawingShapes,
     drawingCanvasRef,
     viewerSize,
     onPinClick,
+    onShapeClick,
     onCanvasClick,
     onShapesChange,
 }: PdfViewerProps) {
@@ -183,12 +189,15 @@ export function PdfViewer({
                         draggable={false}
                     />
 
-                    {/* Annotation pins overlay */}
+                    {/* Annotation overlays */}
                     <AnnotationCanvas
                         pins={pins}
+                        shapes={shapes}
                         isAnnotating={isAnnotating}
                         activePinId={activePinId}
+                        activeShapeId={activeShapeId}
                         onPinClick={onPinClick}
+                        onShapeClick={onShapeClick}
                         onCanvasClick={onCanvasClick}
                     />
 

@@ -175,17 +175,38 @@
   transform: translateX(0) scale(1);
 }
 
-/* ═══ Proof Viewer: hide unwanted scrollbars ═══ */
+/* ═══ Proof Viewer: styled thin scrollbars ═══ */
+.viewer-styled-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a55 transparent;
+}
+
+.viewer-styled-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.viewer-styled-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.viewer-styled-scrollbar::-webkit-scrollbar-thumb {
+  background: #3a3a55;
+  border-radius: 4px;
+}
+
+.viewer-styled-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #5a5a75;
+}
+
+/* ═══ Proof Viewer: hide scrollbars (video timeline only) ═══ */
 .viewer-no-scrollbar {
   scrollbar-width: none;
-  /* Firefox */
   -ms-overflow-style: none;
-  /* IE/Edge */
 }
 
 .viewer-no-scrollbar::-webkit-scrollbar {
   display: none;
-  /* Chrome/Safari */
 }
 
 /* contentEditable rich text editor — thin scrollbar only when needed */

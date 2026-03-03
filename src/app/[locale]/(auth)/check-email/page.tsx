@@ -9,14 +9,14 @@ export default function CheckEmailPage() {
                 </svg>
             </div>
             <h1 className="text-2xl font-bold text-zinc-100">
-                Verifique seu e-mail
+                Dá uma conferida no e-mail
             </h1>
             <p className="text-[15px] text-zinc-400 max-w-sm leading-relaxed">
-                Enviamos um link de confirmação para o seu e-mail. Clique no link para ativar sua conta e começar a usar o GorillaProof.
+                Mandamos um sinal de fumaça pro seu e-mail. Clique no link pra ativar sua conta e entrar na selva.
             </p>
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 max-w-sm">
                 <p className="text-[13px] text-amber-300">
-                    Não encontrou o e-mail? Verifique sua <strong>caixa de spam</strong> ou aguarde alguns minutos.
+                    Não achou? Dá uma olhada na <strong>caixa de spam</strong> — às vezes o sinal se perde na mata.
                 </p>
             </div>
             <Link

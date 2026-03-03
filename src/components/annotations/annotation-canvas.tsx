@@ -11,19 +11,43 @@ interface AnnotationPin {
     preview: string;
 }
 
+export interface AnnotationShape {
+    id: string;
+    commentId: string;
+    type: "rect" | "circle" | "arrow" | "line" | "pen";
+    color: string;
+    status: "open" | "resolved";
+    // Rect/Circle (percentages 0-100)
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    // Arrow/Line (percentages 0-100)
+    x2?: number;
+    y2?: number;
+    // Pen (percentages 0-100)
+    points?: { x: number; y: number }[];
+}
+
 interface AnnotationCanvasProps {
     pins: AnnotationPin[];
+    shapes?: AnnotationShape[];
     isAnnotating: boolean;
     activePinId?: string | null;
+    activeShapeId?: string | null;
     onPinClick: (pinId: string) => void;
+    onShapeClick?: (commentId: string) => void;
     onCanvasClick: (posX: number, posY: number) => void;
 }
 
 export function AnnotationCanvas({
     pins,
+    shapes = [],
     isAnnotating,
     activePinId,
+    activeShapeId,
     onPinClick,
+    onShapeClick,
     onCanvasClick,
 }: AnnotationCanvasProps) {
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -41,12 +65,201 @@ export function AnnotationCanvas({
         [isAnnotating, onCanvasClick]
     );
 
+    const renderShape = (shape: AnnotationShape) => {
+        const isActive = activeShapeId === shape.commentId;
+        const isResolved = shape.status === "resolved";
+        const color = isResolved ? "#71717a" : shape.color;
+        const opacity = isResolved ? 0.35 : isActive ? 1 : 0.7;
+
+        const commonClasses = `absolute pointer-events-auto cursor-pointer transition-all duration-200 ${isActive ? "z-20" : "z-10"}`;
+
+        switch (shape.type) {
+            case "rect":
+                return (
+                    <div
+                        key={shape.id}
+                        className={commonClasses}
+                        style={{
+                            left: `${shape.x}%`,
+                            top: `${shape.y}%`,
+                            width: `${shape.width}%`,
+                            height: `${shape.height}%`,
+                            border: `2px ${isActive ? "solid" : "dashed"} ${color}`,
+                            backgroundColor: `${color}10`,
+                            opacity,
+                            boxShadow: isActive ? `0 0 12px ${color}60` : undefined,
+                        }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onShapeClick?.(shape.commentId);
+                        }}
+                    />
+                );
+            case "circle": {
+                const cx = (shape.x ?? 0) + (shape.width ?? 0) / 2;
+                const cy = (shape.y ?? 0) + (shape.height ?? 0) / 2;
+                const rx = (shape.width ?? 0) / 2;
+                const ry = (shape.height ?? 0) / 2;
+                return (
+                    <svg
+                        key={shape.id}
+                        className={`${commonClasses} overflow-visible`}
+                        style={{
+                            left: `${shape.x}%`,
+                            top: `${shape.y}%`,
+                            width: `${shape.width}%`,
+                            height: `${shape.height}%`,
+                            opacity,
+                        }}
+                        viewBox={`0 0 ${shape.width} ${shape.height}`}
+                        preserveAspectRatio="none"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onShapeClick?.(shape.commentId);
+                        }}
+                    >
+                        <ellipse
+                            cx={rx}
+                            cy={ry}
+                            rx={rx}
+                            ry={ry}
+                            fill={`${color}10`}
+                            stroke={color}
+                            strokeWidth="0.5"
+                            strokeDasharray={isActive ? "none" : "2 2"}
+                            style={{ filter: isActive ? `drop-shadow(0 0 6px ${color}60)` : undefined }}
+                        />
+                    </svg>
+                );
+            }
+            case "arrow":
+            case "line": {
+                const x1 = shape.x ?? 0;
+                const y1 = shape.y ?? 0;
+                const x2 = shape.x2 ?? 0;
+                const y2 = shape.y2 ?? 0;
+                const minX = Math.min(x1, x2);
+                const minY = Math.min(y1, y2);
+                const w = Math.abs(x2 - x1) || 0.5;
+                const h = Math.abs(y2 - y1) || 0.5;
+                const pad = 2;
+                return (
+                    <svg
+                        key={shape.id}
+                        className={`${commonClasses} overflow-visible`}
+                        style={{
+                            left: `${minX - pad}%`,
+                            top: `${minY - pad}%`,
+                            width: `${w + pad * 2}%`,
+                            height: `${h + pad * 2}%`,
+                            opacity,
+                        }}
+                        viewBox={`0 0 ${w + pad * 2} ${h + pad * 2}`}
+                        preserveAspectRatio="none"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onShapeClick?.(shape.commentId);
+                        }}
+                    >
+                        {shape.type === "arrow" && (
+                            <defs>
+                                <marker
+                                    id={`arrowhead-${shape.id}`}
+                                    markerWidth="8"
+                                    markerHeight="6"
+                                    refX="7"
+                                    refY="3"
+                                    orient="auto"
+                                >
+                                    <polygon points="0 0, 8 3, 0 6" fill={color} />
+                                </marker>
+                            </defs>
+                        )}
+                        <line
+                            x1={x1 - minX + pad}
+                            y1={y1 - minY + pad}
+                            x2={x2 - minX + pad}
+                            y2={y2 - minY + pad}
+                            stroke={color}
+                            strokeWidth="0.5"
+                            strokeDasharray={isActive ? "none" : "2 2"}
+                            markerEnd={shape.type === "arrow" ? `url(#arrowhead-${shape.id})` : undefined}
+                            style={{ filter: isActive ? `drop-shadow(0 0 6px ${color}60)` : undefined }}
+                        />
+                        {/* Transparent hit area for easier clicking */}
+                        <line
+                            x1={x1 - minX + pad}
+                            y1={y1 - minY + pad}
+                            x2={x2 - minX + pad}
+                            y2={y2 - minY + pad}
+                            stroke="transparent"
+                            strokeWidth="4"
+                        />
+                    </svg>
+                );
+            }
+            case "pen": {
+                if (!shape.points || shape.points.length < 2) return null;
+                const xs = shape.points.map((p) => p.x);
+                const ys = shape.points.map((p) => p.y);
+                const minX = Math.min(...xs);
+                const minY = Math.min(...ys);
+                const maxX = Math.max(...xs);
+                const maxY = Math.max(...ys);
+                const w = (maxX - minX) || 0.5;
+                const h = (maxY - minY) || 0.5;
+                const pad = 2;
+                const pathData = shape.points
+                    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x - minX + pad} ${p.y - minY + pad}`)
+                    .join(" ");
+                return (
+                    <svg
+                        key={shape.id}
+                        className={`${commonClasses} overflow-visible`}
+                        style={{
+                            left: `${minX - pad}%`,
+                            top: `${minY - pad}%`,
+                            width: `${w + pad * 2}%`,
+                            height: `${h + pad * 2}%`,
+                            opacity,
+                        }}
+                        viewBox={`0 0 ${w + pad * 2} ${h + pad * 2}`}
+                        preserveAspectRatio="none"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onShapeClick?.(shape.commentId);
+                        }}
+                    >
+                        <path
+                            d={pathData}
+                            fill="none"
+                            stroke={color}
+                            strokeWidth="0.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeDasharray={isActive ? "none" : "2 2"}
+                            style={{ filter: isActive ? `drop-shadow(0 0 6px ${color}60)` : undefined }}
+                        />
+                        {/* Transparent hit area */}
+                        <path d={pathData} fill="none" stroke="transparent" strokeWidth="4" />
+                    </svg>
+                );
+            }
+            default:
+                return null;
+        }
+    };
+
     return (
         <div
             ref={canvasRef}
             className={`absolute inset-0 z-10 ${isAnnotating ? "cursor-crosshair" : "pointer-events-none"}`}
             onClick={handleClick}
         >
+            {/* Render comment-linked shapes */}
+            {shapes.map((shape) => renderShape(shape))}
+
+            {/* Render pins */}
             {pins.map((pin) => (
                 <button
                     key={pin.id}

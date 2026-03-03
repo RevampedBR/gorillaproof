@@ -5,9 +5,9 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
-interface Proof { id: string; title: string; status: string; }
+interface Proof { id: string; title: string; status: string; project_id?: string | null; }
 interface Project { id: string; name: string; proofs?: Proof[]; }
-interface Client { id: string; name: string; logo_url?: string | null; projects?: Project[]; }
+interface Client { id: string; name: string; logo_url?: string | null; projects?: Project[]; proofs?: Proof[]; }
 
 interface NavTreeProps {
     refreshKey?: number;
@@ -41,6 +41,9 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
                 projects (
                     id, name,
                     proofs ( id, title, status )
+                ),
+                proofs!proofs_client_id_fkey (
+                    id, title, status, project_id
                 )
             `)
             .in("organization_id", orgIds)
@@ -113,6 +116,8 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
                 const clientExpanded = expandedClients.has(client.id);
                 const clientPath = `/clients/${client.id}`;
                 const hasProjects = (client.projects?.length || 0) > 0;
+                const looseProofs = (client.proofs || []).filter(p => !p.project_id);
+                const hasContent = hasProjects || looseProofs.length > 0;
 
                 return (
                     <div key={client.id}>
@@ -148,16 +153,33 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
                                     </div>
                                 )}
                                 <span className="truncate">{client.name}</span>
-                                {hasProjects && (
-                                    <span className="ml-auto text-[10px] text-zinc-600 shrink-0">{client.projects!.length}</span>
+                                {hasContent && (
+                                    <span className="ml-auto text-[10px] text-zinc-600 shrink-0">
+                                        {(client.projects?.length || 0) + looseProofs.length}
+                                    </span>
                                 )}
                             </Link>
                         </div>
 
                         {/* Projects */}
-                        {clientExpanded && hasProjects && (
+                        {clientExpanded && hasContent && (
                             <div className="ml-5 mt-0.5 space-y-0.5 border-l border-zinc-800/60 pl-2">
-                                {client.projects!.map(project => {
+                                {/* Loose proofs (without project) */}
+                                {looseProofs.map(proof => (
+                                    <Link
+                                        key={proof.id}
+                                        href={`/proofs/${proof.id}` as any}
+                                        className={`flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] transition-colors min-w-0 ${isActive(`/proofs/${proof.id}`)
+                                            ? "bg-zinc-800/60 text-zinc-200"
+                                            : "text-zinc-600 hover:bg-zinc-800/30 hover:text-zinc-400"}`}
+                                    >
+                                        <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${proof.status === "approved" ? "bg-emerald-500" : proof.status === "changes_requested" ? "bg-amber-500" : proof.status === "in_review" ? "bg-blue-400" : "bg-zinc-600"}`} />
+                                        <span className="truncate">{proof.title}</span>
+                                    </Link>
+                                ))}
+
+                                {/* Projects */}
+                                {hasProjects && client.projects!.map(project => {
                                     const projectPath = `/clients/${client.id}/projects/${project.id}`;
                                     const projectExpanded = expandedProjects.has(project.id);
                                     const hasProofs = (project.proofs?.length || 0) > 0;

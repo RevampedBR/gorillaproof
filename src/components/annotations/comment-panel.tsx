@@ -23,6 +23,7 @@ interface Comment {
     user_id: string;
     attachment_url?: string | null;
     is_internal?: boolean;
+    annotation_shape?: Record<string, unknown> | null;
     users: { id: string; full_name: string | null; avatar_url: string | null; email: string } | null;
 }
 
@@ -34,6 +35,7 @@ interface CommentPanelProps {
     currentUserId: string;
     activePinId: string | null;
     pendingPin: { posX: number; posY: number } | null;
+    pendingShape?: Record<string, unknown> | null;
     videoTimestamp?: number | null;
     onCommentCreated: () => void;
     onPinClick: (commentId: string) => void;
@@ -44,6 +46,7 @@ interface CommentPanelProps {
     isLocked?: boolean;
     onRefresh?: () => void;
     onPendingPinClear?: () => void;
+    onPendingShapeClear?: () => void;
 }
 
 type FilterType = "all" | "open" | "resolved";
@@ -56,6 +59,7 @@ export function CommentPanel({
     currentUserId,
     activePinId,
     pendingPin,
+    pendingShape,
     videoTimestamp,
     onCommentCreated,
     onPinClick,
@@ -66,6 +70,7 @@ export function CommentPanel({
     isLocked = false,
     onRefresh,
     onPendingPinClear,
+    onPendingShapeClear,
 }: CommentPanelProps) {
     const t = useTranslations("dashboard.comments");
     const { toast } = useToast();
@@ -99,12 +104,12 @@ export function CommentPanel({
         return (user.full_name?.toLowerCase().includes(q) || user.email?.toLowerCase().includes(q));
     }).slice(0, 6);
 
-    // Focus input when pending pin is placed
+    // Focus input when pending pin/shape is placed
     useEffect(() => {
-        if (pendingPin && commentInputRef.current) {
+        if ((pendingPin || pendingShape) && commentInputRef.current) {
             commentInputRef.current.focus();
         }
-    }, [pendingPin]);
+    }, [pendingPin, pendingShape]);
 
     // Scroll to active comment
     useEffect(() => {
@@ -262,6 +267,8 @@ export function CommentPanel({
                 pendingPin?.posX ?? null,
                 pendingPin?.posY ?? null,
                 videoTimestamp ?? null,
+                null,
+                pendingShape ?? null,
             );
         } else {
             await createComment(
@@ -273,7 +280,8 @@ export function CommentPanel({
                 videoTimestamp ?? null,
                 null,
                 null,
-                isInternal
+                isInternal,
+                pendingShape ?? null
             );
         }
 
@@ -304,6 +312,7 @@ export function CommentPanel({
 
         clearEditor();
         onCancelPin();
+        onPendingShapeClear?.();
         onCommentCreated();
         setSubmitting(false);
     };
@@ -384,7 +393,7 @@ export function CommentPanel({
                         px-4 py-3 cursor-pointer hover:bg-[#2a2a40]/40 transition-colors
                         ${comment.status === "resolved" ? "opacity-50" : ""}
                     `}
-                    onClick={() => !isReply && comment.pos_x != null && onPinClick(comment.id)}
+                    onClick={() => !isReply && (comment.pos_x != null || comment.annotation_shape) && onPinClick(comment.id)}
                 >
                     {/* Author + Time */}
                     <div className="flex items-center gap-2 mb-1.5">
@@ -402,11 +411,21 @@ export function CommentPanel({
                     </div>
 
                     {/* Badges: Pin # + Timestamp + Internal */}
-                    {(pinNum || comment.video_timestamp != null || comment.is_internal) && (
+                    {(pinNum || comment.video_timestamp != null || comment.is_internal || comment.annotation_shape) && (
                         <div className="flex items-center gap-2 mb-1.5 ml-8">
                             {pinNum && (
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${comment.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-[#2a2a40] text-zinc-500"}`}>
                                     ● {pinNum}
+                                </span>
+                            )}
+                            {comment.annotation_shape && (
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${comment.status === "open" ? "bg-blue-500/15 text-blue-400" : "bg-[#2a2a40] text-zinc-500"}`}
+                                    title={`Anotação: ${(comment.annotation_shape as any).type === "rect" ? "Retângulo" : (comment.annotation_shape as any).type === "circle" ? "Círculo" : (comment.annotation_shape as any).type === "arrow" ? "Seta" : (comment.annotation_shape as any).type === "line" ? "Linha" : "Desenho livre"}`}
+                                >
+                                    {(comment.annotation_shape as any).type === "rect" ? "▭" :
+                                        (comment.annotation_shape as any).type === "circle" ? "○" :
+                                            (comment.annotation_shape as any).type === "arrow" ? "↗" :
+                                                (comment.annotation_shape as any).type === "line" ? "╱" : "✏"}
                                 </span>
                             )}
                             {comment.video_timestamp != null && (
@@ -567,7 +586,7 @@ export function CommentPanel({
                         contentEditable
                         suppressContentEditableWarning
                         className="w-full bg-[#1e1e32] border border-[#3a3a55] rounded-lg px-3 py-2.5 text-[13px] text-zinc-200 focus:outline-none focus:border-blue-500/50 min-h-[80px] max-h-[200px] transition-colors overflow-y-auto overflow-x-hidden [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4 [&_a]:text-blue-400 [&_a]:underline empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-600 empty:before:pointer-events-none"
-                        data-placeholder={pendingPin ? t("commentOnPin") : t("addComment")}
+                        data-placeholder={pendingPin ? t("commentOnPin") : pendingShape ? "Descreva a alteração nesta região..." : t("addComment")}
                         onInput={() => {
                             const editor = commentInputRef.current;
                             if (editor) setNewComment(editor.textContent?.trim() || "");
@@ -709,6 +728,26 @@ export function CommentPanel({
                             onClick={onCancelPin}
                             className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors ml-auto cursor-pointer"
                             title="Remover pin"
+                        >
+                            <X className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                )}
+
+                {/* Pending shape indicator */}
+                {pendingShape && (
+                    <div className="flex items-center gap-2 mt-2 px-2 py-1.5 bg-blue-500/10 rounded-md border border-blue-500/20">
+                        <span className="text-[13px]">
+                            {(pendingShape as any).type === "rect" ? "▭" :
+                                (pendingShape as any).type === "circle" ? "○" :
+                                    (pendingShape as any).type === "arrow" ? "↗" :
+                                        (pendingShape as any).type === "line" ? "╱" : "✏"}
+                        </span>
+                        <span className="text-[11px] text-blue-400 font-medium">Anotação de forma adicionada</span>
+                        <button
+                            onClick={onPendingShapeClear}
+                            className="text-[11px] text-zinc-500 hover:text-red-400 transition-colors ml-auto cursor-pointer"
+                            title="Remover anotação"
                         >
                             <X className="h-3.5 w-3.5" />
                         </button>
