@@ -510,38 +510,48 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         const comment = comments.find((c: any) => c.id === commentId);
         if (!comment) return;
 
-        const container = viewerContainerRef.current;
+        const container = compareMode ? rightPanelRef.current : viewerContainerRef.current;
         if (!container) return;
 
-        if (comment.annotation_shape) {
-            const shape = comment.annotation_shape as any;
+        // Ensure video is at the right timestamp
+        if (comment.video_timestamp != null && videoRef.current) {
+            videoRef.current.currentTime = comment.video_timestamp;
+        }
+
+        if (comment.annotation_shape || (comment.pos_x != null && comment.pos_y != null)) {
+            let cx = comment.pos_x || 0;
+            let cy = comment.pos_y || 0;
+
+            if (comment.annotation_shape) {
+                const shape = comment.annotation_shape as any;
+                // Get the bounding box of the shape in percentage
+                switch (shape.type) {
+                    case "rect":
+                    case "circle":
+                        cx = (shape.x + (shape.width || 0) / 2);
+                        cy = (shape.y + (shape.height || 0) / 2);
+                        break;
+                    case "arrow":
+                    case "line":
+                        cx = ((shape.x || 0) + (shape.x2 || 0)) / 2;
+                        cy = ((shape.y || 0) + (shape.y2 || 0)) / 2;
+                        break;
+                    case "highlight":
+                    case "pen":
+                        if (shape.points?.length) {
+                            const xs = shape.points.map((p: any) => p.x);
+                            const ys = shape.points.map((p: any) => p.y);
+                            cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+                            cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+                        }
+                        break;
+                }
+            }
+
             const img = container.querySelector("img, canvas, video");
             if (!img) return;
             const imgRect = img.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
-
-            // Get the bounding box of the shape in percentage
-            let cx = 0, cy = 0;
-            switch (shape.type) {
-                case "rect":
-                case "circle":
-                    cx = (shape.x + (shape.width || 0) / 2);
-                    cy = (shape.y + (shape.height || 0) / 2);
-                    break;
-                case "arrow":
-                case "line":
-                    cx = ((shape.x || 0) + (shape.x2 || 0)) / 2;
-                    cy = ((shape.y || 0) + (shape.y2 || 0)) / 2;
-                    break;
-                case "pen":
-                    if (shape.points?.length) {
-                        const xs = shape.points.map((p: any) => p.x);
-                        const ys = shape.points.map((p: any) => p.y);
-                        cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-                        cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-                    }
-                    break;
-            }
 
             // Convert percentage to pixel position relative to the image
             const pxX = (cx / 100) * imgRect.width;
@@ -556,8 +566,17 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 top: imgOffsetTop + pxY - containerRect.height / 2,
                 behavior: "smooth",
             });
+
+            // Also sync left panel if in compare mode
+            if (compareMode && syncViews && leftPanelRef.current) {
+                leftPanelRef.current.scrollTo({
+                    left: imgOffsetLeft + pxX - leftPanelRef.current.clientWidth / 2,
+                    top: imgOffsetTop + pxY - leftPanelRef.current.clientHeight / 2,
+                    behavior: "smooth",
+                });
+            }
         }
-    }, [comments]);
+    }, [comments, compareMode, syncViews]);
 
     const [reviewerDecisions, setReviewerDecisions] = useState<any[]>([]);
     const isLocked = !!proof.locked_at;
@@ -824,6 +843,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         { id: "arrow", icon: "M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25", label: "Seta" },
         { id: "line", icon: "M4.5 19.5l15-15", label: "Linha" },
         { id: "pen", icon: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z", label: "Desenhar" },
+        { id: "highlight", icon: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z", label: "Marca-texto" },
     ];
 
     return (
@@ -1548,7 +1568,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                         />
                                         <DrawingCanvas
                                             ref={drawingCanvasRef}
-                                            tool={["rect", "circle", "arrow", "line", "pen", "text", "select"].includes(activeTool) ? activeTool as any : null}
+                                            tool={["rect", "circle", "arrow", "line", "pen", "highlight", "text", "select"].includes(activeTool) ? activeTool as any : null}
                                             color={annotColor}
                                             containerWidth={viewerSize.width}
                                             containerHeight={viewerSize.height}
@@ -1643,7 +1663,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                                 />
                                                                 <DrawingCanvas
                                                                     ref={drawingCanvasRef}
-                                                                    tool={["rect", "circle", "arrow", "line", "pen", "text", "select"].includes(activeTool) ? activeTool as any : null}
+                                                                    tool={["rect", "circle", "arrow", "line", "pen", "highlight", "text", "select"].includes(activeTool) ? activeTool as any : null}
                                                                     color={annotColor}
                                                                     containerWidth={viewerSize.width}
                                                                     containerHeight={viewerSize.height}
@@ -1746,7 +1766,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                                         />
                                                         <DrawingCanvas
                                                             ref={drawingCanvasRef}
-                                                            tool={["rect", "circle", "arrow", "line", "pen", "text", "select"].includes(activeTool) ? activeTool as any : null}
+                                                            tool={["rect", "circle", "arrow", "line", "pen", "highlight", "text", "select"].includes(activeTool) ? activeTool as any : null}
                                                             color={annotColor}
                                                             containerWidth={viewerSize.width}
                                                             containerHeight={viewerSize.height}
@@ -2156,6 +2176,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     videoTimestamp={fileCategory === "video" ? videoTime : null}
                                     onCommentCreated={refreshComments}
                                     onPinClick={(id) => handleCommentPinClick(id)}
+                                    onCommentClick={(id, posX, posY, videoTimestamp) => {
+                                        // The pan/zoom/seek logic inside handleCommentPinClick handles this now.
+                                        // handleCommentPinClick is already called by onPinClick, but we added this prop
+                                        // to explicitly pass the coordinates in CommentPanel.
+                                        // Since the logic was added directly to handleCommentPinClick (which uses the id),
+                                        // we don't need additional logic here, but we pass it for completeness.
+                                    }}
                                     onCancelPin={() => setPendingPin(null)}
                                     onPendingShapeClear={() => setPendingShape(null)}
                                     orgMembers={orgMembers}
