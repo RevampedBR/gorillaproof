@@ -78,6 +78,7 @@ export function AnnotationCanvas({
                 return (
                     <div
                         key={shape.id}
+                        id={`shape-${shape.commentId}`}
                         className={commonClasses}
                         style={{
                             left: `${shape.x}%`,
@@ -103,6 +104,7 @@ export function AnnotationCanvas({
                 return (
                     <svg
                         key={shape.id}
+                        id={`shape-${shape.commentId}`}
                         className={`${commonClasses} overflow-visible`}
                         style={{
                             left: `${shape.x}%`,
@@ -146,6 +148,7 @@ export function AnnotationCanvas({
                 return (
                     <svg
                         key={shape.id}
+                        id={`shape-${shape.commentId}`}
                         className={`${commonClasses} overflow-visible`}
                         style={{
                             left: `${minX - pad}%`,
@@ -215,6 +218,7 @@ export function AnnotationCanvas({
                 return (
                     <svg
                         key={shape.id}
+                        id={`shape-${shape.commentId}`}
                         className={`${commonClasses} overflow-visible`}
                         style={{
                             left: `${minX - pad}%`,

@@ -23,6 +23,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { submitDecision, getDecisions, lockProof, unlockProof, type ProofDecision } from "@/lib/actions/decisions";
 import { Lock, Unlock, MessageSquare, Clock } from "lucide-react";
+import { CommentConnector } from "@/components/viewer/comment-connector";
 
 interface ProofViewerProps {
     proof: any;
@@ -848,6 +849,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     return (
         <div className="flex flex-col h-screen bg-[#1a1a2e] overflow-hidden">
+            <CommentConnector
+                sourceId={activePinId ? `shape-${activePinId}` : null}
+                targetId={activePinId ? `comment-${activePinId}` : null}
+                color="#34d399" // emerald-400
+            />
+
             {/* ═══════════════════════════════════════════════════
                 ROW 1: HEADER BAR (matches Ziflow exactly)
                 ☰ Title [TYPE] V.2▾ [compare]  →  Make decision  →  Share [avatar]
