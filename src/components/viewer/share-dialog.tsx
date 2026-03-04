@@ -19,7 +19,7 @@ export function ShareDialog({ isOpen, onClose, proofId, proofTitle, projectId, e
     const [copied, setCopied] = useState(false);
     const [token, setToken] = useState<string | null>(existingToken || null);
     const [generating, setGenerating] = useState(false);
-    const [guests, setGuests] = useState<any[]>([]);
+    const [guests, setGuests] = useState<{ id: string; display_name: string; email?: string | null; created_at: string }[]>([]);
     const [expiration, setExpiration] = useState<string>("none");
     const inputRef = useRef<HTMLInputElement>(null);
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -192,7 +192,7 @@ export function ShareDialog({ isOpen, onClose, proofId, proofTitle, projectId, e
                             Revisores externos ({guests.length})
                         </p>
                         <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-                            {guests.map((g: any) => (
+                            {guests.map((g) => (
                                 <div key={g.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#2a2a40]/50 transition-colors">
                                     <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
                                         {g.display_name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)}

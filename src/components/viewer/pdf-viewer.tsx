@@ -53,7 +53,7 @@ export function PdfViewer({
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [pageNum, setPageNum] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
-    const [pdfDoc, setPdfDoc] = useState<any>(null);
+    const [pdfDoc, setPdfDoc] = useState<unknown>(null);
     const [pageImgUrl, setPageImgUrl] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -81,8 +81,8 @@ export function PdfViewer({
                 setPdfDoc(doc);
                 setTotalPages(doc.numPages);
                 setPageNum(1);
-            } catch (err: any) {
-                if (!cancelled) setError(err?.message || "Erro ao carregar PDF");
+            } catch (err: unknown) {
+                if (!cancelled) setError(err instanceof Error ? err.message : "Erro ao carregar PDF");
             }
         })();
 
@@ -90,11 +90,15 @@ export function PdfViewer({
     }, [fileUrl]);
 
     // Render current page to canvas → image
-    const renderPage = useCallback(async (doc: any, num: number) => {
+    const renderPage = useCallback(async (doc: unknown, num: number) => {
         if (!doc || !canvasRef.current) return;
+        const pdfDocument = doc as { getPage: (num: number) => Promise<unknown> };
         try {
             setLoading(true);
-            const page = await doc.getPage(num);
+            const page = await pdfDocument.getPage(num) as {
+                getViewport: (opts: { scale: number }) => { width: number, height: number };
+                render: (opts: { canvasContext: CanvasRenderingContext2D, viewport: { width: number, height: number } }) => { promise: Promise<void> };
+            };
             const scale = 2; // Render at 2x for sharpness
             const viewport = page.getViewport({ scale });
             const canvas = canvasRef.current;
@@ -110,8 +114,8 @@ export function PdfViewer({
             setPageImgUrl(url);
             setDims({ w: viewport.width / scale, h: viewport.height / scale });
             setLoading(false);
-        } catch (err: any) {
-            setError(err?.message || "Erro ao renderizar página");
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Erro ao renderizar página");
             setLoading(false);
         }
     }, []);
@@ -205,7 +209,7 @@ export function PdfViewer({
                     {activeTool !== "pin" && activeTool !== "select" && (
                         <DrawingCanvas
                             ref={drawingCanvasRef}
-                            tool={activeTool as any}
+                            tool={activeTool as "freehand" | "rect" | "circle" | "arrow" | "line"}
                             color={annotColor}
                             containerWidth={dims.w}
                             containerHeight={dims.h}

@@ -43,7 +43,7 @@ export function usePresence(proofId: string, currentUser: { id: string; full_nam
         });
 
         ch.on("presence", { event: "sync" }, () => {
-            syncPresence(ch.presenceState() as any);
+            syncPresence(ch.presenceState() as Record<string, { userId: string; fullName: string | null; email: string; enteredAt: string }[]>);
         });
 
         ch.subscribe(async (status) => {
@@ -57,7 +57,7 @@ export function usePresence(proofId: string, currentUser: { id: string; full_nam
             }
         });
 
-        setChannel(ch);
+        setTimeout(() => setChannel(ch), 0);
 
         return () => {
             ch.unsubscribe();

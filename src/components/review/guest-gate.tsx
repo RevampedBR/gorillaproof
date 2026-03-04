@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 
 interface GuestGateProps {
@@ -149,7 +150,7 @@ export function GuestTokenError({ message }: { message: string }) {
                     <h1 className="text-[18px] font-bold text-white mb-2">Opa, link perdido na mata</h1>
                     <p className="text-[14px] text-zinc-400 mb-6">{message}</p>
 
-                    <a
+                    <Link
                         href="/"
                         className="inline-flex items-center gap-2 text-[13px] text-indigo-400 hover:text-indigo-300 transition-colors"
                     >
@@ -157,7 +158,7 @@ export function GuestTokenError({ message }: { message: string }) {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Voltar pro habitat
-                    </a>
+                    </Link>
                 </div>
             </div>
         </div>

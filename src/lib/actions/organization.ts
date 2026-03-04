@@ -136,7 +136,7 @@ export async function getSidebarData() {
             .limit(1)
             .single();
 
-        const orgData = (membership as any)?.organizations;
+        const orgData = (membership as unknown as { organizations: { name: string; logo_url: string | null } })?.organizations;
 
         return {
             data: {
@@ -189,7 +189,7 @@ export async function getOrgMembers(orgId: string) {
             return { data: enriched, error: null };
         }
 
-        const members = (data || []).map((m: any) => ({
+        const members = (data || []).map((m: { id: string; user_id: string; role: string; created_at: string; profiles?: { full_name?: string | null; email?: string | null; avatar_url?: string | null } }) => ({
             id: m.id,
             user_id: m.user_id,
             role: m.role,
