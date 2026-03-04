@@ -8,6 +8,7 @@ import { TeamTab } from "./team-tab";
 import { ProofingTab } from "./proofing-tab";
 import { BrandingTab } from "./branding-tab";
 import { ProfileTab } from "./profile-tab";
+import { BillingTab } from "./billing-tab";
 
 interface SettingsClientProps {
     orgId: string;
@@ -16,7 +17,7 @@ interface SettingsClientProps {
 }
 
 export function SettingsClient({ orgId, userEmail, userName }: SettingsClientProps) {
-    const [tab, setTab] = useState<"workspace" | "team" | "proofing" | "branding" | "profile">("workspace");
+    const [tab, setTab] = useState<"workspace" | "team" | "proofing" | "branding" | "profile" | "billing">("workspace");
     const [orgData, setOrgData] = useState<Record<string, any> | null>(null);
     const [prefsData, setPrefsData] = useState<NotificationPrefs | null>(null);
     const [loading, setLoading] = useState(true);
@@ -75,6 +76,15 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
             icon: (
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            ),
+        },
+        {
+            key: "billing" as const,
+            label: "Planos e Faturamento",
+            icon: (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                 </svg>
             ),
         },
@@ -154,6 +164,13 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
                             email_on_mention: true,
                             email_on_deadline: true,
                         }}
+                    />
+                )}
+                {tab === "billing" && (
+                    <BillingTab
+                        orgId={orgId}
+                        subscriptionStatus={orgData?.subscription_status as string}
+                        priceId={orgData?.stripe_price_id as string}
                     />
                 )}
             </div>
