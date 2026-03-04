@@ -69,24 +69,6 @@ export default function DashboardLayout({
                 </svg>
             ),
         },
-        {
-            href: "/clients",
-            label: t("sidebar.clients"),
-            icon: (
-                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-            ),
-        },
-        {
-            href: "/proofs",
-            label: "Provas",
-            icon: (
-                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            ),
-        },
     ];
 
     return (
@@ -99,11 +81,11 @@ export default function DashboardLayout({
                 <div className="flex h-[52px] items-center gap-2.5 px-4 border-b border-zinc-800/60 shrink-0">
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-lg shadow-indigo-500/20">
                         <Image
-                            src="https://static.wixstatic.com/media/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png/v1/fill/w_38,h_30,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png"
+                            src="/logo-white.png"
                             alt="GP"
                             width={16}
                             height={13}
-                            className="brightness-200"
+                            className="invert"
                         />
                     </div>
                     <span className="text-[14px] font-semibold tracking-tight text-zinc-100">GorillaProof</span>
@@ -123,7 +105,7 @@ export default function DashboardLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+                <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 viewer-styled-scrollbar">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}

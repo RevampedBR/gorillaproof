@@ -47,6 +47,7 @@ interface CommentPanelProps {
     onRefresh?: () => void;
     onPendingPinClear?: () => void;
     onPendingShapeClear?: () => void;
+    shapeNumbers?: Record<string, number>;
 }
 
 type FilterType = "all" | "open" | "resolved";
@@ -71,6 +72,7 @@ export function CommentPanel({
     onRefresh,
     onPendingPinClear,
     onPendingShapeClear,
+    shapeNumbers = {},
 }: CommentPanelProps) {
     const t = useTranslations("dashboard.comments");
     const { toast } = useToast();
@@ -259,7 +261,7 @@ export function CommentPanel({
         setSubmitting(true);
 
         if (isGuest && guestInfo) {
-            await createGuestComment(
+            const result = await createGuestComment(
                 versionId,
                 content,
                 proofId,
@@ -270,8 +272,13 @@ export function CommentPanel({
                 null,
                 pendingShape ?? null,
             );
+            if (result?.error) {
+                toast(`Erro ao salvar: ${result.error}`, "error");
+                setSubmitting(false);
+                return;
+            }
         } else {
-            await createComment(
+            const result = await createComment(
                 versionId,
                 content,
                 proofId,
@@ -283,6 +290,11 @@ export function CommentPanel({
                 isInternal,
                 pendingShape ?? null
             );
+            if (result?.error) {
+                toast(`Erro ao salvar: ${result.error}`, "error");
+                setSubmitting(false);
+                return;
+            }
         }
 
         // Activity log
@@ -426,6 +438,7 @@ export function CommentPanel({
                                         (comment.annotation_shape as any).type === "circle" ? "○" :
                                             (comment.annotation_shape as any).type === "arrow" ? "↗" :
                                                 (comment.annotation_shape as any).type === "line" ? "╱" : "✏"}
+                                    {shapeNumbers[comment.id] ? ` #${shapeNumbers[comment.id]}` : ""}
                                 </span>
                             )}
                             {comment.video_timestamp != null && (

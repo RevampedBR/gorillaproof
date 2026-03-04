@@ -17,6 +17,7 @@ export interface AnnotationShape {
     type: "rect" | "circle" | "arrow" | "line" | "pen";
     color: string;
     status: "open" | "resolved";
+    number?: number;
     // Rect/Circle (percentages 0-100)
     x?: number;
     y?: number;
@@ -65,6 +66,54 @@ export function AnnotationCanvas({
         [isAnnotating, onCanvasClick]
     );
 
+    // Render a numbered badge for a shape
+    const renderShapeBadge = (shape: AnnotationShape, posX: number, posY: number, color: string, isActive: boolean) => {
+        if (!shape.number) return null;
+        return (
+            <div
+                key={`badge-${shape.id}`}
+                className="absolute pointer-events-auto cursor-pointer z-30 -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${posX}%`, top: `${posY}%` }}
+                onClick={(e) => { e.stopPropagation(); onShapeClick?.(shape.commentId); }}
+                data-shape-badge={shape.commentId}
+            >
+                <div
+                    className={`
+                        h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold
+                        shadow-lg border-2 transition-all duration-200
+                        ${isActive ? "scale-125 ring-2 ring-offset-1 ring-offset-zinc-950" : "hover:scale-110"}
+                        ${shape.status === "open"
+                            ? "text-white border-white/50"
+                            : "bg-zinc-600 text-zinc-300 border-zinc-500"
+                        }
+                    `}
+                    style={shape.status === "open" ? { backgroundColor: color, borderColor: `${color}cc` } : undefined}
+                >
+                    {shape.number}
+                </div>
+            </div>
+        );
+    };
+
+    // Get badge position for a shape
+    const getShapeBadgePos = (shape: AnnotationShape): { x: number; y: number } => {
+        switch (shape.type) {
+            case "rect":
+            case "circle":
+                return { x: shape.x ?? 0, y: shape.y ?? 0 };
+            case "arrow":
+            case "line":
+                return { x: shape.x ?? 0, y: shape.y ?? 0 };
+            case "pen":
+                if (shape.points && shape.points.length > 0) {
+                    return { x: shape.points[0].x, y: shape.points[0].y };
+                }
+                return { x: 0, y: 0 };
+            default:
+                return { x: 0, y: 0 };
+        }
+    };
+
     const renderShape = (shape: AnnotationShape) => {
         const isActive = activeShapeId === shape.commentId;
         const isResolved = shape.status === "resolved";
@@ -79,6 +128,7 @@ export function AnnotationCanvas({
                     <div
                         key={shape.id}
                         className={commonClasses}
+                        data-shape-id={shape.commentId}
                         style={{
                             left: `${shape.x}%`,
                             top: `${shape.y}%`,
@@ -258,6 +308,14 @@ export function AnnotationCanvas({
         >
             {/* Render comment-linked shapes */}
             {shapes.map((shape) => renderShape(shape))}
+
+            {/* Render numbered badges on shapes */}
+            {shapes.map((shape) => {
+                const pos = getShapeBadgePos(shape);
+                const isActive = activeShapeId === shape.commentId;
+                const color = shape.status === "resolved" ? "#71717a" : shape.color;
+                return renderShapeBadge(shape, pos.x, pos.y, color, isActive);
+            })}
 
             {/* Render pins */}
             {pins.map((pin) => (

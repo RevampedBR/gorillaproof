@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import Image from "next/image";
 
 export default async function Home({
     params,
@@ -21,6 +22,16 @@ export default async function Home({
             </div>
 
             <main className="z-10 flex w-full max-w-6xl flex-col items-center justify-center px-4 sm:px-6 pt-32 pb-24 text-center">
+                {/* Logo */}
+                <Image
+                    src="/logo-white.png"
+                    alt="GorillaProof"
+                    width={80}
+                    height={62}
+                    className="mb-10 object-contain invert drop-shadow-[0_0_20px_rgba(255,255,255,0.12)]"
+                    priority
+                />
+
                 {/* Shiny Badge */}
                 <div className="relative mb-8 inline-flex items-center gap-2 overflow-hidden rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wide text-zinc-300 backdrop-blur-xl transition-colors hover:bg-white/10 sm:text-sm shadow-[0_0_15px_rgba(255,255,255,0.02)]">
                     <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />

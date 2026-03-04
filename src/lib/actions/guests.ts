@@ -84,6 +84,12 @@ export async function registerGuest(
             .single();
 
         if (existing) {
+            // Record view timestamp
+            await supabaseAdmin
+                .from("proofs")
+                .update({ last_viewed_at: new Date().toISOString() })
+                .eq("id", validation.proof!.id);
+
             return {
                 guest: { id: existing.id, displayName: existing.display_name, email: existing.email || undefined },
                 error: null,
@@ -103,6 +109,12 @@ export async function registerGuest(
         .single();
 
     if (error) return { guest: null, error: error.message };
+
+    // Record view timestamp
+    await supabaseAdmin
+        .from("proofs")
+        .update({ last_viewed_at: new Date().toISOString() })
+        .eq("id", validation.proof!.id);
 
     return {
         guest: { id: data.id, displayName: data.display_name, email: data.email || undefined },

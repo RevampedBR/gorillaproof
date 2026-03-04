@@ -9,6 +9,7 @@ import { getVersions } from "@/lib/actions/versions";
 import { AnnotationCanvas, AnnotationShape } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
+import { ConnectorLine } from "@/components/annotations/connector-line";
 import { PdfViewer } from "@/components/viewer/pdf-viewer";
 import { ColorPicker } from "@/components/viewer/color-picker";
 import { ShareDialog } from "@/components/viewer/share-dialog";
@@ -107,6 +108,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     const viewerContainerRef = useRef<HTMLDivElement>(null);
     const [viewerSize, setViewerSize] = useState({ width: 800, height: 600 });
     const [drawingShapes, setDrawingShapes] = useState<DrawnShape[]>([]);
+    const outerContainerRef = useRef<HTMLDivElement>(null);
 
     // Shape annotation state (links drawing shapes to comments)
     const [pendingShape, setPendingShape] = useState<Record<string, unknown> | null>(null);
@@ -404,13 +406,17 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     const handleCanvasClick = useCallback((posX: number, posY: number) => {
         if (!isAnnotating) return;
+        // Only place a pin when the pin tool is active.
+        // Shape tools (rect, circle, arrow, line, pen) are handled by
+        // handleShapeDrawnForAnnotation via the DrawingCanvas onShapesChange.
+        if (activeTool !== "pin") return;
         setPendingPin({ posX, posY });
         setShowSidebar(true);
         if (fileCategory === "video" && videoRef.current) {
             videoRef.current.pause();
             setIsPlaying(false);
         }
-    }, [isAnnotating, fileCategory]);
+    }, [isAnnotating, fileCategory, activeTool]);
 
     // ═══ SHAPE ANNOTATION HANDLER ═══
     // When a drawing tool completes a shape on the DrawingCanvas, convert it to
@@ -780,12 +786,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     // Build annotation shapes from comments
     const annotationShapes: AnnotationShape[] = comments
         .filter((c: any) => !c.parent_comment_id && c.annotation_shape)
-        .map((c: any) => ({
+        .map((c: any, idx: number) => ({
             id: `shape-${c.id}`,
             commentId: c.id,
             type: c.annotation_shape.type,
             color: c.annotation_shape.color || "#ef4444",
             status: c.status as "open" | "resolved",
+            number: idx + 1,
             x: c.annotation_shape.x,
             y: c.annotation_shape.y,
             width: c.annotation_shape.width,
@@ -827,7 +834,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     ];
 
     return (
-        <div className="flex flex-col h-screen bg-[#1a1a2e] overflow-hidden">
+        <div ref={outerContainerRef} className="flex flex-col h-screen bg-[#1a1a2e] overflow-hidden relative">
             {/* ═══════════════════════════════════════════════════
                 ROW 1: HEADER BAR (matches Ziflow exactly)
                 ☰ Title [TYPE] V.2▾ [compare]  →  Make decision  →  Share [avatar]
@@ -2159,6 +2166,9 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     onCancelPin={() => setPendingPin(null)}
                                     onPendingShapeClear={() => setPendingShape(null)}
                                     orgMembers={orgMembers}
+                                    shapeNumbers={Object.fromEntries(
+                                        annotationShapes.map((s) => [s.commentId, s.number ?? 0])
+                                    )}
                                 />
                             </div>
                         ) : (
@@ -2167,6 +2177,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     </div>
                 )}
             </div>
+
+            {/* ═══ CONNECTOR LINE (Ziflow-style) ═══ */}
+            <ConnectorLine
+                activeCommentId={activePinId}
+                containerRef={outerContainerRef}
+            />
 
             {/* Powered by badge */}
             <div className="h-6 flex items-center px-3 bg-[#15152a] border-t border-[#2a2a40] shrink-0">

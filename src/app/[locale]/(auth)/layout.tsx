@@ -19,11 +19,11 @@ export default function AuthLayout({
                 <div className="relative z-10">
                     <Link href="/" className="inline-flex items-center gap-3">
                         <Image
-                            src="https://static.wixstatic.com/media/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png/v1/fill/w_77,h_60,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png"
+                            src="/logo-white.png"
                             alt="GorillaProof Logo"
                             width={38}
                             height={30}
-                            className="drop-shadow-xl"
+                            className="drop-shadow-xl invert"
                         />
                         <span className="text-xl font-bold tracking-tight text-white drop-shadow-md">
                             GorillaProof

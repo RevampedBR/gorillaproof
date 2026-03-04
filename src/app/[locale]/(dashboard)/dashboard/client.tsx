@@ -168,31 +168,7 @@ export function DashboardHomeClient({ clients }: { clients: ClientData[] }) {
                 <AnalyticsDashboard />
             </div>
 
-            {/* ═══ STATUS BAR ═══ */}
-            {totalProofs > 0 && (
-                <div className="mb-6 pb-6 border-b border-zinc-800/50">
-                    <div className="flex items-center gap-1 h-2 rounded-full overflow-hidden bg-zinc-800/40">
-                        {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
-                            const count = statusCounts[status] || 0;
-                            if (count === 0) return null;
-                            const width = (count / totalProofs) * 100;
-                            return <div key={status} className={`h-full ${cfg.dot} transition-all duration-500`} style={{ width: `${width}%` }} title={`${cfg.label}: ${count}`} />;
-                        })}
-                    </div>
-                    <div className="flex items-center gap-4 mt-2.5">
-                        {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
-                            const count = statusCounts[status] || 0;
-                            if (count === 0) return null;
-                            return (
-                                <div key={status} className="flex items-center gap-1.5">
-                                    <div className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                                    <span className="text-[10px] text-zinc-500">{cfg.label} ({count})</span>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+
 
             {/* ═══ CLIENT LIST (ACCORDION) ═══ */}
             {clients.length === 0 ? (

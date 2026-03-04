@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/lib/actions/activity";
 
@@ -46,8 +47,8 @@ export async function createComment(
 
     if (!user) return { error: "Não autenticado", data: null };
 
-    // Check if proof is locked
-    const { data: proof } = await supabase
+    // Check if proof is locked (use admin to bypass RLS)
+    const { data: proof } = await supabaseAdmin
         .from("proofs")
         .select("locked_at")
         .eq("id", proofId)
@@ -55,20 +56,23 @@ export async function createComment(
     if (proof?.locked_at) return { error: "Prova está travada", data: null };
 
     try {
-        const { data, error } = await supabase
+        const insertPayload = {
+            version_id: versionId,
+            user_id: user.id,
+            content,
+            pos_x: posX ?? null,
+            pos_y: posY ?? null,
+            video_timestamp: videoTimestamp ?? null,
+            parent_comment_id: parentCommentId ?? null,
+            attachment_url: attachmentUrl ?? null,
+            is_internal: isInternal ?? false,
+            annotation_shape: annotationShape ?? null,
+        };
+        console.log("[createComment] Inserting:", JSON.stringify(insertPayload, null, 2));
+
+        const { data, error } = await supabaseAdmin
             .from("comments")
-            .insert({
-                version_id: versionId,
-                user_id: user.id,
-                content,
-                pos_x: posX ?? null,
-                pos_y: posY ?? null,
-                video_timestamp: videoTimestamp ?? null,
-                parent_comment_id: parentCommentId ?? null,
-                attachment_url: attachmentUrl ?? null,
-                is_internal: isInternal ?? false,
-                annotation_shape: annotationShape ?? null,
-            })
+            .insert(insertPayload)
             .select(`
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at,
@@ -78,13 +82,18 @@ export async function createComment(
             `)
             .single();
 
-        if (error) return { error: error.message, data: null };
+        if (error) {
+            console.error("[createComment] Insert failed:", error.message, error.details, error.hint);
+            return { error: error.message, data: null };
+        }
 
+        console.log("[createComment] Success! Comment ID:", data.id);
         await logActivity({ proofId, action: "comment_added", metadata: { commentId: data.id, hasAnnotation: !!(posX && posY) } });
 
         revalidatePath(`/proofs/${proofId}`);
         return { error: null, data };
-    } catch {
+    } catch (err) {
+        console.error("[createComment] Exception:", err);
         return { error: "Falha ao criar comentário", data: null };
     }
 }

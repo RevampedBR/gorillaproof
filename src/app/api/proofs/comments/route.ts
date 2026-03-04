@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at, updated_at,
                 user_id, guest_reviewer_id, attachment_url, is_internal,
+                annotation_shape,
                 users ( id, full_name, avatar_url, email ),
                 guest_reviewers ( id, display_name, email )
             `)
