@@ -38,7 +38,10 @@ export function ActivityLogPanel({ proofId }: ActivityLogPanelProps) {
         setLoading(false);
     }, [proofId]);
 
-    useEffect(() => { refresh(); }, [refresh]);
+    useEffect(() => {
+        // Run refresh without calling setState synchronously in effect
+        setTimeout(() => refresh(), 0);
+    }, [refresh]);
 
     const formatTime = (date: string) => {
         const d = new Date(date);

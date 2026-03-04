@@ -50,7 +50,7 @@ export async function validateShareToken(token: string): Promise<ValidateResult>
             deadline: proof.deadline,
             locked_at: proof.locked_at,
             project_id: proof.project_id,
-            projects: proof.projects as any,
+            projects: proof.projects as { id: string; name: string; organization_id: string } | null,
         },
     };
 }

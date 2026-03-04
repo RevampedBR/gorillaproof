@@ -41,11 +41,20 @@ export function NotificationCenter({ userId }: { userId: string }) {
     }, []);
 
     useEffect(() => {
-        fetchNotifications();
-        const stored = localStorage.getItem("gp_notif_seen");
-        if (stored) setLastSeen(stored);
+        let isMounted = true;
+        const init = async () => {
+            await fetchNotifications();
+            if (isMounted) {
+                const stored = localStorage.getItem("gp_notif_seen");
+                if (stored) setLastSeen(stored);
+            }
+        };
+        init();
         const interval = setInterval(fetchNotifications, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, [fetchNotifications]);
 
     // Click outside to close

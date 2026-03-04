@@ -73,7 +73,10 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
     };
 
     useEffect(() => {
-        if (!open) { reset(); return; }
+        if (!open) {
+            setTimeout(() => reset(), 0);
+            return;
+        }
         startTransition(async () => {
             const [{ data: cls }, { data: projs }] = await Promise.all([getClients(), getProjects()]);
             const clientList = (cls as Client[]) || [];

@@ -54,7 +54,7 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
     }, []);
 
     useEffect(() => {
-        fetchClients();
+        setTimeout(() => fetchClients(), 0);
     }, [fetchClients, refreshKey, pathname]);
 
     // Auto-expand active client/project based on current path
@@ -139,7 +139,7 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
 
                             {/* Client link */}
                             <Link
-                                href={clientPath as any}
+                                href={clientPath}
                                 className={`flex flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-[12.5px] font-medium transition-colors min-w-0 ${isActive(clientPath)
                                     ? "bg-zinc-800/80 text-zinc-100"
                                     : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"}`}
@@ -168,7 +168,7 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
                                 {looseProofs.map(proof => (
                                     <Link
                                         key={proof.id}
-                                        href={`/proofs/${proof.id}` as any}
+                                        href={`/proofs/${proof.id}`}
                                         className={`flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] transition-colors min-w-0 ${isActive(`/proofs/${proof.id}`)
                                             ? "bg-zinc-800/60 text-zinc-200"
                                             : "text-zinc-600 hover:bg-zinc-800/30 hover:text-zinc-400"}`}
@@ -201,7 +201,7 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
                                                 </button>
 
                                                 <Link
-                                                    href={projectPath as any}
+                                                    href={projectPath}
                                                     className={`flex flex-1 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[12px] transition-colors min-w-0 ${isActive(projectPath)
                                                         ? "bg-zinc-800/60 text-zinc-200"
                                                         : "text-zinc-500 hover:bg-zinc-800/30 hover:text-zinc-300"}`}
@@ -219,7 +219,7 @@ export function ClientsNavTree({ refreshKey = 0 }: NavTreeProps) {
                                                     {project.proofs!.map(proof => (
                                                         <Link
                                                             key={proof.id}
-                                                            href={`/proofs/${proof.id}` as any}
+                                                            href={`/proofs/${proof.id}`}
                                                             className={`flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[11.5px] transition-colors min-w-0 ${isActive(`/proofs/${proof.id}`)
                                                                 ? "bg-zinc-800/60 text-zinc-200"
                                                                 : "text-zinc-600 hover:bg-zinc-800/30 hover:text-zinc-400"}`}

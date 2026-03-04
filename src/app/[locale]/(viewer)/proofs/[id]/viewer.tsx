@@ -255,9 +255,10 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
             const v = videoRef.current;
             const dur = v && isFinite(v.duration) ? v.duration : 0;
+            const currentFileCategory = selectedVersion ? getFileCategory(selectedVersion.file_type) : "unknown";
 
             // ── Space / K = Play/Pause (only for video — for images, Space is used for pan) ──
-            if (e.key === "k" || ((e.key === " " || e.code === "Space") && fileCategory === "video")) {
+            if (e.key === "k" || ((e.key === " " || e.code === "Space") && currentFileCategory === "video")) {
                 if (target.tagName === "BUTTON") return;
                 if (e.key !== "k") e.preventDefault(); // Let Space pan handler manage preventDefault for non-video
                 if (v) {

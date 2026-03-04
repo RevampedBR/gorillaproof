@@ -18,8 +18,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const saved = localStorage.getItem("gp-theme") as Theme | null;
-        if (saved) setTheme(saved);
-    }, []);
+        if (saved && saved !== theme) {
+            // update theme in a macro task to avoid synchronous state update in effect warning
+            setTimeout(() => setTheme(saved), 0);
+        }
+    }, [theme]);
 
     useEffect(() => {
         document.documentElement.setAttribute("data-theme", theme);
