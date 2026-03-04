@@ -2,13 +2,15 @@
 
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 
-export type ShapeType = "rect" | "circle" | "arrow" | "line" | "pen" | "text";
+export type ShapeType = "rect" | "circle" | "arrow" | "line" | "pen" | "text" | "highlight";
 
 export interface DrawnShape {
     id: string;
     type: ShapeType;
     color: string;
     lineWidth: number;
+    fill?: boolean;
+    opacity?: number;
     // For rect, circle
     x: number;
     y: number;
@@ -120,11 +122,16 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
 
             const allShapes = currentShape ? [...visibleShapes, currentShape] : visibleShapes;
             for (const shape of allShapes) {
+                ctx.save();
                 ctx.strokeStyle = shape.color;
                 ctx.fillStyle = shape.color;
                 ctx.lineWidth = shape.lineWidth;
                 ctx.lineCap = "round";
                 ctx.lineJoin = "round";
+
+                if (shape.opacity !== undefined) {
+                    ctx.globalAlpha = shape.opacity;
+                }
 
                 const isSelected = selectedShapeId === shape.id;
                 if (isSelected) {
@@ -132,8 +139,20 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                     ctx.shadowBlur = 6;
                 }
 
+                if (shape.type === "highlight") {
+                    ctx.globalCompositeOperation = "multiply";
+                    ctx.globalAlpha = shape.opacity || 0.4;
+                    ctx.lineWidth = shape.lineWidth * 2; // Thicker for highlight
+                }
+
                 switch (shape.type) {
                     case "rect":
+                        if (shape.fill) {
+                            if (shape.opacity) ctx.globalAlpha = shape.opacity;
+                            else ctx.globalAlpha = 0.2;
+                            ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+                            ctx.globalAlpha = shape.opacity || 1;
+                        }
                         ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
                         break;
                     case "circle": {
@@ -143,6 +162,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                         const cy = shape.y + shape.height / 2;
                         ctx.beginPath();
                         ctx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+                        if (shape.fill) {
+                            if (shape.opacity) ctx.globalAlpha = shape.opacity;
+                            else ctx.globalAlpha = 0.2;
+                            ctx.fill();
+                            ctx.globalAlpha = shape.opacity || 1;
+                        }
                         ctx.stroke();
                         break;
                     }
@@ -159,15 +184,18 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                         ctx.stroke();
                         // Arrowhead
                         const angle = Math.atan2(shape.y2 - shape.y, shape.x2 - shape.x);
-                        const headLen = 12;
+                        const headLen = 14 + shape.lineWidth;
+
                         ctx.beginPath();
                         ctx.moveTo(shape.x2, shape.y2);
-                        ctx.lineTo(shape.x2 - headLen * Math.cos(angle - Math.PI / 6), shape.y2 - headLen * Math.sin(angle - Math.PI / 6));
-                        ctx.moveTo(shape.x2, shape.y2);
-                        ctx.lineTo(shape.x2 - headLen * Math.cos(angle + Math.PI / 6), shape.y2 - headLen * Math.sin(angle + Math.PI / 6));
-                        ctx.stroke();
+                        ctx.lineTo(shape.x2 - headLen * Math.cos(angle - Math.PI / 7), shape.y2 - headLen * Math.sin(angle - Math.PI / 7));
+                        ctx.lineTo(shape.x2 - headLen * 0.7 * Math.cos(angle), shape.y2 - headLen * 0.7 * Math.sin(angle));
+                        ctx.lineTo(shape.x2 - headLen * Math.cos(angle + Math.PI / 7), shape.y2 - headLen * Math.sin(angle + Math.PI / 7));
+                        ctx.closePath();
+                        ctx.fill();
                         break;
                     }
+                    case "highlight":
                     case "pen":
                         if (shape.points.length < 2) break;
                         ctx.beginPath();
@@ -200,6 +228,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                             bx = Math.min(shape.x, shape.x2) - 4; by = Math.min(shape.y, shape.y2) - 4;
                             bw = Math.abs(shape.x2 - shape.x) + 8; bh = Math.abs(shape.y2 - shape.y) + 8;
                             break;
+                        case "highlight":
                         case "pen":
                             if (shape.points.length > 0) {
                                 const xs = shape.points.map(p => p.x);
@@ -229,6 +258,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                     }
                     ctx.restore();
                 }
+                ctx.restore();
             }
         }, [shapes, currentShape, containerWidth, containerHeight, selectedShapeId, videoTimestamp]);
 
@@ -267,6 +297,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                         if (dist < margin + 4) return s;
                         break;
                     }
+                    case "highlight":
                     case "pen": {
                         for (let j = 1; j < s.points.length; j++) {
                             if (distToSegment(x, y, s.points[j - 1].x, s.points[j - 1].y, s.points[j].x, s.points[j].y) < margin + 4) return s;
@@ -291,8 +322,15 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 const hit = findShapeAt(pos.x, pos.y);
                 setSelectedShapeId(hit?.id || null);
                 if (hit) {
+                    // Save history BEFORE starting the drag so we can undo the drag later
+                    saveToHistory(shapes);
+                    // Start drag on the hit shape. dragOffset stores the relative pointer position.
                     setDragOffset({ x: pos.x - hit.x, y: pos.y - hit.y });
                     setIsDrawing(true);
+                } else {
+                    // Clicked outside any shape, clear selection
+                    setDragOffset(null);
+                    setIsDrawing(false);
                 }
                 return;
             }
@@ -315,7 +353,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                 height: 0,
                 x2: pos.x,
                 y2: pos.y,
-                points: tool === "pen" ? [{ x: pos.x, y: pos.y }] : [],
+                points: tool === "pen" || tool === "highlight" ? [{ x: pos.x, y: pos.y }] : [],
                 text: "",
                 fontSize,
                 timestamp: videoTimestamp ?? null,
@@ -329,11 +367,17 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
             const pos = getCanvasPos(e);
 
             if (tool === "select" && selectedShapeId && dragOffset) {
-                setShapes((prev) =>
-                    prev.map((s) => {
+                setShapes((prev) => {
+                    const newShapes = prev.map((s) => {
                         if (s.id !== selectedShapeId) return s;
-                        const dx = pos.x - dragOffset.x - s.x;
-                        const dy = pos.y - dragOffset.y - s.y;
+                        // For selection/dragging, we apply the delta.
+                        // We use the pos and subtract dragOffset to get the new 'x' origin,
+                        // then calculate the delta dx, dy to apply to all other points.
+                        const newX = pos.x - dragOffset.x;
+                        const newY = pos.y - dragOffset.y;
+                        const dx = newX - s.x;
+                        const dy = newY - s.y;
+
                         return {
                             ...s,
                             x: s.x + dx,
@@ -342,9 +386,12 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                             y2: s.y2 + dy,
                             points: s.points.map((p) => ({ x: p.x + dx, y: p.y + dy })),
                         };
-                    })
-                );
-                setDragOffset({ x: pos.x - (shapes.find(s => s.id === selectedShapeId)?.x || 0), y: pos.y - (shapes.find(s => s.id === selectedShapeId)?.y || 0) });
+                    });
+
+                    // We DO NOT update dragOffset here; we want the offset from the pointer
+                    // to the shape's original `x`, `y` to remain constant throughout the drag.
+                    return newShapes;
+                });
                 return;
             }
 
@@ -359,6 +406,7 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
                     case "line":
                     case "arrow":
                         return { ...prev, x2: pos.x, y2: pos.y };
+                    case "highlight":
                     case "pen":
                         return { ...prev, points: [...prev.points, { x: pos.x, y: pos.y }] };
                     default:
@@ -372,14 +420,18 @@ export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>
             setIsDrawing(false);
 
             if (tool === "select") {
+                if (dragOffset && selectedShapeId) {
+                    // Drag completed. The history was saved onMouseDown. Notify parent.
+                    onShapesChange?.(shapes);
+                }
                 setDragOffset(null);
                 return;
             }
 
             if (currentShape) {
-                const minSize = currentShape.type === "pen" ? 0 : 3;
+                const minSize = currentShape.type === "pen" || currentShape.type === "highlight" ? 0 : 3;
                 const isValid =
-                    currentShape.type === "pen"
+                    currentShape.type === "pen" || currentShape.type === "highlight"
                         ? currentShape.points.length > 2
                         : currentShape.type === "line" || currentShape.type === "arrow"
                             ? Math.abs(currentShape.x2 - currentShape.x) + Math.abs(currentShape.y2 - currentShape.y) > minSize

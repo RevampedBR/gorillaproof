@@ -47,6 +47,7 @@ interface CommentPanelProps {
     onRefresh?: () => void;
     onPendingPinClear?: () => void;
     onPendingShapeClear?: () => void;
+    onCommentClick?: (commentId: string, posX: number | null, posY: number | null, videoTimestamp: number | null) => void;
 }
 
 type FilterType = "all" | "open" | "resolved";
@@ -71,6 +72,7 @@ export function CommentPanel({
     onRefresh,
     onPendingPinClear,
     onPendingShapeClear,
+    onCommentClick
 }: CommentPanelProps) {
     const t = useTranslations("dashboard.comments");
     const { toast } = useToast();
@@ -393,7 +395,14 @@ export function CommentPanel({
                         px-4 py-3 cursor-pointer hover:bg-[#2a2a40]/40 transition-colors
                         ${comment.status === "resolved" ? "opacity-50" : ""}
                     `}
-                    onClick={() => !isReply && (comment.pos_x != null || comment.annotation_shape) && onPinClick(comment.id)}
+                    onClick={() => {
+                        if (!isReply) {
+                            if (comment.pos_x != null || comment.annotation_shape || comment.video_timestamp != null) {
+                                onPinClick(comment.id);
+                                onCommentClick?.(comment.id, comment.pos_x, comment.pos_y, comment.video_timestamp);
+                            }
+                        }
+                    }}
                 >
                     {/* Author + Time */}
                     <div className="flex items-center gap-2 mb-1.5">
