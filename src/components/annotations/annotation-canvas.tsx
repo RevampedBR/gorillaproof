@@ -102,7 +102,7 @@ export function AnnotationCanvas({
                 const ry = (shape.height ?? 0) / 2;
                 return (
                     <svg
-                        key={shape.id}
+                        key={shape.id} id={`shape-${shape.commentId}`}
                         className={`${commonClasses} overflow-visible`}
                         style={{
                             left: `${shape.x}%`,
@@ -145,7 +145,7 @@ export function AnnotationCanvas({
                 const pad = 2;
                 return (
                     <svg
-                        key={shape.id}
+                        key={shape.id} id={`shape-${shape.commentId}`}
                         className={`${commonClasses} overflow-visible`}
                         style={{
                             left: `${minX - pad}%`,
@@ -214,7 +214,7 @@ export function AnnotationCanvas({
                     .join(" ");
                 return (
                     <svg
-                        key={shape.id}
+                        key={shape.id} id={`shape-${shape.commentId}`}
                         className={`${commonClasses} overflow-visible`}
                         style={{
                             left: `${minX - pad}%`,
@@ -262,7 +262,7 @@ export function AnnotationCanvas({
             {/* Render pins */}
             {pins.map((pin) => (
                 <button
-                    key={pin.id}
+                    key={pin.id} id={`pin-${pin.id}`}
                     onClick={(e) => {
                         e.stopPropagation();
                         onPinClick(pin.id);
