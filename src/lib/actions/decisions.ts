@@ -93,3 +93,31 @@ export async function unlockProof(proofId: string) {
         return { error: "Falha ao destravar prova" };
     }
 }
+
+export async function toggleDownloadLock(proofId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Não autenticado" };
+
+    try {
+        const { data: proof } = await supabase
+            .from("proofs")
+            .select("download_locked")
+            .eq("id", proofId)
+            .single();
+
+        const newValue = !proof?.download_locked;
+
+        const { error } = await supabase
+            .from("proofs")
+            .update({ download_locked: newValue })
+            .eq("id", proofId);
+
+        if (error) return { error: error.message };
+
+        revalidatePath(`/proofs/${proofId}`);
+        return { error: null, locked: newValue };
+    } catch {
+        return { error: "Falha ao alterar bloqueio de download" };
+    }
+}

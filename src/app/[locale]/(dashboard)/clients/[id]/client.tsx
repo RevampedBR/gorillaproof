@@ -48,12 +48,11 @@ const PROOF_STATUS: Record<string, { label: string; dot: string }> = {
 
 export function ClientDetailClient({ client }: ClientDetailProps) {
 
-    const looseProofs = (client.proofs || []).filter(p => !p.project_id);
+    const allProofs = client.proofs || [];
+    const looseProofs = allProofs.filter(p => !p.project_id);
     const totalProjects = client.projects.length;
-    const totalProofs = client.projects.reduce((acc, p) => acc + (p.proofs?.length || 0), 0) + looseProofs.length;
-    const approvedProofs = client.projects.reduce(
-        (acc, p) => acc + (p.proofs?.filter((pr) => pr.status === "approved").length || 0), 0
-    ) + looseProofs.filter(p => p.status === "approved").length;
+    const totalProofs = allProofs.length;
+    const approvedProofs = allProofs.filter(p => p.status === "approved").length;
 
     return (
         <div className="flex flex-col h-full max-w-5xl mx-auto">
@@ -274,11 +273,11 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                     </svg>
                     Provas
                     <Badge variant="secondary" className="ml-1 rounded-full px-2 py-0.5 text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        {looseProofs.length}
+                        {allProofs.length}
                     </Badge>
                 </h2>
 
-                {looseProofs.length === 0 ? (
+                {allProofs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-white/5 bg-zinc-950/40">
                         <div className="h-14 w-14 rounded-2xl bg-zinc-800/60 flex items-center justify-center mb-4">
                             <svg className="h-6 w-6 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -297,8 +296,11 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                     </div>
                 ) : (
                     <div className="rounded-2xl border border-white/5 bg-zinc-950/40 divide-y divide-white/5 overflow-hidden">
-                        {looseProofs.map((proof) => {
+                        {allProofs.map((proof) => {
                             const proofStatus = PROOF_STATUS[proof.status] || PROOF_STATUS.draft;
+                            const projectName = proof.project_id
+                                ? client.projects.find(p => p.proofs?.some(pr => pr.id === proof.id))?.name
+                                : null;
                             return (
                                 <Link
                                     key={proof.id}
@@ -306,7 +308,12 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                                     className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-900/40 transition-colors group"
                                 >
                                     <div className={`h-2 w-2 rounded-full shrink-0 ${proofStatus.dot}`} />
-                                    <span className="text-[13px] font-medium text-zinc-300 group-hover:text-white truncate flex-1">{proof.title}</span>
+                                    <span className="text-[13px] font-medium text-zinc-300 group-hover:text-white truncate flex-1">
+                                        {proof.title}
+                                        {projectName && (
+                                            <span className="ml-2 text-[10px] text-zinc-500 font-normal">em {projectName}</span>
+                                        )}
+                                    </span>
                                     <span className={`text-[11px] shrink-0 ${proofStatus.dot.replace('bg-', 'text-')}`}>{proofStatus.label}</span>
                                     <svg className="h-3.5 w-3.5 text-zinc-600 group-hover:text-zinc-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

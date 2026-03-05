@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { UploadDropzone } from "@/components/upload/dropzone";
-import { getVersions } from "@/lib/actions/versions";
+import { getVersions, getVersionPages } from "@/lib/actions/versions";
 import { AnnotationCanvas, AnnotationShape } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
@@ -13,6 +13,7 @@ import { ConnectorLine } from "@/components/annotations/connector-line";
 import { PdfViewer } from "@/components/viewer/pdf-viewer";
 import { ColorPicker } from "@/components/viewer/color-picker";
 import { ShareDialog } from "@/components/viewer/share-dialog";
+import { AccessAssignmentDialog } from "@/components/proofs/access-assignment-dialog";
 import { getSignedUrl, getFileCategory } from "@/lib/storage";
 import { getComments, carryCommentsForward } from "@/lib/actions/comments";
 import { updateProofStatus, updateProofDeadline } from "@/lib/actions/proofs";
@@ -22,7 +23,7 @@ import { usePresence } from "@/hooks/use-presence";
 import { notifyStatusChange } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
-import { submitDecision, getDecisions, lockProof, unlockProof, type ProofDecision } from "@/lib/actions/decisions";
+import { submitDecision, getDecisions, lockProof, unlockProof, toggleDownloadLock, type ProofDecision } from "@/lib/actions/decisions";
 import { Lock, Unlock, MessageSquare, Clock } from "lucide-react";
 
 interface ProofViewerProps {
@@ -103,12 +104,19 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     // Drawing state
     const [annotColor, setAnnotColor] = useState("#ef4444");
     const [showShareDialog, setShowShareDialog] = useState(false);
+    const [showAccessDialog, setShowAccessDialog] = useState(false);
     const [sidebarLayout, setSidebarLayout] = useState<"right" | "bottom">("right");
     const drawingCanvasRef = useRef<DrawingCanvasHandle>(null);
     const viewerContainerRef = useRef<HTMLDivElement>(null);
     const [viewerSize, setViewerSize] = useState({ width: 800, height: 600 });
     const [drawingShapes, setDrawingShapes] = useState<DrawnShape[]>([]);
     const outerContainerRef = useRef<HTMLDivElement>(null);
+    const initialFitDoneRef = useRef(false);
+    const contentImgRef = useRef<HTMLImageElement>(null);
+
+    // ═══ MULTI-PAGE VERSION STATE ═══
+    const [versionPages, setVersionPages] = useState<any[]>([]);
+    const [pageUrls, setPageUrls] = useState<string[]>([]);
 
     // Shape annotation state (links drawing shapes to comments)
     const [pendingShape, setPendingShape] = useState<Record<string, unknown> | null>(null);
@@ -350,11 +358,42 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
         return () => window.removeEventListener("keydown", handler);
     }, []);
 
-    // Load signed URL
+    // ═══ COMPUTE FIT-TO-VIEW ZOOM ═══
+    const computeFitZoom = useCallback((imgNaturalW: number, imgNaturalH: number) => {
+        const container = viewerContainerRef.current;
+        if (!container || imgNaturalW === 0 || imgNaturalH === 0) return;
+        const cw = container.clientWidth - 40;
+        const ch = container.clientHeight - 40;
+        const fitZoom = Math.min(cw / imgNaturalW, ch / imgNaturalH, 2);
+        setZoom(Math.round(fitZoom * 100) / 100);
+    }, []);
+
+    // Load signed URL + reset fit flag on version change
     useEffect(() => {
+        initialFitDoneRef.current = false;
         if (selectedVersion?.file_url) {
             getSignedUrl(selectedVersion.file_url).then(setFileUrl);
         }
+    }, [selectedVersion]);
+
+    // Fetch version pages when version changes
+    useEffect(() => {
+        if (!selectedVersion?.id) { setVersionPages([]); setPageUrls([]); return; }
+        let cancelled = false;
+        (async () => {
+            const { data } = await getVersionPages(selectedVersion.id);
+            if (cancelled) return;
+            if (data && data.length > 0) {
+                setVersionPages(data);
+                // Resolve signed URLs for all pages
+                const urls = await Promise.all(data.map((p: any) => getSignedUrl(p.file_url)));
+                if (!cancelled) setPageUrls(urls);
+            } else {
+                setVersionPages([]);
+                setPageUrls([]);
+            }
+        })();
+        return () => { cancelled = true; };
     }, [selectedVersion]);
 
     // Load compare URL
@@ -567,6 +606,14 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     const [reviewerDecisions, setReviewerDecisions] = useState<any[]>([]);
     const isLocked = !!proof.locked_at;
+    const [downloadLocked, setDownloadLocked] = useState(!!proof.download_locked);
+
+    const handleToggleDownloadLock = async () => {
+        const result = await toggleDownloadLock(proof.id);
+        if (result.error) { toast(result.error, "error"); return; }
+        setDownloadLocked(!!result.locked);
+        toast(result.locked ? "Download bloqueado" : "Download liberado", "info");
+    };
 
     useEffect(() => {
         getDecisions(proof.id).then(({ data }) => setReviewerDecisions(data));
@@ -1055,13 +1102,23 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     })}
                                 </div>
                             )}
-                            {/* Lock/unlock */}
-                            <div className="border-t border-[#3a3a55] mt-1.5 pt-1.5 mx-2">
+                            {/* Lock/unlock + Download lock */}
+                            <div className="border-t border-[#3a3a55] mt-1.5 pt-1.5 mx-2 space-y-0.5">
                                 <button
                                     onClick={handleToggleLock}
                                     className="w-full flex items-center gap-2 px-2 py-2 text-[12px] text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors"
                                 >
+                                    {isLocked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
                                     {isLocked ? "Destravar prova" : "Travar prova"}
+                                </button>
+                                <button
+                                    onClick={handleToggleDownloadLock}
+                                    className={`w-full flex items-center gap-2 px-2 py-2 text-[12px] cursor-pointer transition-colors ${downloadLocked ? "text-red-400 hover:text-red-300" : "text-zinc-400 hover:text-zinc-200"}`}
+                                >
+                                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                    </svg>
+                                    {downloadLocked ? "Liberar download" : "Bloquear download"}
                                 </button>
                             </div>
                         </div>
@@ -1075,14 +1132,20 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
                         </svg>
                     </button>
+                    <button onClick={() => setShowAccessDialog(true)} className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2 cursor-pointer" data-tip="Controle de acesso">
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                        Acesso
+                    </button>
                     <button onClick={() => setShowShareDialog(true)} className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2 cursor-pointer" data-tip="Compartilhar">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                         </svg>
                         Compartilhar
                     </button>
-                    {/* Baixar Original */}
-                    {fileUrl && (
+                    {/* Baixar Original — hidden when download is locked */}
+                    {fileUrl && !downloadLocked && (
                         <a href={fileUrl} target="_blank" rel="noopener noreferrer" download className="h-[36px] px-4 rounded-lg text-[13px] text-zinc-400 hover:text-white hover:bg-[#2a2a40] transition-colors flex items-center gap-2 cursor-pointer no-underline">
                             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1183,12 +1246,18 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 </button>
                 <button
                     onClick={() => {
-                        const container = viewerContainerRef.current;
-                        if (!container) return;
-                        const cw = container.clientWidth - 40;
-                        const ch = container.clientHeight - 40;
-                        const fitZoom = Math.min(cw / viewerSize.width, ch / viewerSize.height, 2);
-                        setZoom(Math.round(fitZoom * 100) / 100);
+                        const img = contentImgRef.current;
+                        if (img && img.naturalWidth > 0) {
+                            computeFitZoom(img.naturalWidth, img.naturalHeight);
+                        } else {
+                            // Fallback: query any img inside the viewer
+                            const container = viewerContainerRef.current;
+                            if (!container) return;
+                            const anyImg = container.querySelector("img") as HTMLImageElement | null;
+                            if (anyImg && anyImg.naturalWidth > 0) {
+                                computeFitZoom(anyImg.naturalWidth, anyImg.naturalHeight);
+                            }
+                        }
                     }}
                     className="h-8 w-8 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-200 hover:bg-[#2a2a40] transition-colors cursor-pointer"
                     data-tip="Ajustar ao conteúdo"
@@ -1539,10 +1608,74 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                             </div>
                         ) : fileUrl ? (
                             <div className="flex items-center justify-center w-full h-full">
-                                {fileCategory === "image" && (
+                                {fileCategory === "image" && versionPages.length > 1 && pageUrls.length > 0 ? (
+                                    /* ═══ MULTI-PAGE VIEW (Ziflow-style vertical scroll) ═══ */
+                                    <div className="flex flex-col items-center w-full h-full overflow-auto viewer-styled-scrollbar">
+                                        {/* Page counter bar */}
+                                        <div className="sticky top-0 z-20 flex items-center gap-2 bg-[#1e1e32]/95 backdrop-blur border border-[#3a3a55] rounded-lg px-3 py-1.5 shadow-lg my-3">
+                                            <svg className="h-3.5 w-3.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                            </svg>
+                                            <span className="text-[12px] font-mono text-zinc-300">
+                                                {pageUrls.length} {pageUrls.length === 1 ? "página" : "páginas"}
+                                            </span>
+                                        </div>
+                                        {/* Stacked pages */}
+                                        {pageUrls.map((url, idx) => (
+                                            <div key={versionPages[idx]?.id || idx} className="relative mb-4 last:mb-8" style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}>
+                                                {/* Page number label */}
+                                                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 -translate-y-full bg-[#1e1e32] border border-[#3a3a55] rounded-t-md px-2.5 py-0.5 z-10">
+                                                    <span className="text-[10px] font-mono text-zinc-400">Página {idx + 1}</span>
+                                                </div>
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={url} alt={`${proof.title} — Página ${idx + 1}`} className="max-w-none rounded shadow-2xl" draggable={false}
+                                                    onLoad={idx === 0 ? (e) => {
+                                                        if (!initialFitDoneRef.current) {
+                                                            initialFitDoneRef.current = true;
+                                                            const img = e.currentTarget;
+                                                            computeFitZoom(img.naturalWidth, img.naturalHeight);
+                                                        }
+                                                    } : undefined}
+                                                />
+                                                {/* Only show annotations on the first page for now */}
+                                                {idx === 0 && (
+                                                    <>
+                                                        <AnnotationCanvas
+                                                            pins={allPins}
+                                                            shapes={allShapes}
+                                                            isAnnotating={isAnnotating}
+                                                            activePinId={activePinId}
+                                                            activeShapeId={activePinId}
+                                                            onPinClick={(id) => handleCommentPinClick(id)}
+                                                            onShapeClick={(id) => handleCommentPinClick(id)}
+                                                            onCanvasClick={handleCanvasClick}
+                                                        />
+                                                        <DrawingCanvas
+                                                            ref={drawingCanvasRef}
+                                                            tool={["rect", "circle", "arrow", "line", "pen", "text", "select"].includes(activeTool) ? activeTool as any : null}
+                                                            color={annotColor}
+                                                            containerWidth={viewerSize.width}
+                                                            containerHeight={viewerSize.height}
+                                                            onShapesChange={handleShapeDrawnForAnnotation}
+                                                        />
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : fileCategory === "image" && (
+                                    /* ═══ SINGLE IMAGE VIEW (retrocompatible) ═══ */
                                     <div className="relative transition-transform duration-200 ease-out" style={{ transform: `scale(${zoom})` }}>
                                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={fileUrl} alt={proof.title} className="max-w-none rounded shadow-2xl" draggable={false} />
+                                        <img ref={contentImgRef} src={fileUrl} alt={proof.title} className="max-w-none rounded shadow-2xl" draggable={false}
+                                            onLoad={(e) => {
+                                                if (!initialFitDoneRef.current) {
+                                                    initialFitDoneRef.current = true;
+                                                    const img = e.currentTarget;
+                                                    computeFitZoom(img.naturalWidth, img.naturalHeight);
+                                                }
+                                            }}
+                                        />
                                         <AnnotationCanvas
                                             pins={allPins}
                                             shapes={allShapes}
@@ -2089,9 +2222,11 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 {(fileCategory === "design" || fileCategory === "unknown") && (
                                     <div className="text-center">
                                         <p className="text-[14px] text-zinc-400">{t("previewUnavailable")}</p>
-                                        <a href={fileUrl} download className="text-[12px] text-emerald-400 hover:text-emerald-300 mt-2 inline-block underline underline-offset-4">
-                                            {t("downloadFile")}
-                                        </a>
+                                        {!downloadLocked && (
+                                            <a href={fileUrl} download className="text-[12px] text-emerald-400 hover:text-emerald-300 mt-2 inline-block underline underline-offset-4">
+                                                {t("downloadFile")}
+                                            </a>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -2197,6 +2332,17 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 proofTitle={proof.title}
                 projectId={proof.project_id}
                 existingToken={proof.share_token || null}
+            />
+
+            {/* Access Assignment Dialog */}
+            <AccessAssignmentDialog
+                isOpen={showAccessDialog}
+                onClose={() => setShowAccessDialog(false)}
+                targetType="proof"
+                targetId={proof.id}
+                targetName={proof.title}
+                orgId={orgId}
+                currentAccessMode={proof.access_mode || "org_wide"}
             />
 
             {/* ═══ KEYBOARD SHORTCUTS OVERLAY ═══ */}

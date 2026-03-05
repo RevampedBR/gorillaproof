@@ -22,6 +22,7 @@ export default async function ProofViewerPage({ params }: Props) {
         .from("proofs")
         .select(`
             id, title, status, created_at, updated_at, deadline, share_token,
+            locked_at, download_locked, access_mode,
             project_id,
             projects ( id, name, organization_id )
         `)

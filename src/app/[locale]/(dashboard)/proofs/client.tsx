@@ -36,13 +36,31 @@ const STATUS_TABS = [
     { key: "changes_required", label: "Ajustes" },
 ];
 
+const SORT_OPTIONS = [
+    { key: "last_activity", label: "Última atividade" },
+    { key: "created", label: "Data de criação" },
+    { key: "name", label: "Nome (A–Z)" },
+    { key: "comments", label: "Comentários" },
+    { key: "status", label: "Status" },
+] as const;
+
+type SortKey = (typeof SORT_OPTIONS)[number]["key"];
+
+const STATUS_ORDER: Record<string, number> = {
+    in_review: 0, changes_required: 1, active: 2, draft: 3, approved: 4, completed: 5,
+};
+
 export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [sortBy, setSortBy] = useState<SortKey>("last_activity");
     const [view, setView] = useState<"list" | "grid">("list");
 
+    const getCommentCount = (proof: Proof) =>
+        proof.versions?.reduce((acc, v) => acc + (v.comments?.length || 0), 0) || 0;
+
     const filtered = useMemo(() => {
-        let result = proofs;
+        let result = [...proofs];
 
         if (statusFilter !== "all") {
             result = result.filter((p) => p.status === statusFilter);
@@ -57,8 +75,25 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
             );
         }
 
+        result.sort((a, b) => {
+            switch (sortBy) {
+                case "last_activity":
+                    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+                case "created":
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                case "name":
+                    return a.title.localeCompare(b.title, "pt-BR");
+                case "comments":
+                    return getCommentCount(b) - getCommentCount(a);
+                case "status":
+                    return (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99);
+                default:
+                    return 0;
+            }
+        });
+
         return result;
-    }, [proofs, statusFilter, search]);
+    }, [proofs, statusFilter, search, sortBy]);
 
     const statusCounts = useMemo(() => {
         const counts: Record<string, number> = { all: proofs.length };
@@ -102,7 +137,7 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                 </div>
             </div>
 
-            {/* Search */}
+            {/* Search + Sort */}
             <div className="flex items-center gap-3 mb-4">
                 <div className="relative flex-1 max-w-sm">
                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -115,6 +150,26 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                         placeholder="Filtrar por nome ou cliente..."
                         className="w-full h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
                     />
+                </div>
+
+                <div className="relative">
+                    <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5-3L16.5 18m0 0L12 13.5M16.5 18V4.5" />
+                    </svg>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value as SortKey)}
+                        className="h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-8 pr-7 text-[13px] text-zinc-300 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors appearance-none cursor-pointer hover:border-zinc-700"
+                    >
+                        {SORT_OPTIONS.map((opt) => (
+                            <option key={opt.key} value={opt.key}>
+                                {opt.label}
+                            </option>
+                        ))}
+                    </select>
+                    <svg className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
                 </div>
             </div>
 

@@ -71,3 +71,22 @@ export async function getVersions(proofId: string) {
         return { data: [], error: "Falha ao buscar versões" };
     }
 }
+
+export async function getVersionPages(versionId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "Não autenticado" };
+
+    try {
+        const { data, error } = await supabase
+            .from("version_pages")
+            .select("id, page_number, file_url, file_type, created_at")
+            .eq("version_id", versionId)
+            .order("page_number", { ascending: true });
+
+        return { data: data ?? [], error: error?.message ?? null };
+    } catch {
+        return { data: [], error: "Falha ao buscar páginas" };
+    }
+}
+

@@ -92,14 +92,13 @@ export async function getProofs(projectId: string) {
                 id,
                 title,
                 status,
-                file_type,
                 deadline,
                 locked_at,
                 tags,
                 share_token,
                 created_at,
                 updated_at,
-                versions ( id, file_url, comments ( id, status ) )
+                versions ( id, file_url, file_type, comments ( id, status ) )
             `)
             .eq("project_id", projectId)
             .order("updated_at", { ascending: false });
@@ -156,27 +155,46 @@ export async function createProof(clientId: string, formData: FormData, projectI
 
         await logActivity({ proofId: proof.id, action: "proof_created", metadata: { title: title.replace(/<[^>]+>/g, "") } });
 
-        // 3. Upload files and create version rows
+        // 3. Upload files and create a single version
+        // Multi-file uploads create 1 version with N pages (Ziflow-style)
         const files = formData.getAll("files") as File[];
         const storageBucket = projectId || clientId;
         if (files && files.length > 0) {
+            // Upload all files first
+            const uploadedFiles: { path: string; type: string }[] = [];
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-                const storagePath = `${orgId}/${storageBucket}/${proof.id}/v${i + 1}-${Date.now()}.${ext}`;
+                const storagePath = `${orgId}/${storageBucket}/${proof.id}/v1-p${i + 1}-${Date.now()}.${ext}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from("proofs")
                     .upload(storagePath, file, { cacheControl: "3600", upsert: true });
 
                 if (!uploadError) {
-                    await supabase.from("versions").insert({
-                        proof_id: proof.id,
-                        version_number: i + 1,
-                        file_url: storagePath,
-                        file_type: file.type || "application/octet-stream",
-                        uploaded_by: user.id,
-                    });
+                    uploadedFiles.push({ path: storagePath, type: file.type || "application/octet-stream" });
+                }
+            }
+
+            if (uploadedFiles.length > 0) {
+                // Create a single version row (using first file as the main file_url)
+                const { data: version } = await supabase.from("versions").insert({
+                    proof_id: proof.id,
+                    version_number: 1,
+                    file_url: uploadedFiles[0].path,
+                    file_type: uploadedFiles[0].type,
+                    uploaded_by: user.id,
+                }).select("id").single();
+
+                // If multi-file, also insert version_pages for ALL files (including first)
+                if (version && uploadedFiles.length > 1) {
+                    const pages = uploadedFiles.map((f, idx) => ({
+                        version_id: version.id,
+                        page_number: idx + 1,
+                        file_url: f.path,
+                        file_type: f.type,
+                    }));
+                    await supabase.from("version_pages").insert(pages);
                 }
             }
         }
@@ -353,12 +371,11 @@ export async function getClientProofs(clientId: string) {
         const { data, error } = await supabase
             .from("proofs")
             .select(`
-                id, title, status, file_type, deadline, locked_at, tags,
-                share_token, created_at, updated_at,
-                versions ( id, file_url, comments ( id, status ) )
+                id, title, status, deadline, locked_at, tags,
+                share_token, created_at, updated_at, project_id,
+                versions ( id, file_url, file_type, comments ( id, status ) )
             `)
             .eq("client_id", clientId)
-            .is("project_id", null)
             .order("updated_at", { ascending: false });
 
         return { data: data ?? [], error: error?.message ?? null };
