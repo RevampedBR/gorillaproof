@@ -90,13 +90,13 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
     const clientMap = new Map((clientRows || []).map((c) => [c.id, c.name]));
 
     if (!projects || projects.length === 0) {
-        return { data: emptyDashboard(), error: null };
+        // Continue — there may be loose proofs with no project
     }
 
-    const projectIds = projects.map((p) => p.id);
-    const projectMap = new Map(projects.map((p) => [p.id, p]));
+    const projectIds = (projects || []).map((p) => p.id);
+    const projectMap = new Map((projects || []).map((p) => [p.id, p]));
 
-    // Get ALL proofs in this org's clients (without last_viewed_at which may not exist yet)
+    // Get ALL proofs in this org's clients
     const clientIds = (clientRows || []).map((c) => c.id);
     if (clientIds.length === 0) {
         return { data: emptyDashboard(), error: null };
@@ -104,7 +104,7 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
 
     const { data: proofs, error: proofsError } = await supabase
         .from("proofs")
-        .select("id, title, status, deadline, created_at, updated_at, thumbnail_url, project_id, client_id")
+        .select("id, title, status, deadline, created_at, updated_at, project_id, client_id")
         .in("client_id", clientIds);
 
     if (proofsError || !proofs) {
@@ -229,7 +229,7 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
         .map((p) => ({
             id: p.id,
             title: p.title,
-            thumbnailUrl: p.thumbnail_url || null,
+            thumbnailUrl: null,
             clientName: getClientName(p),
             projectName: getProjectName(p),
             status: p.status,
@@ -253,7 +253,7 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
         .map((p) => ({
             id: p.id,
             title: p.title,
-            thumbnailUrl: p.thumbnail_url || null,
+            thumbnailUrl: null,
             clientName: getClientName(p),
             deadline: p.deadline!,
             status: p.status,

@@ -42,10 +42,10 @@ export async function getClients() {
                 status,
                 created_at,
                 updated_at,
-                proofs ( id, title, status, tags, updated_at, thumbnail_url, deadline )
+                proofs ( id, title, status, tags, updated_at, deadline )
             ),
             proofs!proofs_client_id_fkey (
-                id, title, status, tags, updated_at, thumbnail_url, deadline, project_id
+                id, title, status, tags, updated_at, deadline, project_id
             )
         `)
         .in("organization_id", orgIds)

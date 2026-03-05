@@ -30,12 +30,15 @@ function formatRelative(iso: string | null): string {
 
 /* ═══ COMPONENT ═══ */
 
-export function AnalyticsDashboard() {
-    const [data, setData] = useState<DashboardData | null>(null);
-    const [loading, setLoading] = useState(true);
+export function AnalyticsDashboard({ initialData }: { initialData?: DashboardData | null }) {
+    const [data, setData] = useState<DashboardData | null>(initialData ?? null);
+    const [loading, setLoading] = useState(!initialData);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // If we already have data from server-side props, skip client fetch
+        if (initialData) return;
+
         getDashboardData()
             .then(({ data, error }) => {
                 if (error) {
@@ -50,7 +53,7 @@ export function AnalyticsDashboard() {
                 setError(err?.message || "Erro desconhecido");
                 setLoading(false);
             });
-    }, []);
+    }, [initialData]);
 
     if (loading) {
         return (

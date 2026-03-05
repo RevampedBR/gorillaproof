@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
+import type { DashboardData } from "@/lib/actions/analytics";
 
 /* ═══ TYPES ═══ */
 interface Proof {
@@ -89,7 +90,7 @@ function getTypeIconColor(type: string): string {
 }
 
 /* ═══ MAIN COMPONENT ═══ */
-export function DashboardHomeClient({ clients }: { clients: ClientData[] }) {
+export function DashboardHomeClient({ clients, dashboardData }: { clients: ClientData[]; dashboardData: DashboardData | null }) {
     const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
         // Auto-expand the first client if it has projects, or explicitly open all
         return new Set(clients.map(c => c.id));
@@ -165,7 +166,7 @@ export function DashboardHomeClient({ clients }: { clients: ClientData[] }) {
 
             {/* ═══ BIG BENTO ANALYTICS ═══ */}
             <div className="mb-8">
-                <AnalyticsDashboard />
+                <AnalyticsDashboard initialData={dashboardData} />
             </div>
 
 
