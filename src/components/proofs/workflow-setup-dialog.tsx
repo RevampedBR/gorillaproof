@@ -7,10 +7,12 @@ import {
     cancelWorkflow,
     advanceStage,
     restartStage,
+    createWorkflowTemplate,
     type WorkflowStageInput,
     type WorkflowTemplateRow,
     type ProofWorkflowRow,
 } from "@/lib/actions/workflows";
+import { Save } from "lucide-react";
 
 interface WorkflowSetupDialogProps {
     proofId: string;
@@ -53,6 +55,8 @@ export function WorkflowSetupDialog({
     const [stages, setStages] = useState<StageFormData[]>([{ ...EMPTY_STAGE, name: "Revisão" }]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+    const [templateName, setTemplateName] = useState("");
 
     // Load templates
     useEffect(() => {
@@ -124,6 +128,11 @@ export function WorkflowSetupDialog({
             }
         }
 
+        if (saveAsTemplate && !templateName.trim()) {
+            setError("Nome do template é obrigatório quando 'Salvar como template' está ativo");
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -135,7 +144,14 @@ export function WorkflowSetupDialog({
             deadline_days: s.deadline_days > 0 ? s.deadline_days : undefined,
         }));
 
-        const result = await startWorkflow(proofId, stageInputs, selectedTemplateId);
+        // Save as template first
+        let newTemplateId: string | null = null;
+        if (saveAsTemplate && templateName.trim()) {
+            const tmplRes = await createWorkflowTemplate(orgId, templateName.trim(), null, stageInputs);
+            if (tmplRes.data) newTemplateId = tmplRes.data.id;
+        }
+
+        const result = await startWorkflow(proofId, stageInputs, newTemplateId || selectedTemplateId);
 
         if (result.error) {
             setError(result.error);
@@ -206,10 +222,10 @@ export function WorkflowSetupDialog({
                                 <div className="flex items-center justify-between">
                                     <span className="text-[12px] font-semibold text-zinc-300">{i + 1}. {stage.name}</span>
                                     <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${stage.status === "active" ? "text-blue-400 bg-blue-500/15"
-                                            : stage.status === "approved" ? "text-emerald-400 bg-emerald-500/15"
-                                                : stage.status === "rejected" ? "text-red-400 bg-red-500/15"
-                                                    : stage.status === "skipped" ? "text-zinc-400 bg-zinc-500/15"
-                                                        : "text-zinc-500 bg-zinc-500/10"
+                                        : stage.status === "approved" ? "text-emerald-400 bg-emerald-500/15"
+                                            : stage.status === "rejected" ? "text-red-400 bg-red-500/15"
+                                                : stage.status === "skipped" ? "text-zinc-400 bg-zinc-500/15"
+                                                    : "text-zinc-500 bg-zinc-500/10"
                                         }`}>
                                         {stage.status === "active" ? "Ativo" : stage.status === "approved" ? "Aprovado" : stage.status === "rejected" ? "Rejeitado" : stage.status === "skipped" ? "Pulado" : "Pendente"}
                                     </span>
@@ -461,6 +477,31 @@ export function WorkflowSetupDialog({
                         <span className="text-[14px]">+</span> Adicionar etapa
                     </button>
                 </div>
+
+                {/* Save as template */}
+                {mode === "custom" && (
+                    <div className="mx-5 mb-3">
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={saveAsTemplate}
+                                onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                                className="h-3.5 w-3.5 rounded border-zinc-700 bg-zinc-900 accent-emerald-500"
+                            />
+                            <Save className="h-3 w-3 text-zinc-600 group-hover:text-zinc-400" />
+                            <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">Salvar como template para uso futuro</span>
+                        </label>
+                        {saveAsTemplate && (
+                            <input
+                                type="text"
+                                value={templateName}
+                                onChange={(e) => setTemplateName(e.target.value)}
+                                placeholder="Nome do template (ex: Fluxo Padrão)"
+                                className="mt-2 w-full h-8 bg-[#15152a] border border-[#2a2a40] rounded-lg text-[11px] text-zinc-300 px-3 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50"
+                            />
+                        )}
+                    </div>
+                )}
 
                 {/* Error */}
                 {error && (

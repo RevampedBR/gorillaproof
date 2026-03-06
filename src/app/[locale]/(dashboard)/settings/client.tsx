@@ -8,6 +8,8 @@ import { TeamTab } from "./team-tab";
 import { ProofingTab } from "./proofing-tab";
 import { BrandingTab } from "./branding-tab";
 import { ProfileTab } from "./profile-tab";
+import { WorkflowsTab } from "./workflows-tab";
+import { Layers } from "lucide-react";
 
 interface SettingsClientProps {
     orgId: string;
@@ -16,7 +18,7 @@ interface SettingsClientProps {
 }
 
 export function SettingsClient({ orgId, userEmail, userName }: SettingsClientProps) {
-    const [tab, setTab] = useState<"workspace" | "team" | "proofing" | "branding" | "profile">("workspace");
+    const [tab, setTab] = useState<"workspace" | "team" | "proofing" | "branding" | "profile" | "workflows">("workspace");
     const [orgData, setOrgData] = useState<Record<string, any> | null>(null);
     const [prefsData, setPrefsData] = useState<NotificationPrefs | null>(null);
     const [loading, setLoading] = useState(true);
@@ -68,6 +70,11 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             ),
+        },
+        {
+            key: "workflows" as const,
+            label: "Workflows",
+            icon: <Layers className="h-4 w-4" />,
         },
         {
             key: "profile" as const,
@@ -137,6 +144,7 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
                         initialReviewerAccess={orgData?.reviewer_auth_mode as string}
                     />
                 )}
+                {tab === "workflows" && <WorkflowsTab orgId={orgId} />}
                 {tab === "branding" && (
                     <BrandingTab
                         orgId={orgId}
