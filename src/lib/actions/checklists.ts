@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export interface ChecklistItem {
@@ -13,7 +14,6 @@ export interface ChecklistItem {
     position: number;
     created_at: string;
     created_by: string | null;
-    users?: { full_name: string | null } | null;
 }
 
 export async function getChecklistItems(proofId: string) {
@@ -21,7 +21,7 @@ export async function getChecklistItems(proofId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { data: [], error: "Não autenticado" };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("proof_checklist_items")
         .select("id, proof_id, label, checked, checked_by, checked_at, position, created_at, created_by")
         .eq("proof_id", proofId)
@@ -38,7 +38,7 @@ export async function addChecklistItem(proofId: string, label: string) {
     if (!label.trim()) return { error: "Item não pode ser vazio", data: null };
 
     // Get max position
-    const { data: existing } = await supabase
+    const { data: existing } = await supabaseAdmin
         .from("proof_checklist_items")
         .select("position")
         .eq("proof_id", proofId)
@@ -47,7 +47,7 @@ export async function addChecklistItem(proofId: string, label: string) {
 
     const nextPos = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("proof_checklist_items")
         .insert({
             proof_id: proofId,
@@ -69,7 +69,7 @@ export async function toggleChecklistItem(itemId: string, proofId: string) {
     if (!user) return { error: "Não autenticado" };
 
     // Get current state
-    const { data: item } = await supabase
+    const { data: item } = await supabaseAdmin
         .from("proof_checklist_items")
         .select("checked")
         .eq("id", itemId)
@@ -78,7 +78,7 @@ export async function toggleChecklistItem(itemId: string, proofId: string) {
     if (!item) return { error: "Item não encontrado" };
 
     const newChecked = !item.checked;
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
         .from("proof_checklist_items")
         .update({
             checked: newChecked,
@@ -97,7 +97,7 @@ export async function removeChecklistItem(itemId: string, proofId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Não autenticado" };
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
         .from("proof_checklist_items")
         .delete()
         .eq("id", itemId);
