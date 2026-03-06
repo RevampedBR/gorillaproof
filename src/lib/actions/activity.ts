@@ -11,7 +11,15 @@ export type ActivityAction =
     | "status_changed"
     | "deadline_set"
     | "deadline_removed"
-    | "comments_carried";
+    | "comments_carried"
+    | "workflow_started"
+    | "workflow_completed"
+    | "workflow_cancelled"
+    | "stage_decision"
+    | "stage_advanced"
+    | "stage_rejected"
+    | "stage_skipped"
+    | "stage_restarted";
 
 interface LogActivityParams {
     proofId: string;
