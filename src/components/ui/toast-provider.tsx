@@ -20,8 +20,8 @@ export const useToast = () => useContext(ToastContext);
 
 let nextId = 0;
 
-const TYPE_STYLES: Record<ToastType, { bg: string; border: string; icon: string }> = {
-    success: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", icon: "✓" },
+const TYPE_STYLES: Record<ToastType, { bg: string; border: string; icon: string; isBanana?: boolean }> = {
+    success: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", icon: "🍌", isBanana: true },
     error: { bg: "bg-red-500/10", border: "border-red-500/30", icon: "✗" },
     info: { bg: "bg-blue-500/10", border: "border-blue-500/30", icon: "ℹ" },
     warning: { bg: "bg-amber-500/10", border: "border-amber-500/30", icon: "⚠" },
@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             key={t.id}
                             className={`pointer-events-auto ${s.bg} ${s.border} border rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md flex items-start gap-3 animate-slide-in-right`}
                         >
-                            <span className="text-[16px] shrink-0 mt-0.5">{s.icon}</span>
+                            <span className={`text-[16px] shrink-0 mt-0.5 ${s.isBanana ? "banana-spinner" : ""}`}>{s.icon}</span>
                             <p className="text-[13px] text-zinc-200 leading-snug flex-1">{t.message}</p>
                             <button
                                 onClick={() => dismiss(t.id)}

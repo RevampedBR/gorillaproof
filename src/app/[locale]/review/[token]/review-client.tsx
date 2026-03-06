@@ -270,7 +270,7 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                 {/* LEFT */}
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     {/* Logo */}
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-lg shadow-indigo-500/20 shrink-0">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-800 shadow-lg shadow-emerald-500/20 shrink-0">
                         <Image
                             src="https://static.wixstatic.com/media/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png/v1/fill/w_38,h_30,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png"
                             alt="GP"
@@ -316,11 +316,11 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
                     </div>
 
                     {/* Guest badge */}
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 ml-2">
-                        <svg className="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 ml-2">
+                        <svg className="h-3.5 w-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                         </svg>
-                        <span className="text-[11px] font-semibold text-indigo-400">{guestInfo.displayName}</span>
+                        <span className="text-[11px] font-semibold text-emerald-400">{guestInfo.displayName}</span>
                     </div>
                 </div>
 
@@ -361,7 +361,7 @@ function GuestViewer({ proof, versions, initialComments, guestInfo, projectName,
 
                 {/* RIGHT: just the guest avatar */}
                 <div className="flex items-center gap-2 flex-1 justify-end">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-600 flex items-center justify-center text-[11px] font-bold text-white">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-800 flex items-center justify-center text-[11px] font-bold text-white">
                         {guestInfo.displayName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
                     </div>
                 </div>

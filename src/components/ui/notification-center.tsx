@@ -15,7 +15,7 @@ interface NotificationEntry {
 
 const ACTION_LABELS: Record<string, { iconPath: string; label: string; color: string }> = {
     status_changed: { iconPath: "M1 4v6h6 M23 20v-6h-6 M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15", label: "alterou status", color: "text-amber-400" },
-    comment_added: { iconPath: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", label: "comentou", color: "text-indigo-400" },
+    comment_added: { iconPath: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", label: "comentou", color: "text-emerald-400" },
     comment_resolved: { iconPath: "M22 11.08V12a10 10 0 11-5.93-9.14 M22 4L12 14.01l-3-3", label: "resolveu comentário", color: "text-emerald-400" },
     comment_reopened: { iconPath: "M1 4v6h6 M3.51 15a9 9 0 1014.85-3.36L23 4", label: "reabriu comentário", color: "text-orange-400" },
     version_uploaded: { iconPath: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M17 8l-5-5-5 5 M12 3v12", label: "enviou nova versão", color: "text-teal-400" },

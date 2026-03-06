@@ -41,7 +41,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 const PROOF_STATUS: Record<string, { label: string; color: string }> = {
     draft: { label: "Rascunho", color: "text-zinc-400" },
-    in_review: { label: "Em revisão", color: "text-blue-400" },
+    in_review: { label: "Em revisão", color: "text-amber-400" },
     approved: { label: "Aprovado", color: "text-emerald-400" },
     rejected: { label: "Rejeitado", color: "text-red-400" },
     changes_requested: { label: "Alterações", color: "text-amber-400" },
@@ -96,11 +96,11 @@ export function ClientsListClient({ clients }: { clients: ClientItem[] }) {
     };
 
     return (
-        <div className="flex flex-col h-full max-w-5xl mx-auto">
+        <div className="flex flex-col h-full max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex items-end justify-between mb-6">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight text-zinc-100">Clientes</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-zinc-100 font-heading">Clientes</h1>
                     <p className="text-[12px] text-zinc-500 mt-0.5">
                         {clients.length} cliente{clients.length !== 1 ? "s" : ""} no seu workspace
                     </p>
@@ -127,7 +127,7 @@ export function ClientsListClient({ clients }: { clients: ClientItem[] }) {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar clientes, projetos ou provas..."
-                        className="w-full h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        className="w-full h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     />
                 </div>
 

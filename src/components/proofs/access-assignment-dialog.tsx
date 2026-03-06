@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
     getGroups,
     getProofAssignments,
@@ -12,7 +12,7 @@ import {
     removeProjectAssignment,
     setProjectAccessMode,
 } from "@/lib/actions/groups";
-import { getOrgMembers } from "@/lib/actions/organization";
+import { getOrgMembers, inviteMember } from "@/lib/actions/organization";
 import { useToast } from "@/components/ui/toast-provider";
 
 interface AccessAssignmentDialogProps {
@@ -43,6 +43,10 @@ export function AccessAssignmentDialog({
     const [assigning, setAssigning] = useState(false);
     const [showPicker, setShowPicker] = useState(false);
     const [pickerTab, setPickerTab] = useState<"groups" | "people">("groups");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showInvite, setShowInvite] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState("");
+    const [inviting, setInviting] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -92,7 +96,7 @@ export function AccessAssignmentDialog({
         if (error) {
             toast(error, "error");
         } else {
-            toast("Acesso atribuído", "success");
+            toast("Acesso atribuído. O membro será notificado.", "success");
             fetchData();
         }
     };
@@ -109,12 +113,50 @@ export function AccessAssignmentDialog({
         }
     };
 
+    const handleInviteAndAssign = async () => {
+        if (!inviteEmail.trim()) return;
+        setInviting(true);
+        const result = await inviteMember(orgId, inviteEmail, "member");
+        setInviting(false);
+
+        if (result.error) {
+            toast(result.error, "error");
+        } else {
+            toast(`Convite enviado para ${inviteEmail}`, "success");
+            setInviteEmail("");
+            setShowInvite(false);
+            // Refresh data so the new member appears
+            await fetchData();
+        }
+    };
+
     const assignedGroupIds = assignments.filter(a => a.group_id).map(a => a.group_id);
     const assignedUserIds = assignments.filter(a => a.user_id).map(a => a.user_id);
     const availableGroups = groups.filter(g => !assignedGroupIds.includes(g.id));
     const availableMembers = members.filter(m => !assignedUserIds.includes(m.user_id));
 
+    // Filtered results based on search
+    const filteredGroups = useMemo(() => {
+        if (!searchQuery.trim()) return availableGroups;
+        const q = searchQuery.toLowerCase();
+        return availableGroups.filter(g =>
+            g.name.toLowerCase().includes(q) ||
+            (g.description || "").toLowerCase().includes(q)
+        );
+    }, [availableGroups, searchQuery]);
+
+    const filteredMembers = useMemo(() => {
+        if (!searchQuery.trim()) return availableMembers;
+        const q = searchQuery.toLowerCase();
+        return availableMembers.filter(m =>
+            (m.name || "").toLowerCase().includes(q) ||
+            (m.email || "").toLowerCase().includes(q)
+        );
+    }, [availableMembers, searchQuery]);
+
     if (!isOpen) return null;
+
+    const targetLabel = targetType === "proof" ? "prova" : "projeto";
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -196,7 +238,7 @@ export function AccessAssignmentDialog({
                             </div>
                             <p className="text-[13px] text-zinc-300 font-medium">Acesso aberto</p>
                             <p className="text-[11px] text-zinc-600 mt-1">
-                                Todos os membros da organização podem visualizar esta {targetType === "proof" ? "prova" : "projeto"}.
+                                Todos os membros da organização podem visualizar esta {targetLabel}.
                                 <br />Ative o &ldquo;Acesso Restrito&rdquo; para limitar o acesso.
                             </p>
                         </div>
@@ -206,7 +248,7 @@ export function AccessAssignmentDialog({
                             {assignments.length === 0 ? (
                                 <div className="p-6 text-center">
                                     <p className="text-[12px] text-amber-400/80">
-                                        Nenhum acesso atribuído. Apenas admins podem ver esta {targetType === "proof" ? "prova" : "projeto"}.
+                                        Nenhum acesso atribuído. Apenas admins podem ver esta {targetLabel}.
                                     </p>
                                 </div>
                             ) : (
@@ -216,8 +258,8 @@ export function AccessAssignmentDialog({
                                             <div className="flex items-center gap-2.5">
                                                 {a.group_id ? (
                                                     <>
-                                                        <div className="h-7 w-7 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                                                            <svg className="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                        <div className="h-7 w-7 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                                            <svg className="h-3.5 w-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                                                             </svg>
                                                         </div>
@@ -256,19 +298,45 @@ export function AccessAssignmentDialog({
                             )}
 
                             {/* Add Assignment */}
-                            <div className="border-t border-zinc-800/40 p-4">
+                            <div className="border-t border-zinc-800/40 p-4 space-y-3">
                                 {!showPicker ? (
-                                    <button
-                                        onClick={() => setShowPicker(true)}
-                                        className="flex items-center gap-1.5 text-[12px] text-indigo-400 hover:text-indigo-300 font-medium transition-colors"
-                                    >
-                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                        </svg>
-                                        Atribuir acesso
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => { setShowPicker(true); setSearchQuery(""); }}
+                                            className="flex items-center gap-1.5 text-[12px] text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                                        >
+                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                            Atribuir acesso
+                                        </button>
+                                        <button
+                                            onClick={() => setShowInvite(true)}
+                                            className="flex items-center gap-1.5 text-[12px] text-teal-400 hover:text-teal-300 font-medium transition-colors"
+                                        >
+                                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                            </svg>
+                                            Convidar por e-mail
+                                        </button>
+                                    </div>
                                 ) : (
                                     <div className="space-y-3">
+                                        {/* Search input */}
+                                        <div className="relative">
+                                            <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                            </svg>
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar grupos ou pessoas..."
+                                                value={searchQuery}
+                                                onChange={e => setSearchQuery(e.target.value)}
+                                                className="w-full h-8 pl-9 pr-3 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-[12px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                                                autoFocus
+                                            />
+                                        </div>
+
                                         {/* Picker Tabs */}
                                         <div className="flex gap-1 p-0.5 bg-zinc-800/40 rounded-lg w-fit">
                                             <button
@@ -278,7 +346,7 @@ export function AccessAssignmentDialog({
                                                     : "text-zinc-500 hover:text-zinc-300"
                                                     }`}
                                             >
-                                                Grupos
+                                                Grupos {filteredGroups.length > 0 && `(${filteredGroups.length})`}
                                             </button>
                                             <button
                                                 onClick={() => setPickerTab("people")}
@@ -287,41 +355,59 @@ export function AccessAssignmentDialog({
                                                     : "text-zinc-500 hover:text-zinc-300"
                                                     }`}
                                             >
-                                                Pessoas
+                                                Pessoas {filteredMembers.length > 0 && `(${filteredMembers.length})`}
                                             </button>
                                         </div>
 
-                                        <div className="max-h-36 overflow-y-auto space-y-0.5 viewer-styled-scrollbar">
+                                        <div className="max-h-40 overflow-y-auto space-y-0.5 viewer-styled-scrollbar">
                                             {pickerTab === "groups" ? (
-                                                availableGroups.length === 0 ? (
-                                                    <p className="text-[11px] text-zinc-600 py-2">Nenhum grupo disponível.</p>
+                                                filteredGroups.length === 0 ? (
+                                                    <p className="text-[11px] text-zinc-600 py-2">
+                                                        {searchQuery ? "Nenhum grupo encontrado." : "Nenhum grupo disponível."}
+                                                    </p>
                                                 ) : (
-                                                    availableGroups.map(g => (
+                                                    filteredGroups.map(g => (
                                                         <button
                                                             key={g.id}
                                                             onClick={() => handleAssign({ groupId: g.id })}
                                                             disabled={assigning}
                                                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-zinc-800/40 transition-colors text-left disabled:opacity-50"
                                                         >
-                                                            <div className="h-6 w-6 rounded-lg bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                                                                <svg className="h-3 w-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                            <div className="h-6 w-6 rounded-lg bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                                                <svg className="h-3 w-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                                                                 </svg>
                                                             </div>
-                                                            <div>
+                                                            <div className="min-w-0 flex-1">
                                                                 <span className="text-[12px] text-zinc-300 font-medium">{g.name}</span>
                                                                 <span className="text-[10px] text-zinc-600 ml-1.5">
                                                                     {g.member_count} membro{g.member_count !== 1 ? "s" : ""}
                                                                 </span>
                                                             </div>
+                                                            <span className="text-[10px] text-emerald-400/60 shrink-0">+ Atribuir</span>
                                                         </button>
                                                     ))
                                                 )
                                             ) : (
-                                                availableMembers.length === 0 ? (
-                                                    <p className="text-[11px] text-zinc-600 py-2">Todos os membros já estão atribuídos.</p>
+                                                filteredMembers.length === 0 ? (
+                                                    <div className="py-2 space-y-2">
+                                                        <p className="text-[11px] text-zinc-600">
+                                                            {searchQuery ? "Nenhuma pessoa encontrada." : "Todos os membros já estão atribuídos."}
+                                                        </p>
+                                                        {!showInvite && (
+                                                            <button
+                                                                onClick={() => { setShowPicker(false); setShowInvite(true); }}
+                                                                className="text-[11px] text-teal-400 hover:text-teal-300 font-medium transition-colors flex items-center gap-1"
+                                                            >
+                                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                                                </svg>
+                                                                Convidar novo membro por e-mail
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 ) : (
-                                                    availableMembers.map(m => (
+                                                    filteredMembers.map(m => (
                                                         <button
                                                             key={m.user_id}
                                                             onClick={() => handleAssign({ userId: m.user_id })}
@@ -331,19 +417,77 @@ export function AccessAssignmentDialog({
                                                             <div className="h-6 w-6 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-bold text-zinc-400 shrink-0">
                                                                 {(m.name || "?").charAt(0).toUpperCase()}
                                                             </div>
-                                                            <span className="text-[12px] text-zinc-300">{m.name || m.email || "Membro"}</span>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-[12px] text-zinc-300 truncate">{m.name || m.email || "Membro"}</p>
+                                                                {m.email && <p className="text-[10px] text-zinc-600 truncate">{m.email}</p>}
+                                                            </div>
+                                                            <span className="text-[10px] text-emerald-400/60 shrink-0">+ Atribuir</span>
                                                         </button>
                                                     ))
                                                 )
                                             )}
                                         </div>
 
-                                        <button
-                                            onClick={() => setShowPicker(false)}
-                                            className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
-                                        >
-                                            Fechar
-                                        </button>
+                                        <div className="flex items-center justify-between pt-1">
+                                            <button
+                                                onClick={() => { setShowPicker(false); setSearchQuery(""); }}
+                                                className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                                            >
+                                                Fechar
+                                            </button>
+                                            {!showInvite && (
+                                                <button
+                                                    onClick={() => { setShowPicker(false); setShowInvite(true); }}
+                                                    className="flex items-center gap-1 text-[11px] text-teal-400/70 hover:text-teal-300 font-medium transition-colors"
+                                                >
+                                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                                    </svg>
+                                                    Convidar novo
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Inline Invite */}
+                                {showInvite && (
+                                    <div className="space-y-2 pt-2 border-t border-zinc-800/30">
+                                        <p className="text-[11px] text-zinc-500 font-medium">Convidar novo membro por e-mail:</p>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                                                </svg>
+                                                <input
+                                                    type="email"
+                                                    placeholder="nome@empresa.com"
+                                                    value={inviteEmail}
+                                                    onChange={e => setInviteEmail(e.target.value)}
+                                                    onKeyDown={e => e.key === "Enter" && handleInviteAndAssign()}
+                                                    className="w-full h-8 pl-9 pr-3 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-[12px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleInviteAndAssign}
+                                                disabled={inviting || !inviteEmail.trim()}
+                                                className="h-8 px-3 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-medium disabled:opacity-50 whitespace-nowrap transition-colors"
+                                            >
+                                                {inviting ? "..." : "Convidar"}
+                                            </button>
+                                            <button
+                                                onClick={() => { setShowInvite(false); setInviteEmail(""); }}
+                                                className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 transition-colors"
+                                            >
+                                                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-zinc-600">
+                                            O membro será convidado para a organização. Depois, atribua-o a esta {targetLabel}.
+                                        </p>
                                     </div>
                                 )}
                             </div>

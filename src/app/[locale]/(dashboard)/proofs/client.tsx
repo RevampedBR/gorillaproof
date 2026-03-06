@@ -22,9 +22,9 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string 
     draft: { label: "Rascunho", color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30", dot: "bg-zinc-400" },
     active: { label: "Ativa", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
     in_review: { label: "Em Revisão", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", dot: "bg-amber-400" },
-    approved: { label: "Aprovada", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", dot: "bg-blue-400" },
+    approved: { label: "Aprovada", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
     changes_required: { label: "Ajustes", color: "bg-rose-500/20 text-rose-400 border-rose-500/30", dot: "bg-rose-400" },
-    completed: { label: "Concluída", color: "bg-indigo-500/20 text-indigo-400 border-indigo-500/30", dot: "bg-indigo-400" },
+    completed: { label: "Concluída", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400" },
 };
 
 const STATUS_TABS = [
@@ -104,11 +104,11 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
     }, [proofs]);
 
     return (
-        <div className="flex flex-col h-full max-w-5xl mx-auto">
+        <div className="flex flex-col h-full max-w-6xl mx-auto">
             {/* Header */}
             <div className="flex items-end justify-between mb-6">
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight text-zinc-100">Todas as Provas</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-zinc-100 font-heading">Todas as Provas</h1>
                     <p className="text-[12px] text-zinc-500 mt-0.5">
                         {proofs.length} no total em todos os clientes
                     </p>
@@ -148,7 +148,7 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Filtrar por nome ou cliente..."
-                        className="w-full h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        className="w-full h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-9 pr-3 text-[13px] text-zinc-100 placeholder:text-zinc-600 outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     />
                 </div>
 
@@ -159,7 +159,7 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                     <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as SortKey)}
-                        className="h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-8 pr-7 text-[13px] text-zinc-300 outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-colors appearance-none cursor-pointer hover:border-zinc-700"
+                        className="h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 pl-8 pr-7 text-[13px] text-zinc-300 outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-colors appearance-none cursor-pointer hover:border-zinc-700"
                     >
                         {SORT_OPTIONS.map((opt) => (
                             <option key={opt.key} value={opt.key}>
@@ -202,8 +202,8 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
             {/* Results */}
             {filtered.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl shadow-sm">
-                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mb-5 border border-indigo-500/20">
-                        <svg className="h-8 w-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-700/20 flex items-center justify-center mb-5 border border-emerald-500/20">
+                        <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -291,9 +291,9 @@ export function AllProofsClient({ proofs }: { proofs: Proof[] }) {
                             <Link
                                 key={proof.id}
                                 href={`/proofs/${proof.id}`}
-                                className="group rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl overflow-hidden hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 cursor-pointer relative"
+                                className="group rounded-2xl border border-white/5 bg-zinc-950/40 backdrop-blur-xl overflow-hidden hover:bg-zinc-900/40 hover:border-zinc-700/60 transition-all duration-300 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 cursor-pointer relative"
                             >
-                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/0 to-purple-500/0 group-hover:from-indigo-500/5 group-hover:to-purple-500/5 transition-all duration-300" />
+                                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/0 to-emerald-700/0 group-hover:from-emerald-500/5 group-hover:to-emerald-700/5 transition-all duration-300" />
                                 <div className="aspect-[4/3] bg-zinc-900 flex items-center justify-center border-b border-white/5 relative z-10 overflow-hidden">
                                     <svg className="h-8 w-8 text-zinc-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

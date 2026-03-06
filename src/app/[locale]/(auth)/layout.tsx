@@ -7,13 +7,22 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex min-h-screen bg-zinc-950">
-            {/* Left Pane - Branding / Visuals */}
-            <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-zinc-900 p-12 lg:flex">
-                {/* Background Gradients */}
+        <div className="flex min-h-screen bg-[oklch(0.08_0.03_155)]">
+            {/* Left Pane - Branding with Jungle Image */}
+            <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-12 lg:flex">
+                {/* Jungle background image */}
                 <div className="absolute inset-0 z-0">
-                    <div className="absolute -left-1/4 -top-1/4 h-[800px] w-[800px] rounded-full bg-indigo-600/10 blur-[120px]" />
-                    <div className="absolute -bottom-1/4 -right-1/4 h-[600px] w-[600px] rounded-full bg-fuchsia-600/10 blur-[120px]" />
+                    <Image
+                        src="/jungle-bg.png"
+                        alt=""
+                        fill
+                        className="object-cover"
+                        priority
+                    />
+                    {/* Dark gradient overlay — right edge fades into form bg */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[oklch(0.08_0.03_155)]" />
+                    {/* Overall darkening so text is readable */}
+                    <div className="absolute inset-0 bg-black/50" />
                 </div>
 
                 <div className="relative z-10">
@@ -25,17 +34,17 @@ export default function AuthLayout({
                             height={30}
                             className="drop-shadow-xl invert"
                         />
-                        <span className="text-xl font-bold tracking-tight text-white drop-shadow-md">
+                        <span className="text-xl font-bold tracking-tight text-white drop-shadow-md font-heading">
                             GorillaProof
                         </span>
                     </Link>
                 </div>
 
                 <div className="relative z-10 space-y-4">
-                    <h1 className="text-4xl font-bold tracking-tight text-zinc-100">
+                    <h1 className="text-4xl font-bold tracking-tight text-emerald-50 font-heading drop-shadow-lg">
                         Domine suas revisões como um primata evoluído.
                     </h1>
-                    <p className="text-lg text-zinc-400">
+                    <p className="text-lg text-emerald-300/70 drop-shadow-md">
                         Agências inteligentes já revisam no habitat certo — feedback
                         centralizado, sem caos.
                     </p>

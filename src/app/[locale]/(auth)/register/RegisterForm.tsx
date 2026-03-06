@@ -48,7 +48,7 @@ export function RegisterForm() {
                             autoCapitalize="words"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                         />
                     </div>
 
@@ -63,7 +63,7 @@ export function RegisterForm() {
                             type="text"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                         />
                     </div>
 
@@ -81,7 +81,7 @@ export function RegisterForm() {
                             autoCorrect="off"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                         />
                     </div>
 
@@ -96,7 +96,7 @@ export function RegisterForm() {
                             autoComplete="new-password"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                         />
                     </div>
 
@@ -104,7 +104,7 @@ export function RegisterForm() {
                         <div className="text-sm text-red-500 font-medium">{error}</div>
                     )}
 
-                    <Button disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full">
+                    <Button disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full">
                         {isPending && (
                             <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -117,7 +117,7 @@ export function RegisterForm() {
             </form>
             <div className="text-center text-sm text-zinc-400">
                 {t("alreadyHaveAccount")}{" "}
-                <Link href="/login" className="font-medium text-indigo-400 hover:text-indigo-300">
+                <Link href="/login" className="font-medium text-emerald-400 hover:text-emerald-300">
                     {t("loginLink")}
                 </Link>
             </div>

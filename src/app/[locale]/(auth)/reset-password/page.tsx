@@ -48,10 +48,10 @@ export default function ResetPasswordPage() {
                         name="password"
                         type="password"
                         required
-                        className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 focus-visible:ring-indigo-500"
+                        className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 focus-visible:ring-emerald-500"
                     />
                 </div>
-                <Button type="submit" disabled={isPending} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-[0_0_15px_rgba(79,70,229,0.3)]">
+                <Button type="submit" disabled={isPending} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                     {isPending ? "..." : t("submit")}
                 </Button>
             </div>

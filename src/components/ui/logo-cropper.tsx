@@ -121,7 +121,7 @@ export function LogoCropper({ onUpload, currentLogoUrl }: LogoCropperProps) {
                 <div className="group flex items-center gap-5 pt-2 pb-4">
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="relative h-16 w-16 shrink-0 rounded-full bg-zinc-900 flex items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ring-1 ring-zinc-800 hover:ring-indigo-500/50 hover:bg-zinc-800"
+                        className="relative h-16 w-16 shrink-0 rounded-full bg-zinc-900 flex items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ring-1 ring-zinc-800 hover:ring-emerald-500/50 hover:bg-zinc-800"
                     >
                         {currentLogoUrl ? (
                             <>
@@ -131,14 +131,14 @@ export function LogoCropper({ onUpload, currentLogoUrl }: LogoCropperProps) {
                                 </div>
                             </>
                         ) : (
-                            <svg className="h-5 w-5 text-zinc-500 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <svg className="h-5 w-5 text-zinc-500 group-hover:text-emerald-400 group-hover:scale-110 transition-all duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                             </svg>
                         )}
                     </div>
                     <div className="flex flex-col justify-center">
                         <span className="text-[14px] font-semibold text-zinc-100 tracking-tight">
-                            Logotipo do Cliente
+                            Sua Logo
                         </span>
                         <span className="text-[12px] text-zinc-500 mt-0.5">
                             Recomendado: 400x400px (Máx 2MB)
@@ -146,7 +146,7 @@ export function LogoCropper({ onUpload, currentLogoUrl }: LogoCropperProps) {
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="text-[12px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors mt-2 uppercase tracking-wider text-left w-fit"
+                            className="text-[12px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors mt-2 uppercase tracking-wider text-left w-fit"
                         >
                             {currentLogoUrl ? "Atualizar logo →" : "Fazer upload →"}
                         </button>

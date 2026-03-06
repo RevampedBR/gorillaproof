@@ -79,7 +79,7 @@ function detectFileType(proof: Proof): string {
 
 function getTypeGradient(type: string): string {
     if (type === "video") return "from-rose-500/20 to-orange-500/20 border-rose-500/20";
-    if (type === "pdf") return "from-sky-500/20 to-blue-500/20 border-sky-500/20";
+    if (type === "pdf") return "from-teal-500/20 to-emerald-500/20 border-teal-500/20";
     return "from-emerald-500/20 to-teal-500/20 border-emerald-500/20";
 }
 

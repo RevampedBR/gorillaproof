@@ -15,7 +15,7 @@ interface NotifEntry {
 const ACTION_ICONS: Record<string, { path: string; label: string; color: string }> = {
     proof_created: { path: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6", label: "criou uma prova", color: "text-blue-400" },
     status_changed: { path: "M1 4v6h6 M23 20v-6h-6 M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15", label: "alterou status", color: "text-amber-400" },
-    comment_added: { path: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", label: "comentou", color: "text-indigo-400" },
+    comment_added: { path: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", label: "comentou", color: "text-emerald-400" },
     comment_resolved: { path: "M22 11.08V12a10 10 0 11-5.93-9.14 M22 4L12 14.01l-3-3", label: "resolveu comentário", color: "text-emerald-400" },
     comment_reopened: { path: "M1 4v6h6 M3.51 15a9 9 0 1014.85-3.36L23 4", label: "reabriu comentário", color: "text-orange-400" },
     version_uploaded: { path: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M17 8l-5-5-5 5 M12 3v12", label: "enviou nova versão", color: "text-teal-400" },
@@ -121,7 +121,7 @@ export function NotificationsDropdown() {
                         {entries.length > 0 && (
                             <button
                                 onClick={handleMarkAllRead}
-                                className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium transition-colors cursor-pointer"
+                                className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium transition-colors cursor-pointer"
                             >
                                 Marcar como lido
                             </button>

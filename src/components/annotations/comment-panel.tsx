@@ -409,7 +409,7 @@ export function CommentPanel({
                 >
                     {/* Author + Time */}
                     <div className="flex items-center gap-2 mb-1.5">
-                        <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${(comment as any).guest_reviewer_id ? "bg-gradient-to-br from-indigo-500 to-fuchsia-600" : "bg-gradient-to-br from-emerald-500 to-blue-600"}`}>
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center shrink-0 ${(comment as any).guest_reviewer_id ? "bg-gradient-to-br from-emerald-500 to-emerald-800" : "bg-gradient-to-br from-emerald-500 to-blue-600"}`}>
                             <span className="text-[9px] font-bold text-white">
                                 {(comment as any).guest_reviewers?.display_name
                                     ? getInitials((comment as any).guest_reviewers.display_name, (comment as any).guest_reviewers.email || "G")

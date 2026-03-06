@@ -11,6 +11,7 @@ import { createProof } from "@/lib/actions/proofs";
 import { createProject, getProjects } from "@/lib/actions/projects";
 import { createClientAction, getClients } from "@/lib/actions/clients";
 import { ACCEPTED_EXTENSIONS, MAX_FILE_SIZE, getFileCategory } from "@/lib/storage";
+import { BananaUploadProgress, BananaSpinner } from "@/components/ui/banana-elements";
 
 interface NewProofModalProps {
     open: boolean;
@@ -264,7 +265,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                     <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${i === stepIdx ? "bg-zinc-800 text-zinc-100" : i < stepIdx ? "text-emerald-500" : "text-zinc-600"}`}>
                                         {i < stepIdx
                                             ? <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                            : <span className={`h-1.5 w-1.5 rounded-full ${i === stepIdx ? "bg-indigo-400" : "bg-zinc-700"}`} />
+                                            : <span className={`h-1.5 w-1.5 rounded-full ${i === stepIdx ? "bg-emerald-400" : "bg-zinc-700"}`} />
                                         }
                                         {label}
                                     </div>
@@ -280,7 +281,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                     {/* ── Loading ──────────────────────────────────────── */}
                     {step === "loading" && (
                         <div className="flex justify-center py-8">
-                            <div className="h-5 w-5 rounded-full border-2 border-zinc-700 border-t-indigo-500 animate-spin" />
+                            <BananaSpinner text="Preparando..." size={36} />
                         </div>
                     )}
 
@@ -291,12 +292,12 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                             <div className="space-y-1.5">
                                 {clients.map(c => (
                                     <button key={c.id} onClick={() => setSelectedClientId(c.id)}
-                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-all ${selectedClientId === c.id ? "border-indigo-500/50 bg-indigo-500/8 text-zinc-100" : "border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}>
+                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-all ${selectedClientId === c.id ? "border-emerald-500/50 bg-emerald-500/8 text-zinc-100" : "border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}>
                                         <div className="h-8 w-8 rounded-lg bg-zinc-800 flex items-center justify-center shrink-0 overflow-hidden">
                                             {c.logo_url ? <img src={c.logo_url} alt="" className="h-full w-full object-cover" /> : <span className="text-[11px] font-bold text-zinc-300">{c.name[0].toUpperCase()}</span>}
                                         </div>
                                         <span className="text-[13.5px] font-medium flex-1 truncate">{c.name}</span>
-                                        {selectedClientId === c.id && <span className="h-2 w-2 rounded-full bg-indigo-400 shrink-0" />}
+                                        {selectedClientId === c.id && <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />}
                                     </button>
                                 ))}
                             </div>
@@ -312,7 +313,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
 
                             <div className="flex justify-end gap-2 pt-1">
                                 <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                <Button size="sm" onClick={handleClientNext} disabled={!selectedClientId} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5">Continuar</Button>
+                                <Button size="sm" onClick={handleClientNext} disabled={!selectedClientId} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5">Continuar</Button>
                             </div>
                         </>
                     )}
@@ -379,10 +380,10 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                             <div className="space-y-1.5">
                                 {clientProjects.map(p => (
                                     <button key={p.id} onClick={() => setSelectedProjectId(p.id)}
-                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-all ${selectedProjectId === p.id ? "border-indigo-500/50 bg-indigo-500/8 text-zinc-100" : "border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}>
+                                        className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-all ${selectedProjectId === p.id ? "border-emerald-500/50 bg-emerald-500/8 text-zinc-100" : "border-zinc-800/80 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}>
                                         <svg className="h-4 w-4 shrink-0 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>
                                         <span className="text-[13.5px] font-medium flex-1 truncate">{p.name}</span>
-                                        {selectedProjectId === p.id && <span className="h-2 w-2 rounded-full bg-indigo-400 shrink-0" />}
+                                        {selectedProjectId === p.id && <span className="h-2 w-2 rounded-full bg-emerald-400 shrink-0" />}
                                     </button>
                                 ))}
                             </div>
@@ -405,7 +406,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                 <Button variant="ghost" size="sm" onClick={() => setStep("client")} className="text-zinc-400 hover:text-zinc-200">Voltar</Button>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                    <Button size="sm" onClick={handleProjectNext} disabled={!selectedProjectId} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5">Continuar</Button>
+                                    <Button size="sm" onClick={handleProjectNext} disabled={!selectedProjectId} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5">Continuar</Button>
                                 </div>
                             </div>
                         </>
@@ -520,13 +521,13 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                             type="button"
                                             onClick={() => setUploadMode("separate")}
                                             className={`relative flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl border text-center transition-all ${uploadMode === "separate"
-                                                    ? "border-indigo-500/50 bg-indigo-500/8 text-zinc-100"
-                                                    : "border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                                                ? "border-emerald-500/50 bg-emerald-500/8 text-zinc-100"
+                                                : "border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"
                                                 }`}
                                         >
-                                            <span className={`absolute top-2.5 left-2.5 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center ${uploadMode === "separate" ? "border-indigo-400" : "border-zinc-600"
+                                            <span className={`absolute top-2.5 left-2.5 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center ${uploadMode === "separate" ? "border-emerald-400" : "border-zinc-600"
                                                 }`}>
-                                                {uploadMode === "separate" && <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />}
+                                                {uploadMode === "separate" && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
                                             </span>
                                             <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -539,13 +540,13 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                             type="button"
                                             onClick={() => setUploadMode("combined")}
                                             className={`relative flex flex-col items-center gap-2 px-3 py-3.5 rounded-xl border text-center transition-all ${uploadMode === "combined"
-                                                    ? "border-indigo-500/50 bg-indigo-500/8 text-zinc-100"
-                                                    : "border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                                                ? "border-emerald-500/50 bg-emerald-500/8 text-zinc-100"
+                                                : "border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"
                                                 }`}
                                         >
-                                            <span className={`absolute top-2.5 left-2.5 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center ${uploadMode === "combined" ? "border-indigo-400" : "border-zinc-600"
+                                            <span className={`absolute top-2.5 left-2.5 h-3.5 w-3.5 rounded-full border-2 flex items-center justify-center ${uploadMode === "combined" ? "border-emerald-400" : "border-zinc-600"
                                                 }`}>
-                                                {uploadMode === "combined" && <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />}
+                                                {uploadMode === "combined" && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
                                             </span>
                                             <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -559,9 +560,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
 
 
                             {isPending && (
-                                <div className="h-1 rounded-full bg-zinc-800 overflow-hidden">
-                                    <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse" />
-                                </div>
+                                <BananaUploadProgress current={undefined} total={files.length || undefined} />
                             )}
 
                             {error && <p className="text-[12px] text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg">{error}</p>}

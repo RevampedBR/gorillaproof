@@ -21,7 +21,7 @@ export default function CheckEmailPage() {
             </div>
             <Link
                 href="/login"
-                className="mt-4 text-[14px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+                className="mt-4 text-[14px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
             >
                 Voltar para o Login
             </Link>

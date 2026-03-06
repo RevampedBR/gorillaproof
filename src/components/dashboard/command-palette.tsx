@@ -71,8 +71,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                                 className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-zinc-800/60 transition-colors"
                                 onClick={() => onOpenChange(false)}
                             >
-                                <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
-                                    <svg className="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                    <svg className="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                     </svg>
                                 </div>

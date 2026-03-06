@@ -35,7 +35,7 @@ interface ClientDetailProps {
 const PROJECT_STATUS: Record<string, { label: string; color: string }> = {
     active: { label: "Ativo", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
     archived: { label: "Arquivado", color: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30" },
-    completed: { label: "Concluído", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+    completed: { label: "Concluído", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" },
 };
 
 const PROOF_STATUS: Record<string, { label: string; dot: string }> = {
@@ -55,11 +55,13 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
     const approvedProofs = allProofs.filter(p => p.status === "approved").length;
 
     return (
-        <div className="flex flex-col h-full max-w-5xl mx-auto">
+        <div className="flex flex-col h-full max-w-6xl mx-auto">
             {/* ═══ HERO HEADER ═══ */}
-            <div className="relative overflow-hidden rounded-2xl mb-8 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] border border-zinc-800/50">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-emerald-500/10 via-teal-500/5 to-transparent rounded-full blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-transparent rounded-full blur-3xl" />
+            <div className="relative rounded-2xl mb-8 bg-gradient-to-br from-[#0a1f12] via-[#0d2818] to-[#0a2e1a] border border-zinc-800/50">
+                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-emerald-500/10 via-teal-500/5 to-transparent rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-emerald-500/8 via-teal-500/5 to-transparent rounded-full blur-3xl" />
+                </div>
 
                 <div className="relative z-10 px-8 py-8">
                     {/* Breadcrumb */}
@@ -77,14 +79,14 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                     </div>
 
                     {/* Title + Create */}
-                    <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-5">
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="flex items-center gap-5 min-w-0">
                             {/* Logo ou Iniciais */}
-                            <div className="h-20 w-20 shrink-0 rounded-2xl border border-white/10 bg-zinc-900/80 backdrop-blur-md flex items-center justify-center overflow-hidden shadow-xl">
+                            <div className="h-16 w-16 shrink-0 rounded-2xl border border-white/10 bg-zinc-900/80 backdrop-blur-md flex items-center justify-center overflow-hidden shadow-xl">
                                 {client.logo_url ? (
                                     <img src={client.logo_url} alt={client.name} className="h-full w-full object-cover" />
                                 ) : (
-                                    <span className="text-3xl font-bold text-zinc-300">
+                                    <span className="text-2xl font-bold text-zinc-300">
                                         {client.name.charAt(0).toUpperCase()}
                                     </span>
                                 )}
@@ -98,7 +100,7 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                                 {(client.contact_email || client.contact_phone || client.segment) && (
                                     <div className="flex flex-wrap items-center gap-3 mt-3">
                                         {client.segment && (
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 text-indigo-300 text-[11px] font-medium border border-indigo-500/20">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[11px] font-medium border border-emerald-500/20">
                                                 <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
@@ -126,36 +128,38 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                                 )}
                             </div>
                         </div>
-                        <CreateProjectDialog clientId={client.id}>
-                            <Button
-                                size="lg"
-                                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[14px] h-11 px-6 rounded-xl shadow-lg shadow-emerald-500/20 font-semibold"
-                            >
-                                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                Novo Projeto
-                            </Button>
-                        </CreateProjectDialog>
-                        <CreateProofDialog clientId={client.id} clientName={client.name}>
-                            <Button
-                                size="lg"
-                                variant="outline"
-                                className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 text-[14px] h-11 px-6 rounded-xl font-semibold"
-                            >
-                                <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                                Nova Prova
-                            </Button>
-                        </CreateProofDialog>
+                        <div className="flex items-center gap-3 shrink-0">
+                            <CreateProjectDialog clientId={client.id}>
+                                <Button
+                                    size="lg"
+                                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[14px] h-11 px-6 rounded-xl shadow-lg shadow-emerald-500/20 font-semibold"
+                                >
+                                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Novo Projeto
+                                </Button>
+                            </CreateProjectDialog>
+                            <CreateProofDialog clientId={client.id} clientName={client.name}>
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 text-[14px] h-11 px-6 rounded-xl font-semibold"
+                                >
+                                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Nova Prova
+                                </Button>
+                            </CreateProofDialog>
+                        </div>
                     </div>
 
                     {/* Stats */}
                     <div className="flex items-center gap-6 mt-7">
                         {[
-                            { label: "Projetos", value: totalProjects, color: "from-blue-500 to-indigo-500" },
-                            { label: "Provas", value: totalProofs, color: "from-violet-500 to-purple-500" },
+                            { label: "Projetos", value: totalProjects, color: "from-emerald-500 to-teal-600" },
+                            { label: "Provas", value: totalProofs, color: "from-emerald-500 to-teal-500" },
                             { label: "Aprovadas", value: approvedProofs, color: "from-emerald-500 to-teal-500" },
                         ].map((stat) => (
                             <div key={stat.label} className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
@@ -172,11 +176,11 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
             {/* ═══ PROJECTS ═══ */}
             <div className="space-y-4">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                     </svg>
                     Projetos
-                    <Badge variant="secondary" className="ml-1 rounded-full px-2 py-0.5 text-[11px] bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    <Badge variant="secondary" className="ml-1 rounded-full px-2 py-0.5 text-[11px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         {totalProjects}
                     </Badge>
                 </h2>
@@ -253,7 +257,7 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                                         </CreateProofDialog>
                                         <Link
                                             href={`/clients/${client.id}/projects/${project.id}`}
-                                            className="text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                            className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
                                         >
                                             Ver projeto →
                                         </Link>

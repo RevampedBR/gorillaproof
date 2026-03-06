@@ -17,7 +17,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 const ROLE_COLORS: Record<string, string> = {
     owner: "bg-amber-500/15 text-amber-400 border-amber-500/20",
-    admin: "bg-blue-500/15 text-blue-400 border-blue-500/20",
+    admin: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20",
     member: "bg-zinc-700/40 text-zinc-300 border-zinc-600/30",
     reviewer: "bg-teal-500/15 text-teal-400 border-teal-500/20",
 };
@@ -83,8 +83,8 @@ export function TeamTab({ orgId }: TeamTabProps) {
                         {members.map(member => (
                             <div key={member.id} className="flex items-center justify-between p-4 px-6 hover:bg-zinc-800/20 transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500/20 to-teal-500/20 border border-indigo-500/30 flex items-center justify-center">
-                                        <span className="text-[14px] font-bold text-indigo-400">
+                                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center">
+                                        <span className="text-[14px] font-bold text-emerald-400">
                                             {(member.name || "?").charAt(0).toUpperCase()}
                                         </span>
                                     </div>

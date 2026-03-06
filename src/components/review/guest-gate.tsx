@@ -24,8 +24,8 @@ export function GuestGate({ proofTitle, onSubmit, loading = false, error }: Gues
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
             {/* Ambient background glow */}
             <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-indigo-600/8 rounded-full blur-[120px]" />
-                <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-fuchsia-600/5 rounded-full blur-[100px]" />
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-600/8 rounded-full blur-[120px]" />
+                <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] bg-emerald-800/5 rounded-full blur-[100px]" />
             </div>
 
             <div className="relative w-full max-w-[420px]">
@@ -33,7 +33,7 @@ export function GuestGate({ proofTitle, onSubmit, loading = false, error }: Gues
                 <div className="bg-[#1e1e32]/80 backdrop-blur-xl border border-zinc-800/60 rounded-2xl shadow-2xl shadow-black/40 p-8">
                     {/* Logo */}
                     <div className="flex items-center justify-center gap-2.5 mb-6">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-lg shadow-indigo-500/25">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-800 shadow-lg shadow-emerald-500/25">
                             <Image
                                 src="https://static.wixstatic.com/media/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png/v1/fill/w_38,h_30,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/1b0281_ef9aa17a06ce4946acda750d99e30419~mv2.png"
                                 alt="GorillaProof"
@@ -49,7 +49,7 @@ export function GuestGate({ proofTitle, onSubmit, loading = false, error }: Gues
                     <div className="text-center mb-6">
                         <h1 className="text-[18px] font-bold text-white mb-2">Você foi convocado pra revisar</h1>
                         <p className="text-[14px] text-zinc-400">
-                            <span className="text-indigo-400 font-medium">&quot;{proofTitle}&quot;</span>
+                            <span className="text-emerald-400 font-medium">&quot;{proofTitle}&quot;</span>
                         </p>
                     </div>
 
@@ -69,7 +69,7 @@ export function GuestGate({ proofTitle, onSubmit, loading = false, error }: Gues
                                 placeholder="Maria Silva"
                                 required
                                 autoFocus
-                                className="w-full bg-[#15152a] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-[14px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                className="w-full bg-[#15152a] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-[14px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                             />
                         </div>
 
@@ -82,7 +82,7 @@ export function GuestGate({ proofTitle, onSubmit, loading = false, error }: Gues
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="maria@empresa.com"
-                                className="w-full bg-[#15152a] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-[14px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                className="w-full bg-[#15152a] border border-zinc-800 rounded-lg px-3.5 py-2.5 text-[14px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
                             />
                         </div>
 
@@ -95,7 +95,7 @@ export function GuestGate({ proofTitle, onSubmit, loading = false, error }: Gues
                         <button
                             type="submit"
                             disabled={loading || !name.trim()}
-                            className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-[14px] font-semibold rounded-lg shadow-lg shadow-indigo-500/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-[14px] font-semibold rounded-lg shadow-lg shadow-emerald-500/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                         >
                             {loading ? (
                                 <>
@@ -151,7 +151,7 @@ export function GuestTokenError({ message }: { message: string }) {
 
                     <a
                         href="/"
-                        className="inline-flex items-center gap-2 text-[13px] text-indigo-400 hover:text-indigo-300 transition-colors"
+                        className="inline-flex items-center gap-2 text-[13px] text-emerald-400 hover:text-emerald-300 transition-colors"
                     >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />

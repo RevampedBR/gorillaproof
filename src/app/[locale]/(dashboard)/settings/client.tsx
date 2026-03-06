@@ -82,7 +82,7 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
 
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto py-20 flex justify-center">
+            <div className="max-w-6xl mx-auto py-20 flex justify-center">
                 <div className="flex flex-col items-center gap-3">
                     <div className="h-8 w-8 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
                     <p className="text-[13px] text-zinc-500">Carregando configurações...</p>
@@ -92,10 +92,10 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
     }
 
     return (
-        <div className="max-w-4xl mx-auto pb-10">
+        <div className="max-w-6xl mx-auto pb-10">
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-white tracking-tight">Configurações</h1>
+                <h1 className="text-2xl font-bold text-white tracking-tight font-heading">Configurações</h1>
                 <p className="text-[13px] text-zinc-500 mt-1">Gerencie sua organização, equipe e preferências pessoais.</p>
             </div>
 
@@ -106,8 +106,8 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
                         key={t.key}
                         onClick={() => setTab(t.key)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap ${tab === t.key
-                                ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm"
-                                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 border border-transparent"
+                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 border border-transparent"
                             }`}
                     >
                         {t.icon}

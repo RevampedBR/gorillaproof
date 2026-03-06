@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getVersions } from "@/lib/actions/versions";
 import { getComments } from "@/lib/actions/comments";
 import { getOrgMembers } from "@/lib/actions/proofs";
+import { getProofWorkflow } from "@/lib/actions/workflows";
 import { notFound } from "next/navigation";
 import { ProofViewer } from "./viewer";
 
@@ -44,6 +45,20 @@ export default async function ProofViewerPage({ params }: Props) {
     const orgId = (proof as any).projects?.organization_id || "";
     const { data: orgMembers } = orgId ? await getOrgMembers(orgId) : { data: [] };
 
+    // Fetch workflow data
+    const { data: workflow } = await getProofWorkflow(id);
+
+    // Fetch contact groups for workflow setup
+    let contactGroups: { id: string; name: string }[] = [];
+    if (orgId) {
+        const { data: groups } = await supabase
+            .from("contact_groups")
+            .select("id, name")
+            .eq("organization_id", orgId)
+            .order("name");
+        contactGroups = groups ?? [];
+    }
+
     return (
         <ProofViewer
             proof={proof}
@@ -53,6 +68,8 @@ export default async function ProofViewerPage({ params }: Props) {
             orgId={orgId}
             currentUserId={user.id}
             orgMembers={orgMembers}
+            initialWorkflow={workflow}
+            contactGroups={contactGroups}
         />
     );
 }

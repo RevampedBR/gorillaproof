@@ -4,8 +4,9 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { GorillaEasterEgg } from "@/components/ui/banana-elements";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -59,6 +60,20 @@ export default function DashboardLayout({
         return () => document.removeEventListener("keydown", onKeyDown);
     }, []);
 
+    /* ── 🦍 Easter egg: 5 rapid clicks on logo ── */
+    const logoClickRef = useRef<number[]>([]);
+    const [showEasterEgg, setShowEasterEgg] = useState(false);
+    const handleLogoClick = () => {
+        const now = Date.now();
+        logoClickRef.current.push(now);
+        logoClickRef.current = logoClickRef.current.filter(t => now - t < 2000);
+        if (logoClickRef.current.length >= 5) {
+            setShowEasterEgg(true);
+            logoClickRef.current = [];
+        }
+    };
+    const handleEasterEggDone = useCallback(() => setShowEasterEgg(false), []);
+
     const navItems = [
         {
             href: "/dashboard",
@@ -72,14 +87,17 @@ export default function DashboardLayout({
     ];
 
     return (
-        <div className="flex h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-indigo-500/30">
+        <div className="flex h-screen bg-[oklch(0.10_0.03_155)] text-[oklch(0.75_0.04_155)] font-sans selection:bg-emerald-500/30">
 
             {/* ========== SIDEBAR ========== */}
-            <aside className="hidden w-[220px] flex-col border-r border-zinc-800/60 bg-zinc-950 lg:flex z-10">
+            <aside className="hidden w-[220px] flex-col border-r border-emerald-900/20 bg-[oklch(0.08_0.03_155)] lg:flex z-10 jungle-leaf-texture">
 
                 {/* Logo */}
-                <div className="flex h-[52px] items-center gap-2.5 px-4 border-b border-zinc-800/60 shrink-0">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-600 shadow-lg shadow-indigo-500/20">
+                <div className="flex h-[52px] items-center gap-2.5 px-4 border-b border-emerald-900/20 shrink-0 relative z-10">
+                    <button
+                        onClick={handleLogoClick}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-800 shadow-lg shadow-emerald-500/20 cursor-pointer transition-transform hover:scale-105"
+                    >
                         <Image
                             src="/logo-white.png"
                             alt="GP"
@@ -87,15 +105,18 @@ export default function DashboardLayout({
                             height={13}
                             className="invert"
                         />
-                    </div>
-                    <span className="text-[14px] font-semibold tracking-tight text-zinc-100">GorillaProof</span>
+                    </button>
+                    <span className="text-[14px] font-semibold tracking-tight text-emerald-50 font-heading">GorillaProof</span>
+
+                    {/* 🦍 Easter egg — proper SVG gorilla animation */}
+                    <GorillaEasterEgg show={showEasterEgg} onDone={handleEasterEggDone} />
                 </div>
 
                 {/* + Nova Prova Button */}
-                <div className="px-3 pt-4 pb-2">
+                <div className="px-3 pt-4 pb-2 relative z-10">
                     <Button
                         onClick={() => setIsNewProofOpen(true)}
-                        className="w-full h-9 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-medium rounded-lg shadow-sm gap-1.5"
+                        className="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-medium rounded-lg shadow-sm shadow-emerald-500/20 gap-1.5 transition-all hover:shadow-emerald-500/30"
                     >
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -105,17 +126,17 @@ export default function DashboardLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 viewer-styled-scrollbar">
+                <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5 viewer-styled-scrollbar relative z-10">
                     {navItems.map((item) => (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive(item.href)
-                                ? "bg-zinc-800/80 text-zinc-100"
-                                : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
+                                ? "bg-emerald-500/10 text-emerald-50"
+                                : "text-[oklch(0.55_0.04_155)] hover:bg-emerald-500/5 hover:text-emerald-200"
                                 }`}
                         >
-                            <span className={isActive(item.href) ? "text-indigo-400" : ""}>{item.icon}</span>
+                            <span className={isActive(item.href) ? "text-emerald-400" : ""}>{item.icon}</span>
                             {item.label}
                         </Link>
                     ))}
@@ -125,11 +146,11 @@ export default function DashboardLayout({
                         <Link
                             href="/clients"
                             className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/clients")
-                                ? "bg-zinc-800/80 text-zinc-100"
-                                : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
+                                ? "bg-emerald-500/10 text-emerald-50"
+                                : "text-[oklch(0.55_0.04_155)] hover:bg-emerald-500/5 hover:text-emerald-200"
                                 }`}
                         >
-                            <span className={isActive("/clients") ? "text-indigo-400" : ""}>
+                            <span className={isActive("/clients") ? "text-emerald-400" : ""}>
                                 <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                                 </svg>
@@ -146,11 +167,11 @@ export default function DashboardLayout({
                     <Link
                         href="/members"
                         className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/members")
-                            ? "bg-zinc-800/80 text-zinc-100"
-                            : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
+                            ? "bg-emerald-500/10 text-emerald-50"
+                            : "text-[oklch(0.55_0.04_155)] hover:bg-emerald-500/5 hover:text-emerald-200"
                             }`}
                     >
-                        <span className={isActive("/members") ? "text-indigo-400" : ""}>
+                        <span className={isActive("/members") ? "text-emerald-400" : ""}>
                             <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                             </svg>
@@ -159,15 +180,15 @@ export default function DashboardLayout({
                     </Link>
 
                     <div className="pt-4 pb-1 px-2">
-                        <span className="text-[11px] font-semibold tracking-wider text-zinc-600 uppercase">
+                        <span className="text-[11px] font-semibold tracking-wider text-[oklch(0.35_0.04_155)] uppercase">
                             Configurações
                         </span>
                     </div>
                     <Link
                         href="/settings"
                         className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/settings")
-                            ? "bg-zinc-800/80 text-zinc-100"
-                            : "text-zinc-400 hover:bg-zinc-800/40 hover:text-zinc-200"
+                            ? "bg-emerald-500/10 text-emerald-50"
+                            : "text-[oklch(0.55_0.04_155)] hover:bg-emerald-500/5 hover:text-emerald-200"
                             }`}
                     >
                         <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -179,27 +200,27 @@ export default function DashboardLayout({
                 </nav>
 
                 {/* User / Account */}
-                <div className="border-t border-zinc-800/60 p-3">
+                <div className="border-t border-emerald-900/20 p-3 relative z-10">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-zinc-800/40 transition-colors">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-bold text-zinc-300 ring-1 ring-zinc-700">
+                            <button className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left hover:bg-emerald-500/5 transition-colors">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-900/40 text-xs font-bold text-emerald-300 ring-1 ring-emerald-700/40">
                                     {sidebarData?.userInitial || "U"}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-medium text-zinc-200 truncate">{sidebarData?.orgName || "Carregando..."}</p>
-                                    <p className="text-[11px] text-zinc-500 truncate">{sidebarData?.userName || ""}</p>
+                                    <p className="text-[13px] font-medium text-emerald-50 truncate">{sidebarData?.orgName || "Carregando..."}</p>
+                                    <p className="text-[11px] text-[oklch(0.45_0.04_155)] truncate">{sidebarData?.userName || ""}</p>
                                 </div>
-                                <svg className="h-4 w-4 text-zinc-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <svg className="h-4 w-4 text-[oklch(0.35_0.04_155)] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                                 </svg>
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" side="top" className="w-56 bg-zinc-950 border-zinc-800 text-zinc-300">
-                            <DropdownMenuItem className="focus:bg-zinc-800 focus:text-zinc-100 cursor-pointer text-[13px]">
+                        <DropdownMenuContent align="end" side="top" className="w-56 bg-[oklch(0.10_0.04_155)] border-emerald-900/30 text-emerald-100">
+                            <DropdownMenuItem className="focus:bg-emerald-500/10 focus:text-emerald-50 cursor-pointer text-[13px]">
                                 {t("header.myAccount")}
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-zinc-800" />
+                            <DropdownMenuSeparator className="bg-emerald-900/20" />
                             <form action="/auth/logout" method="post">
                                 <button type="submit" className="w-full text-left">
                                     <DropdownMenuItem className="text-red-400 focus:bg-red-400/10 focus:text-red-300 cursor-pointer text-[13px]">
@@ -213,21 +234,21 @@ export default function DashboardLayout({
             </aside>
 
             {/* ========== MAIN CONTENT AREA ========== */}
-            <div className="flex flex-1 flex-col overflow-hidden bg-[#18181B] relative">
+            <div className="flex flex-1 flex-col overflow-hidden bg-[oklch(0.12_0.03_155)] relative">
 
                 {/* Top Header */}
-                <header className="flex h-[52px] items-center justify-between border-b border-zinc-800/60 bg-[#18181B] px-4 shrink-0">
+                <header className="flex h-[52px] items-center justify-between border-b border-emerald-900/20 bg-[oklch(0.12_0.03_155)] px-4 shrink-0">
 
                     {/* Search trigger */}
                     <button
                         onClick={() => setIsSearchOpen(true)}
-                        className="flex items-center w-72 h-8 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 text-[13px] text-zinc-500 font-medium cursor-text hover:border-zinc-700 transition-colors gap-2"
+                        className="flex items-center w-72 h-8 rounded-lg border border-emerald-900/25 bg-emerald-950/30 px-3 text-[13px] text-[oklch(0.45_0.04_155)] font-medium cursor-text hover:border-emerald-700/40 transition-colors gap-2"
                     >
                         <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                         </svg>
                         <span className="flex-1 text-left truncate">Buscar provas e clientes...</span>
-                        <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-zinc-700 bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-400">
+                        <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-emerald-800/30 bg-emerald-950/50 px-1.5 font-mono text-[10px] font-medium text-[oklch(0.45_0.04_155)]">
                             <span className="text-[11px]">Cmd</span>K
                         </kbd>
                     </button>

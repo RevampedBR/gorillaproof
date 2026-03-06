@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { supabaseAdmin } from "@/utils/supabase/admin";
+import { revalidatePath } from "next/cache";
 
 export async function getOrgSettings(orgId: string) {
     const supabase = await createClient();
@@ -201,5 +203,112 @@ export async function getOrgMembers(orgId: string) {
         return { data: members, error: null };
     } catch {
         return { data: [], error: "Falha ao buscar membros" };
+    }
+}
+
+// ── Convidar membro por e-mail ──
+export async function inviteMember(
+    orgId: string,
+    email: string,
+    role: "member" | "reviewer" = "member",
+    groupId?: string
+) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Não autenticado" };
+    if (!email?.trim()) return { error: "E-mail é obrigatório" };
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    try {
+        // Verify caller is admin/owner
+        const { data: membership } = await supabase
+            .from("organization_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!membership || !["owner", "admin"].includes(membership.role)) {
+            return { error: "Apenas administradores podem convidar membros" };
+        }
+
+        // Check if email is already a member of this org
+        const { data: existingMembers } = await supabaseAdmin
+            .from("organization_members")
+            .select("id, user_id")
+            .eq("organization_id", orgId);
+
+        if (existingMembers && existingMembers.length > 0) {
+            // Check each existing member's email
+            for (const em of existingMembers) {
+                const { data: userData } = await supabaseAdmin.auth.admin.getUserById(em.user_id);
+                if (userData?.user?.email?.toLowerCase() === normalizedEmail) {
+                    // Already a member — if groupId provided, add to group instead
+                    if (groupId) {
+                        const { error: gmError } = await supabaseAdmin
+                            .from("contact_group_members")
+                            .insert({
+                                group_id: groupId,
+                                user_id: em.user_id,
+                                added_by: user.id,
+                            });
+                        if (gmError && gmError.code !== "23505") return { error: gmError.message };
+                        revalidatePath("/members");
+                        return { error: null, alreadyMember: true, addedToGroup: true };
+                    }
+                    return { error: "Este e-mail já é membro da organização" };
+                }
+            }
+        }
+
+        // Try to find existing auth user by email
+        const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = userList?.users?.find(
+            (u) => u.email?.toLowerCase() === normalizedEmail
+        );
+
+        let targetUserId: string;
+
+        if (existingUser) {
+            targetUserId = existingUser.id;
+        } else {
+            // Invite via email (Mailtrap will send the invite)
+            const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail);
+            if (inviteErr || !invited?.user) {
+                return { error: inviteErr?.message || "Falha ao enviar convite" };
+            }
+            targetUserId = invited.user.id;
+        }
+
+        // Add to organization
+        const { error: insertErr } = await supabaseAdmin
+            .from("organization_members")
+            .insert({
+                organization_id: orgId,
+                user_id: targetUserId,
+                role,
+            });
+
+        if (insertErr) {
+            if (insertErr.code === "23505") return { error: "Este e-mail já é membro da organização" };
+            return { error: insertErr.message };
+        }
+
+        // If groupId provided, also add to group
+        if (groupId) {
+            await supabaseAdmin
+                .from("contact_group_members")
+                .insert({
+                    group_id: groupId,
+                    user_id: targetUserId,
+                    added_by: user.id,
+                });
+        }
+
+        revalidatePath("/members");
+        return { error: null };
+    } catch (err: any) {
+        return { error: err?.message || "Falha ao convidar membro" };
     }
 }

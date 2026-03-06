@@ -50,7 +50,7 @@ export function LoginForm() {
                             autoCorrect="off"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                         />
                     </div>
                     <div className="grid gap-2">
@@ -60,7 +60,7 @@ export function LoginForm() {
                             </Label>
                             <Link
                                 href="/forgot-password"
-                                className="text-sm font-medium text-indigo-400 hover:text-indigo-300"
+                                className="text-sm font-medium text-emerald-400 hover:text-emerald-300"
                             >
                                 {t("forgotPassword")}
                             </Link>
@@ -72,7 +72,7 @@ export function LoginForm() {
                             autoComplete="current-password"
                             disabled={isPending}
                             required
-                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-indigo-500"
+                            className="bg-zinc-900 border-zinc-800 text-zinc-100 focus-visible:ring-emerald-500"
                         />
                     </div>
 
@@ -80,7 +80,7 @@ export function LoginForm() {
                         <div className="text-sm text-red-500 font-medium">{error}</div>
                     )}
 
-                    <Button disabled={isPending} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full">
+                    <Button disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full">
                         {isPending && (
                             <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -93,7 +93,7 @@ export function LoginForm() {
             </form>
             <div className="text-center text-sm text-zinc-400">
                 {t("noAccount")}{" "}
-                <Link href="/register" className="font-medium text-indigo-400 hover:text-indigo-300">
+                <Link href="/register" className="font-medium text-emerald-400 hover:text-emerald-300">
                     {t("signUpLink")}
                 </Link>
             </div>

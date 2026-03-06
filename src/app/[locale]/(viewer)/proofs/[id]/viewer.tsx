@@ -25,6 +25,9 @@ import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { submitDecision, getDecisions, lockProof, unlockProof, toggleDownloadLock, type ProofDecision } from "@/lib/actions/decisions";
 import { Lock, Unlock, MessageSquare, Clock } from "lucide-react";
+import { WorkflowStageBar } from "@/components/viewer/workflow-stage-bar";
+import { WorkflowSetupDialog } from "@/components/proofs/workflow-setup-dialog";
+import { getProofWorkflow, submitStageDecision, type ProofWorkflowRow } from "@/lib/actions/workflows";
 
 interface ProofViewerProps {
     proof: any;
@@ -34,6 +37,8 @@ interface ProofViewerProps {
     orgId: string;
     currentUserId: string;
     orgMembers?: any[];
+    initialWorkflow?: ProofWorkflowRow | null;
+    contactGroups?: { id: string; name: string }[];
 }
 
 const FILE_TYPE_LABELS: Record<string, string> = {
@@ -44,7 +49,7 @@ const FILE_TYPE_LABELS: Record<string, string> = {
     unknown: "FILE",
 };
 
-export function ProofViewer({ proof, versions, initialComments, projectName, orgId, currentUserId, orgMembers = [] }: ProofViewerProps) {
+export function ProofViewer({ proof, versions, initialComments, projectName, orgId, currentUserId, orgMembers = [], initialWorkflow, contactGroups = [] }: ProofViewerProps) {
     const t = useTranslations("dashboard.viewer");
     const tp = useTranslations("dashboard.projects");
     const router = useRouter();
@@ -104,6 +109,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     // Drawing state
     const [annotColor, setAnnotColor] = useState("#ef4444");
     const [showShareDialog, setShowShareDialog] = useState(false);
+    const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
+    const [proofWorkflow, setProofWorkflow] = useState<ProofWorkflowRow | null>(initialWorkflow ?? null);
     const [showAccessDialog, setShowAccessDialog] = useState(false);
     const [sidebarLayout, setSidebarLayout] = useState<"right" | "bottom">("right");
     const drawingCanvasRef = useRef<DrawingCanvasHandle>(null);
@@ -621,7 +628,24 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     const handleDecision = async (status: string) => {
         if (isLocked) { toast(t("proofLocked"), "error"); return; }
-        // Record per-reviewer decision
+
+        // If workflow is active, route decision to the current stage
+        if (proofWorkflow?.status === "active") {
+            const currentStage = proofWorkflow.workflow_stages[proofWorkflow.current_stage_index];
+            if (currentStage?.status === "active" && status !== "in_review") {
+                const result = await submitStageDecision(currentStage.id, status);
+                if (result.error) { toast(result.error, "error"); return; }
+                // Refresh workflow data
+                const { data: updatedWorkflow } = await getProofWorkflow(proof.id);
+                setProofWorkflow(updatedWorkflow ?? null);
+                setShowDecisionMenu(false);
+                toast(`Decisão registrada na etapa: ${currentStage.name}`, "success");
+                router.refresh();
+                return;
+            }
+        }
+
+        // Record per-reviewer decision (flat mode — no workflow)
         const validDecisions: ProofDecision[] = ["approved", "approved_with_changes", "changes_requested", "not_relevant", "rejected"];
         if (validDecisions.includes(status as ProofDecision)) {
             await submitDecision(proof.id, status as ProofDecision);
@@ -1127,6 +1151,23 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
                 {/* RIGHT: Shortcuts + Share + Avatar */}
                 <div className="flex items-center gap-2 flex-1 justify-end">
+                    {/* Workflow button */}
+                    <button
+                        onClick={() => setShowWorkflowDialog(true)}
+                        className={`h-[36px] px-4 rounded-lg text-[13px] transition-colors flex items-center gap-2 cursor-pointer ${proofWorkflow?.status === "active"
+                            ? "text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 bg-blue-500/5 border border-blue-500/20"
+                            : "text-zinc-400 hover:text-white hover:bg-[#2a2a40]"
+                            }`}
+                        data-tip="Gerenciar workflow de aprovação"
+                    >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                        </svg>
+                        {proofWorkflow?.status === "active"
+                            ? `Etapa ${(proofWorkflow.current_stage_index ?? 0) + 1}/${proofWorkflow.workflow_stages?.length ?? 0}`
+                            : "Workflow"
+                        }
+                    </button>
                     <button onClick={() => setShowShortcuts(true)} className="h-9 w-9 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-[#2a2a40] transition-colors flex items-center justify-center cursor-pointer" data-tip="Atalhos do teclado (?)">
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
@@ -1191,6 +1232,11 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                     </div>
                 </div>
             </header>
+
+            {/* ═══ WORKFLOW STAGE BAR ═══ */}
+            {proofWorkflow && proofWorkflow.status !== "cancelled" && (
+                <WorkflowStageBar workflow={proofWorkflow} />
+            )}
 
             {/* ═══════════════════════════════════════════════════
                 ROW 2: SECONDARY TOOLBAR
@@ -2344,6 +2390,28 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                 orgId={orgId}
                 currentAccessMode={proof.access_mode || "org_wide"}
             />
+
+            {/* Workflow Setup/Manage Dialog */}
+            {showWorkflowDialog && (
+                <WorkflowSetupDialog
+                    proofId={proof.id}
+                    orgId={orgId}
+                    orgMembers={orgMembers.map((m: any) => ({
+                        id: m.users?.id || m.user_id,
+                        full_name: m.users?.full_name || "",
+                        email: m.users?.email || "",
+                        role: m.role || "member",
+                    }))}
+                    contactGroups={contactGroups}
+                    existingWorkflow={proofWorkflow}
+                    onClose={() => setShowWorkflowDialog(false)}
+                    onWorkflowChange={async () => {
+                        const { data } = await getProofWorkflow(proof.id);
+                        setProofWorkflow(data ?? null);
+                        router.refresh();
+                    }}
+                />
+            )}
 
             {/* ═══ KEYBOARD SHORTCUTS OVERLAY ═══ */}
             {showShortcuts && (
