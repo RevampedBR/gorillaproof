@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { AnalyticsDashboard } from "@/components/dashboard/analytics-dashboard";
 import type { DashboardData } from "@/lib/actions/analytics";
+import { Filter, X, Calendar, Tag, Users as UsersIcon, CheckCircle } from "lucide-react";
 
 /* ═══ TYPES ═══ */
 interface Proof {
@@ -89,12 +90,25 @@ function getTypeIconColor(type: string): string {
     return "text-emerald-400";
 }
 
+/* ═══ PERIOD OPTIONS ═══ */
+const PERIOD_OPTIONS = [
+    { value: "all", label: "Todos" },
+    { value: "7", label: "7 dias" },
+    { value: "30", label: "30 dias" },
+    { value: "90", label: "90 dias" },
+];
+
 /* ═══ MAIN COMPONENT ═══ */
 export function DashboardHomeClient({ clients, dashboardData }: { clients: ClientData[]; dashboardData: DashboardData | null }) {
     const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
-        // Auto-expand the first client if it has projects, or explicitly open all
         return new Set(clients.map(c => c.id));
     });
+
+    // Filter state
+    const [filterClient, setFilterClient] = useState<string>("all");
+    const [filterStatuses, setFilterStatuses] = useState<Set<string>>(new Set());
+    const [filterTag, setFilterTag] = useState<string>("all");
+    const [filterPeriod, setFilterPeriod] = useState<string>("all");
 
     const toggleExpand = (id: string) => {
         setExpandedIds(prev => {
@@ -105,37 +119,67 @@ export function DashboardHomeClient({ clients, dashboardData }: { clients: Clien
         });
     };
 
-    // Stats
-    const totalClients = clients.filter(c => c.status === "active").length;
+    // Extract all unique tags from proofs
+    const allTags = useMemo(() => {
+        const tags = new Set<string>();
+        clients.forEach(c => c.projects?.forEach(p => p.proofs?.forEach(pr => {
+            pr.tags?.forEach(t => tags.add(t));
+        })));
+        return Array.from(tags).sort();
+    }, [clients]);
 
-    // Calculate total projects across all clients
-    const totalProjects = clients.reduce((acc, c) => acc + (c.projects?.length || 0), 0);
+    // Toggle status filter
+    const toggleStatus = (status: string) => {
+        setFilterStatuses(prev => {
+            const next = new Set(prev);
+            if (next.has(status)) next.delete(status);
+            else next.add(status);
+            return next;
+        });
+    };
 
-    // Calculate total proofs across all projects in all clients
+    const hasActiveFilters = filterClient !== "all" || filterStatuses.size > 0 || filterTag !== "all" || filterPeriod !== "all";
+
+    const clearFilters = () => {
+        setFilterClient("all");
+        setFilterStatuses(new Set());
+        setFilterTag("all");
+        setFilterPeriod("all");
+    };
+
+    // Filter data
+    const filteredClients = useMemo(() => {
+        const now = Date.now();
+        const periodMs = filterPeriod !== "all" ? parseInt(filterPeriod) * 24 * 60 * 60 * 1000 : 0;
+
+        return clients
+            .filter(c => filterClient === "all" || c.id === filterClient)
+            .map(client => {
+                const filteredProjects = client.projects
+                    .map(project => {
+                        const filteredProofs = (project.proofs || []).filter(proof => {
+                            if (filterStatuses.size > 0 && !filterStatuses.has(proof.status)) return false;
+                            if (filterTag !== "all" && !(proof.tags || []).includes(filterTag)) return false;
+                            if (periodMs > 0 && (now - new Date(proof.updated_at).getTime()) > periodMs) return false;
+                            return true;
+                        });
+                        return { ...project, proofs: filteredProofs };
+                    })
+                    .filter(p => p.proofs.length > 0 || !hasActiveFilters);
+                return { ...client, projects: filteredProjects };
+            })
+            .filter(c => c.projects.length > 0 || !hasActiveFilters);
+    }, [clients, filterClient, filterStatuses, filterTag, filterPeriod, hasActiveFilters]);
+
+    // Stats (from original unfiltered data)
     const totalProofs = clients.reduce(
         (acc, c) => acc + (c.projects?.reduce((pAcc, p) => pAcc + (p.proofs?.length || 0), 0) || 0), 0
     );
 
-    // Calculate status distribution
-    const statusCounts = clients.reduce<Record<string, number>>((acc, c) => {
-        c.projects?.forEach(p => p.proofs?.forEach(pr => {
-            acc[pr.status] = (acc[pr.status] || 0) + 1;
-        }));
-        return acc;
-    }, {});
-
-    const approvedCount = statusCounts["approved"] || 0;
-    const approvalRate = totalProofs > 0 ? Math.round((approvedCount / totalProofs) * 100) : 0;
-    const inReviewCount = statusCounts["in_review"] || 0;
-    const changesCount = statusCounts["changes_requested"] || 0;
-
-    const today = useMemo(() => {
-        return new Date().toLocaleDateString(undefined, {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-        });
-    }, []);
+    // Filtered count
+    const filteredProofCount = filteredClients.reduce(
+        (acc, c) => acc + c.projects.reduce((pAcc, p) => pAcc + p.proofs.length, 0), 0
+    );
 
     return (
         <div className="flex flex-col h-full max-w-6xl mx-auto">
@@ -170,26 +214,130 @@ export function DashboardHomeClient({ clients, dashboardData }: { clients: Clien
             </div>
 
 
+            {/* ═══ FILTER BAR ═══ */}
+            {clients.length > 0 && (
+                <div className="mb-6 p-3 rounded-xl bg-zinc-950/40 border border-white/5 backdrop-blur-xl">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Filter className="h-3.5 w-3.5 text-zinc-600 shrink-0" />
+
+                        {/* Client filter */}
+                        <select
+                            value={filterClient}
+                            onChange={e => setFilterClient(e.target.value)}
+                            className="h-8 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] text-zinc-300 px-2.5 pr-7 focus:outline-none focus:border-emerald-500/50 cursor-pointer appearance-none"
+                            style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.3rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
+                        >
+                            <option value="all">Todos os clientes</option>
+                            {clients.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+
+                        {/* Status pills */}
+                        <div className="flex items-center gap-1">
+                            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                                <button
+                                    key={key}
+                                    onClick={() => toggleStatus(key)}
+                                    className={`h-7 px-2.5 rounded-md text-[10px] font-semibold transition-all cursor-pointer border ${filterStatuses.has(key)
+                                            ? `${cfg.bg} ${cfg.text} border-current/20`
+                                            : "text-zinc-600 border-transparent hover:text-zinc-400 hover:bg-zinc-800/50"
+                                        }`}
+                                >
+                                    {cfg.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Tag filter */}
+                        {allTags.length > 0 && (
+                            <select
+                                value={filterTag}
+                                onChange={e => setFilterTag(e.target.value)}
+                                className="h-8 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] text-zinc-300 px-2.5 pr-7 focus:outline-none focus:border-emerald-500/50 cursor-pointer appearance-none"
+                                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.3rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
+                            >
+                                <option value="all">Todas as tags</option>
+                                {allTags.map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                ))}
+                            </select>
+                        )}
+
+                        {/* Period filter */}
+                        <select
+                            value={filterPeriod}
+                            onChange={e => setFilterPeriod(e.target.value)}
+                            className="h-8 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] text-zinc-300 px-2.5 pr-7 focus:outline-none focus:border-emerald-500/50 cursor-pointer appearance-none"
+                            style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.3rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
+                        >
+                            {PERIOD_OPTIONS.map(o => (
+                                <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                        </select>
+
+                        <div className="flex-1" />
+
+                        {/* Active filter indicator + clear */}
+                        {hasActiveFilters && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-zinc-500">
+                                    {filteredProofCount} de {totalProofs} provas
+                                </span>
+                                <button
+                                    onClick={clearFilters}
+                                    className="flex items-center gap-1 h-7 px-2.5 rounded-md text-[10px] font-semibold text-zinc-400 hover:text-zinc-200 bg-zinc-800/50 hover:bg-zinc-800 transition-all cursor-pointer"
+                                >
+                                    <X className="h-3 w-3" />
+                                    Limpar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* ═══ CLIENT LIST (ACCORDION) ═══ */}
-            {clients.length === 0 ? (
+            {filteredClients.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center rounded-2xl bg-zinc-950/40 border border-white/5 backdrop-blur-xl">
                     <div className="h-14 w-14 rounded-full bg-zinc-900 flex items-center justify-center mb-4 border border-zinc-800">
-                        <svg className="h-6 w-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
-                        </svg>
+                        {hasActiveFilters ? (
+                            <Filter className="h-6 w-6 text-zinc-500" />
+                        ) : (
+                            <svg className="h-6 w-6 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+                            </svg>
+                        )}
                     </div>
-                    <h3 className="text-[15px] font-semibold text-zinc-200">Nenhum cliente ativo</h3>
+                    <h3 className="text-[15px] font-semibold text-zinc-200">
+                        {hasActiveFilters ? "Nenhum resultado encontrado" : "Nenhum cliente ativo"}
+                    </h3>
                     <p className="text-[12px] text-zinc-500 mt-1 max-w-xs">
-                        Comece criando seu primeiro projeto para visualizar o progresso aqui.
+                        {hasActiveFilters
+                            ? "Tente ajustar os filtros para ver mais resultados."
+                            : "Comece criando seu primeiro projeto para visualizar o progresso aqui."
+                        }
                     </p>
+                    {hasActiveFilters && (
+                        <button
+                            onClick={clearFilters}
+                            className="mt-3 px-4 py-1.5 rounded-lg text-[11px] font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500/25 cursor-pointer"
+                        >
+                            Limpar filtros
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between mb-4 px-1">
                         <h2 className="text-[14px] font-semibold text-zinc-200 tracking-tight">Atividades em Andamento</h2>
+                        {hasActiveFilters && (
+                            <span className="text-[10px] text-zinc-500">
+                                {filteredClients.length} cliente{filteredClients.length !== 1 ? "s" : ""}
+                            </span>
+                        )}
                     </div>
-                    {clients.map(client => {
+                    {filteredClients.map(client => {
                         const isExpanded = expandedIds.has(client.id);
                         const projectCount = client.projects?.length || 0;
                         const clientProofCount = client.projects?.reduce((acc, p) => acc + (p.proofs?.length || 0), 0) || 0;
