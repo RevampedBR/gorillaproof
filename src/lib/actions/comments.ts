@@ -17,14 +17,22 @@ export async function getComments(versionId: string) {
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at, updated_at,
                 user_id, attachment_url, is_internal, guest_reviewer_id,
-                annotation_shape,
+                annotation_shape, is_private, visible_to,
                 users ( id, full_name, avatar_url, email ),
                 guest_reviewers ( id, display_name, email )
             `)
             .eq("version_id", versionId)
             .order("created_at", { ascending: true });
 
-        return { data: data ?? [], error: error?.message ?? null };
+        // Filter out private comments the user shouldn't see
+        const filtered = (data ?? []).filter((c: any) => {
+            if (!c.is_private) return true;
+            if (c.user_id === user.id) return true;
+            if (Array.isArray(c.visible_to) && c.visible_to.includes(user.id)) return true;
+            return false;
+        });
+
+        return { data: filtered, error: error?.message ?? null };
     } catch {
         return { data: [], error: "Falha ao buscar comentários" };
     }
@@ -40,7 +48,9 @@ export async function createComment(
     parentCommentId?: string | null,
     attachmentUrl?: string | null,
     isInternal?: boolean,
-    annotationShape?: Record<string, unknown> | null
+    annotationShape?: Record<string, unknown> | null,
+    isPrivate?: boolean,
+    visibleTo?: string[]
 ) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -67,6 +77,8 @@ export async function createComment(
             attachment_url: attachmentUrl ?? null,
             is_internal: isInternal ?? false,
             annotation_shape: annotationShape ?? null,
+            is_private: isPrivate ?? false,
+            visible_to: visibleTo ?? [],
         };
         console.log("[createComment] Inserting:", JSON.stringify(insertPayload, null, 2));
 
@@ -77,7 +89,7 @@ export async function createComment(
                 id, content, pos_x, pos_y, video_timestamp,
                 status, parent_comment_id, created_at,
                 user_id, attachment_url, is_internal,
-                annotation_shape,
+                annotation_shape, is_private, visible_to,
                 users ( id, full_name, avatar_url, email )
             `)
             .single();

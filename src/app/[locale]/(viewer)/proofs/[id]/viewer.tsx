@@ -24,10 +24,11 @@ import { notifyStatusChange } from "@/lib/actions/email";
 import { useToast } from "@/components/ui/toast-provider";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { submitDecision, getDecisions, lockProof, unlockProof, toggleDownloadLock, type ProofDecision } from "@/lib/actions/decisions";
-import { Lock, Unlock, MessageSquare, Clock } from "lucide-react";
+import { Lock, Unlock, MessageSquare, Clock, CheckSquare } from "lucide-react";
 import { WorkflowStageBar } from "@/components/viewer/workflow-stage-bar";
 import { WorkflowSetupDialog } from "@/components/proofs/workflow-setup-dialog";
 import { getProofWorkflow, submitStageDecision, type ProofWorkflowRow } from "@/lib/actions/workflows";
+import { ChecklistPanel } from "@/components/viewer/checklist-panel";
 
 interface ProofViewerProps {
     proof: any;
@@ -94,7 +95,7 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
     // Deadline state
     const [deadlineValue, setDeadlineValue] = useState<string | null>(proof.deadline || null);
     const [editingDeadline, setEditingDeadline] = useState(false);
-    const [sidebarTab, setSidebarTab] = useState<"comments" | "activity">("comments");
+    const [sidebarTab, setSidebarTab] = useState<"comments" | "activity" | "checklist">("comments");
 
     // Presence — find current user data from orgMembers
     const currentUserData = orgMembers.find((m) => m.users?.id === currentUserId)?.users || { id: currentUserId, full_name: null, email: "user" };
@@ -2298,6 +2299,13 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                 Comentários
                             </button>
                             <button
+                                onClick={() => setSidebarTab("checklist")}
+                                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "checklist" ? "text-amber-400 border-b-2 border-amber-400 bg-amber-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
+                            >
+                                <CheckSquare className="h-3.5 w-3.5" />
+                                Checklist
+                            </button>
+                            <button
                                 onClick={() => setSidebarTab("activity")}
                                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition-colors cursor-pointer ${sidebarTab === "activity" ? "text-violet-400 border-b-2 border-violet-400 bg-violet-500/5" : "text-zinc-500 hover:text-zinc-300"}`}
                             >
@@ -2352,6 +2360,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
                                     )}
                                 />
                             </div>
+                        ) : sidebarTab === "checklist" ? (
+                            <ChecklistPanel proofId={proof.id} />
                         ) : (
                             <ActivityLogPanel proofId={proof.id} />
                         )}

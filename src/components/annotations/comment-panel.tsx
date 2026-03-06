@@ -23,6 +23,8 @@ interface Comment {
     user_id: string;
     attachment_url?: string | null;
     is_internal?: boolean;
+    is_private?: boolean;
+    visible_to?: string[];
     annotation_shape?: Record<string, unknown> | null;
     users: { id: string; full_name: string | null; avatar_url: string | null; email: string } | null;
 }
@@ -423,7 +425,7 @@ export function CommentPanel({
                     </div>
 
                     {/* Badges: Pin # + Timestamp + Internal */}
-                    {(pinNum || comment.video_timestamp != null || comment.is_internal || comment.annotation_shape) && (
+                    {(pinNum || comment.video_timestamp != null || comment.is_internal || comment.is_private || comment.annotation_shape) && (
                         <div className="flex items-center gap-2 mb-1.5 ml-8">
                             {pinNum && (
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ${comment.status === "open" ? "bg-emerald-500/15 text-emerald-400" : "bg-[#2a2a40] text-zinc-500"}`}>
@@ -449,6 +451,12 @@ export function CommentPanel({
                             {comment.is_internal && (
                                 <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20" title="Visível apenas para sua equipe">
                                     INTERNO
+                                </span>
+                            )}
+                            {comment.is_private && (
+                                <span className="text-[9px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 flex items-center gap-1" title="Visível apenas para destinatários selecionados">
+                                    <Lock className="h-2.5 w-2.5" />
+                                    PRIVADO
                                 </span>
                             )}
                         </div>

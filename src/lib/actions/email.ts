@@ -512,5 +512,28 @@ ${ctaButton(params.proofUrl, "Ver prova final", accent)}
     });
 }
 
-// ─── Utility: Resolve org for current user ───
+// --- Automated Reminder: Pending Review ---
+
+export async function notifyPendingReview(params: {
+    proofTitle: string;
+    proofUrl: string;
+    daysPending: number;
+    recipients: { email: string; name?: string }[];
+    orgId?: string;
+}) {
+    const org = await getOrgBranding(params.orgId);
+    const accent = org?.brandColor || BRAND.primary;
+
+    await sendEmail({
+        to: params.recipients,
+        subject: `Lembrete: "${params.proofTitle}" aguarda sua revisão`,
+        html: baseTemplate(`
+<h2 style="color:${BRAND.white};font-size:17px;font-weight:700;margin:0 0 8px">Revisão pendente</h2>
+<p style="color:${BRAND.textMuted};font-size:13px;margin:0 0 16px;line-height:1.5">A prova <strong style="color:${BRAND.white}">${escapeHtml(params.proofTitle)}</strong> está aguardando sua revisão há <strong style="color:#f59e0b">${params.daysPending} dia${params.daysPending > 1 ? "s" : ""}</strong>.</p>
+${ctaButton(params.proofUrl, "Revisar agora", accent)}
+`, { preheader: `"${params.proofTitle}" aguarda sua revisão há ${params.daysPending} dia(s)`, org }),
+    });
+}
+
+// --- Utility: Resolve org for current user ---
 export { getOrgBrandingForUser, getOrgBranding };

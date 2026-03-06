@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { getDashboardData, type DashboardData } from "@/lib/actions/analytics";
+import { generateDashboardCsv } from "@/lib/actions/export";
 import { Link } from "@/i18n/navigation";
 import { GorillaEmpty, BananaSpinner } from "@/components/ui/banana-elements";
+import { Download } from "lucide-react";
 
 /* ═══ CONSTANTS ═══ */
 
@@ -35,6 +37,24 @@ export function AnalyticsDashboard({ initialData }: { initialData?: DashboardDat
     const [data, setData] = useState<DashboardData | null>(initialData ?? null);
     const [loading, setLoading] = useState(!initialData);
     const [error, setError] = useState<string | null>(null);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExportCsv = async () => {
+        setExporting(true);
+        try {
+            const { csv, error } = await generateDashboardCsv();
+            if (error || !csv) return;
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `gorillaproof_relatorio_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } finally {
+            setExporting(false);
+        }
+    };
 
     useEffect(() => {
         // If we already have data from server-side props, skip client fetch
@@ -81,6 +101,17 @@ export function AnalyticsDashboard({ initialData }: { initialData?: DashboardDat
         <div className="space-y-4">
 
             {/* ═══ ROW 1: QUICK STATS ═══ */}
+            <div className="flex items-center justify-between mb-1">
+                <span />
+                <button
+                    onClick={handleExportCsv}
+                    disabled={exporting}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium text-zinc-400 hover:text-white bg-zinc-800/50 hover:bg-zinc-700/50 border border-white/5 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                    <Download className="h-3.5 w-3.5" />
+                    {exporting ? "Exportando..." : "Exportar CSV"}
+                </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <StatCard label="Provas Ativas" value={stats.totalActive} icon="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" accent="emerald" />
                 <StatCard label="Aguardando Revisão" value={stats.awaitingReview} icon="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z" accent="amber" />
