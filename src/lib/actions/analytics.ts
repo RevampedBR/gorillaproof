@@ -370,3 +370,76 @@ function emptyDashboard(): DashboardData {
         dailyVolume: [0, 0, 0, 0, 0, 0, 0],
     };
 }
+
+/* ═══ CALENDAR DEADLINES ═══ */
+
+export interface CalendarProof {
+    id: string;
+    title: string;
+    status: string;
+    deadline: string;
+    clientName: string;
+    projectName: string | null;
+}
+
+export async function getCalendarDeadlines(month: number, year: number): Promise<{ data: CalendarProof[]; error: string | null }> {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "Não autenticado" };
+
+    const { data: membership } = await supabase
+        .from("organization_members")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .single();
+
+    if (!membership) return { data: [], error: "Nenhuma organização" };
+
+    const { data: clientRows } = await supabase
+        .from("clients")
+        .select("id, name")
+        .eq("organization_id", membership.organization_id);
+
+    const clientIds = (clientRows || []).map(c => c.id);
+    if (clientIds.length === 0) return { data: [], error: null };
+
+    const clientMap = new Map((clientRows || []).map(c => [c.id, c.name]));
+
+    // Range: first day of month to last day of month
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59);
+
+    const { data: proofs } = await supabase
+        .from("proofs")
+        .select("id, title, status, deadline, client_id, project_id")
+        .in("client_id", clientIds)
+        .not("deadline", "is", null)
+        .gte("deadline", start.toISOString())
+        .lte("deadline", end.toISOString());
+
+    if (!proofs) return { data: [], error: null };
+
+    // Get project names
+    const projectIds = [...new Set(proofs.map(p => p.project_id).filter(Boolean))];
+    const projectMap = new Map<string, string>();
+    if (projectIds.length > 0) {
+        const { data: projects } = await supabase
+            .from("projects")
+            .select("id, name")
+            .in("id", projectIds);
+        (projects || []).forEach(p => projectMap.set(p.id, p.name));
+    }
+
+    return {
+        data: proofs.map(p => ({
+            id: p.id,
+            title: p.title,
+            status: p.status,
+            deadline: p.deadline!,
+            clientName: clientMap.get(p.client_id) || "Cliente",
+            projectName: p.project_id ? (projectMap.get(p.project_id) || null) : null,
+        })),
+        error: null,
+    };
+}

@@ -179,6 +179,22 @@ export default function DashboardLayout({
                         Equipe
                     </Link>
 
+                    {/* ── Calendario link ── */}
+                    <Link
+                        href="/calendar"
+                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/calendar")
+                            ? "bg-emerald-500/10 text-emerald-50"
+                            : "text-[oklch(0.55_0.04_155)] hover:bg-emerald-500/5 hover:text-emerald-200"
+                            }`}
+                    >
+                        <span className={isActive("/calendar") ? "text-emerald-400" : ""}>
+                            <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                        </span>
+                        Calendario
+                    </Link>
+
                     <div className="pt-4 pb-1 px-2">
                         <span className="text-[11px] font-semibold tracking-wider text-[oklch(0.35_0.04_155)] uppercase">
                             Configurações

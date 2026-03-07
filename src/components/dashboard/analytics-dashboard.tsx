@@ -179,52 +179,21 @@ export function AnalyticsDashboard({ initialData }: { initialData?: DashboardDat
                     )}
                 </div>
 
-                {/* ── Próximos Deadlines ── */}
+                {/* ── Mini Calendario ── */}
                 <div className="rounded-2xl bg-zinc-950/40 border border-white/5 backdrop-blur-xl p-5 hover:bg-zinc-900/40 transition-colors">
-                    <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-widest mb-4">Próximos Deadlines</p>
+                    <div className="flex items-center justify-between mb-3">
+                        <p className="text-[11px] font-medium text-zinc-500 uppercase tracking-widest">Proximos Deadlines</p>
+                        <Link href="/calendar" className="text-[10px] text-emerald-400 hover:text-emerald-300 font-medium transition-colors flex items-center gap-1">
+                            Ver calendario
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                            </svg>
+                        </Link>
+                    </div>
                     {data.upcomingDeadlines.length === 0 ? (
-                        <GorillaEmpty text="Agenda tranquila" sub="Nenhum prazo nos próximos 7 dias." size={80} />
+                        <GorillaEmpty text="Agenda tranquila" sub="Nenhum prazo nos proximos 7 dias." size={80} />
                     ) : (
-                        <div className="space-y-2">
-                            {data.upcomingDeadlines.map((d) => (
-                                <Link key={d.id} href={`/proofs/${d.id}`} className="flex items-center gap-3 rounded-xl p-2.5 hover:bg-white/[0.03] transition-colors group">
-                                    {/* Thumbnail */}
-                                    <div className="h-12 w-12 rounded-lg bg-zinc-800 border border-white/5 overflow-hidden shrink-0 flex items-center justify-center">
-                                        {d.thumbnailUrl ? (
-                                            <img src={d.thumbnailUrl} alt="" className="h-full w-full object-cover" />
-                                        ) : (
-                                            <svg className="h-5 w-5 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z" />
-                                            </svg>
-                                        )}
-                                    </div>
-                                    {/* Info */}
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-[13px] font-medium text-zinc-200 truncate group-hover:text-white transition-colors">{d.title}</p>
-                                        <div className="flex items-center gap-2 mt-0.5">
-                                            <span className="text-[10px] text-zinc-500 truncate">{d.clientName}</span>
-                                            {d.lastViewedAt && (
-                                                <span className="text-[9px] text-zinc-600 flex items-center gap-0.5">
-                                                    <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                    </svg>
-                                                    Visto {formatRelative(d.lastViewedAt)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* Deadline badge */}
-                                    <div className="flex flex-col items-end gap-1 shrink-0">
-                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md flex items-center gap-1 ${d.daysLeft <= 1 ? "text-red-400 bg-red-500/10" : d.daysLeft <= 3 ? "text-amber-400 bg-amber-500/10" : "text-zinc-400 bg-zinc-800"}`}>
-                                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {d.daysLeft === 0 ? "Hoje" : d.daysLeft === 1 ? "Amanhã" : `${d.daysLeft}d`}
-                                        </span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                        <MiniCalendar deadlines={data.upcomingDeadlines} />
                     )}
                 </div>
             </div>
@@ -331,3 +300,88 @@ function EmptyState({ icon, text }: { icon: string; text: string }) {
         </div>
     );
 }
+
+function MiniCalendar({ deadlines }: { deadlines: { id: string; title: string; deadline: string; clientName: string; daysLeft: number; status: string }[] }) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay();
+    const todayDate = now.getDate();
+
+    const dayNames = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+    // Map deadlines to day numbers
+    const deadlinesByDay = new Map<number, typeof deadlines>();
+    deadlines.forEach(d => {
+        const dt = new Date(d.deadline);
+        if (dt.getMonth() === month && dt.getFullYear() === year) {
+            const day = dt.getDate();
+            if (!deadlinesByDay.has(day)) deadlinesByDay.set(day, []);
+            deadlinesByDay.get(day)!.push(d);
+        }
+    });
+
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    const remaining = 7 - (cells.length % 7);
+    if (remaining < 7) for (let i = 0; i < remaining; i++) cells.push(null);
+
+    return (
+        <div>
+            {/* Day headers */}
+            <div className="grid grid-cols-7 gap-0.5 mb-1">
+                {dayNames.map((d, i) => (
+                    <div key={i} className="text-center text-[9px] font-semibold text-zinc-600 uppercase">{d}</div>
+                ))}
+            </div>
+            {/* Days */}
+            <div className="grid grid-cols-7 gap-0.5">
+                {cells.map((day, i) => {
+                    if (!day) return <div key={i} className="h-8" />;
+                    const isToday = day === todayDate;
+                    const dayDeadlines = deadlinesByDay.get(day) || [];
+                    return (
+                        <div
+                            key={i}
+                            className={`h-8 rounded-md flex flex-col items-center justify-center relative ${isToday ? "bg-emerald-500/15 ring-1 ring-emerald-500/30" : ""
+                                }`}
+                        >
+                            <span className={`text-[10px] font-medium ${isToday ? "text-emerald-400 font-bold" : day < todayDate ? "text-zinc-600" : "text-zinc-400"
+                                }`}>
+                                {day}
+                            </span>
+                            {dayDeadlines.length > 0 && (
+                                <div className="flex gap-[2px] mt-[-1px]">
+                                    {dayDeadlines.slice(0, 3).map((_, j) => (
+                                        <span
+                                            key={j}
+                                            className={`w-1 h-1 rounded-full ${dayDeadlines[0]?.daysLeft <= 1 ? "bg-red-400" : dayDeadlines[0]?.daysLeft <= 3 ? "bg-amber-400" : "bg-emerald-400"
+                                                }`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+            {/* Upcoming list */}
+            <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+                {deadlines.slice(0, 3).map(d => (
+                    <Link key={d.id} href={`/proofs/${d.id}`} className="flex items-center gap-2 py-1 group">
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${d.daysLeft <= 1 ? "bg-red-400" : d.daysLeft <= 3 ? "bg-amber-400" : "bg-emerald-400"
+                            }`} />
+                        <span className="text-[11px] text-zinc-300 truncate flex-1 group-hover:text-white transition-colors">{d.title}</span>
+                        <span className={`text-[9px] font-semibold shrink-0 ${d.daysLeft <= 1 ? "text-red-400" : d.daysLeft <= 3 ? "text-amber-400" : "text-zinc-500"
+                            }`}>
+                            {d.daysLeft === 0 ? "Hoje" : d.daysLeft === 1 ? "Amanha" : `${d.daysLeft}d`}
+                        </span>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+}
+
