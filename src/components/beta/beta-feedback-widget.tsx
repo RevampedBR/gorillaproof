@@ -37,11 +37,7 @@ export function BetaFeedbackWidget() {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
-    // Self-gate: if not in beta mode, render nothing
-    const isBeta = process.env.NEXT_PUBLIC_BETA_MODE === "true";
-    if (!isBeta) return null;
-
-    // Form state
+    // Form state (ALL hooks must be declared before any conditional return)
     const [type, setType] = useState<SubmitFeedbackInput["type"]>("bug");
     const [severity, setSeverity] = useState<SubmitFeedbackInput["severity"]>("annoying");
     const [description, setDescription] = useState("");
@@ -181,6 +177,9 @@ export function BetaFeedbackWidget() {
     };
 
     const screenshotPreview = manualFileUrl || screenshotBase64;
+
+    // Self-gate: render nothing if not in beta mode (AFTER all hooks)
+    if (process.env.NEXT_PUBLIC_BETA_MODE !== "true") return null;
 
     return (
         <div id="beta-feedback-widget">
