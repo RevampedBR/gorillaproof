@@ -133,6 +133,35 @@
   }
 }
 
+/* ═══ Global styled scrollbar (matches system theme) ═══ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.25 0.06 155 / 40%) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: oklch(0.25 0.06 155 / 35%);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.40 0.10 155 / 55%);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* ═══ Instant tooltip (no browser delay) ═══ */
 [data-tip] {
   position: relative;

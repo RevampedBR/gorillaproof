@@ -302,8 +302,8 @@ export default function DashboardLayout({
             <CommandPalette open={isSearchOpen} onOpenChange={setIsSearchOpen} />
             <NewProofModal open={isNewProofOpen} onOpenChange={handleProofModalChange} />
 
-            {/* Beta Feedback Widget — controlled by feature flag */}
-            {process.env.NEXT_PUBLIC_BETA_MODE === "true" && <BetaFeedbackWidget />}
+            {/* Beta Feedback Widget — self-gates via env var */}
+            <BetaFeedbackWidget />
         </div>
     );
 }

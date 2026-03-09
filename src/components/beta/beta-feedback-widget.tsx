@@ -37,6 +37,10 @@ export function BetaFeedbackWidget() {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
+    // Self-gate: if not in beta mode, render nothing
+    const isBeta = process.env.NEXT_PUBLIC_BETA_MODE === "true";
+    if (!isBeta) return null;
+
     // Form state
     const [type, setType] = useState<SubmitFeedbackInput["type"]>("bug");
     const [severity, setSeverity] = useState<SubmitFeedbackInput["severity"]>("annoying");
