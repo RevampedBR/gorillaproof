@@ -19,6 +19,7 @@ import { NotificationsDropdown } from "@/components/dashboard/notifications-drop
 import { NewProofModal } from "@/components/dashboard/new-proof-modal";
 import { ClientsNavTree } from "@/components/dashboard/clients-nav-tree";
 import { getSidebarData } from "@/lib/actions/organization";
+import { BetaFeedbackWidget } from "@/components/beta/beta-feedback-widget";
 
 export default function DashboardLayout({
     children,
@@ -202,7 +203,7 @@ export default function DashboardLayout({
                     </div>
                     <Link
                         href="/settings"
-                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/settings")
+                        className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/settings") && !isActive("/settings/beta-bugs")
                             ? "bg-emerald-500/10 text-emerald-50"
                             : "text-[oklch(0.55_0.04_155)] hover:bg-emerald-500/5 hover:text-emerald-200"
                             }`}
@@ -213,6 +214,20 @@ export default function DashboardLayout({
                         </svg>
                         Configurações
                     </Link>
+
+                    {/* Beta Bugs — admin only */}
+                    {process.env.NEXT_PUBLIC_BETA_MODE === "true" && sidebarData?.userEmail?.endsWith("@gorillaproof.com.br") && (
+                        <Link
+                            href="/settings/beta-bugs"
+                            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors ${isActive("/settings/beta-bugs")
+                                ? "bg-amber-500/10 text-amber-50"
+                                : "text-amber-500/50 hover:bg-amber-500/5 hover:text-amber-300"
+                                }`}
+                        >
+                            <span className="text-[16px]">🐛</span>
+                            Beta Bugs
+                        </Link>
+                    )}
                 </nav>
 
                 {/* User / Account */}
@@ -286,6 +301,9 @@ export default function DashboardLayout({
             {/* Modals */}
             <CommandPalette open={isSearchOpen} onOpenChange={setIsSearchOpen} />
             <NewProofModal open={isNewProofOpen} onOpenChange={handleProofModalChange} />
+
+            {/* Beta Feedback Widget — controlled by feature flag */}
+            {process.env.NEXT_PUBLIC_BETA_MODE === "true" && <BetaFeedbackWidget />}
         </div>
     );
 }
