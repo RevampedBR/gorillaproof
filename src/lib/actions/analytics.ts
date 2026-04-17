@@ -111,7 +111,7 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
     // ── BATCH 3: Parallel fetch of versions, comments, recent activity, last_viewed ──
     const [versionsRes, lastViewedRes, recentProofsRes] = await Promise.all([
         supabase.from("versions").select("id, proof_id").in("proof_id", proofIds),
-        supabase.from("proofs").select("id, last_viewed_at").in("client_id", clientIds).not("last_viewed_at", "is", null).then(r => r).catch(() => ({ data: null })),
+        Promise.resolve(supabase.from("proofs").select("id, last_viewed_at").in("client_id", clientIds).not("last_viewed_at", "is", null)).catch(() => ({ data: null })),
         supabase.from("proofs").select("id, title, status, updated_at, project_id, client_id").in("client_id", clientIds).order("updated_at", { ascending: false }).limit(5),
     ]);
 
