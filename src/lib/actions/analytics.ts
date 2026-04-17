@@ -76,75 +76,109 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
 
     if (!membership) return { data: null, error: "Nenhuma organização" };
 
-    // Get all projects in org
-    const { data: projects } = await supabase
-        .from("projects")
-        .select("id, name, client_id")
-        .eq("organization_id", membership.organization_id);
+    // ── BATCH 1: Parallel fetch of projects + clients ──
+    const [projectsRes, clientsRes] = await Promise.all([
+        supabase.from("projects").select("id, name, client_id").eq("organization_id", membership.organization_id),
+        supabase.from("clients").select("id, name").eq("organization_id", membership.organization_id),
+    ]);
 
-    // Get all clients in org for name lookup
-    const { data: clientRows } = await supabase
-        .from("clients")
-        .select("id, name")
-        .eq("organization_id", membership.organization_id);
-    const clientMap = new Map((clientRows || []).map((c) => [c.id, c.name]));
+    const projects = projectsRes.data || [];
+    const clientRows = clientsRes.data || [];
+    const clientMap = new Map(clientRows.map((c) => [c.id, c.name]));
+    const projectMap = new Map(projects.map((p) => [p.id, p]));
 
-    if (!projects || projects.length === 0) {
-        // Continue — there may be loose proofs with no project
-    }
-
-    const projectIds = (projects || []).map((p) => p.id);
-    const projectMap = new Map((projects || []).map((p) => [p.id, p]));
-
-    // Get ALL proofs in this org's clients
-    const clientIds = (clientRows || []).map((c) => c.id);
+    const clientIds = clientRows.map((c) => c.id);
     if (clientIds.length === 0) {
         return { data: emptyDashboard(), error: null };
     }
 
+    // ── BATCH 2: Proofs (main data source) ──
     const { data: proofs, error: proofsError } = await supabase
         .from("proofs")
         .select("id, title, status, deadline, created_at, updated_at, project_id, client_id")
         .in("client_id", clientIds);
 
     if (proofsError || !proofs) {
-        console.error("[getDashboardData] Proofs query error:", proofsError?.message, "clientIds:", clientIds);
+        console.error("[getDashboardData] Proofs query error:", proofsError?.message);
         return { data: emptyDashboard(), error: null };
     }
 
-    // Get version counts per proof for first-version approval rate
     const proofIds = proofs.map((p) => p.id);
-    const versionCountMap = new Map<string, number>();
-    if (proofIds.length > 0) {
-        try {
-            const { data: versionData } = await supabase
-                .from("versions")
-                .select("id, proof_id")
-                .in("proof_id", proofIds);
-            (versionData || []).forEach((v) => {
-                versionCountMap.set(v.proof_id, (versionCountMap.get(v.proof_id) || 0) + 1);
-            });
-        } catch { /* RLS may block some */ }
+    if (proofIds.length === 0) {
+        return { data: emptyDashboard(), error: null };
     }
 
-    // Try to get last_viewed_at (graceful fallback if column doesn't exist)
-    const lastViewedMap = new Map<string, string>();
-    try {
-        const { data: viewData } = await supabase
-            .from("proofs")
-            .select("id, last_viewed_at")
-            .in("client_id", clientIds)
-            .not("last_viewed_at", "is", null);
-        (viewData || []).forEach((v: any) => {
-            if (v.last_viewed_at) lastViewedMap.set(v.id, v.last_viewed_at);
-        });
-    } catch { /* column may not exist yet */ }
+    // ── BATCH 3: Parallel fetch of versions, comments, recent activity, last_viewed ──
+    const [versionsRes, lastViewedRes, recentProofsRes] = await Promise.all([
+        supabase.from("versions").select("id, proof_id").in("proof_id", proofIds),
+        supabase.from("proofs").select("id, last_viewed_at").in("client_id", clientIds).not("last_viewed_at", "is", null).then(r => r).catch(() => ({ data: null })),
+        supabase.from("proofs").select("id, title, status, updated_at, project_id, client_id").in("client_id", clientIds).order("updated_at", { ascending: false }).limit(5),
+    ]);
 
+    const versionRows = versionsRes.data || [];
+    const versionIds = versionRows.map((v) => v.id);
+    const versionToProof = new Map(versionRows.map((v) => [v.id, v.proof_id]));
+
+    // Version count per proof (for first-version approval rate)
+    const versionCountMap = new Map<string, number>();
+    versionRows.forEach((v) => {
+        versionCountMap.set(v.proof_id, (versionCountMap.get(v.proof_id) || 0) + 1);
+    });
+
+    // Last viewed
+    const lastViewedMap = new Map<string, string>();
+    ((lastViewedRes as any)?.data || []).forEach((v: any) => {
+        if (v.last_viewed_at) lastViewedMap.set(v.id, v.last_viewed_at);
+    });
+
+    // ── BATCH 4: Comments (open + recent) in parallel ──
+    let openCommentsData: any[] = [];
+    let recentCommentsData: any[] = [];
+    if (versionIds.length > 0) {
+        const [openRes, recentRes] = await Promise.all([
+            supabase.from("comments").select("id, version_id").in("version_id", versionIds).is("parent_comment_id", null).eq("status", "open"),
+            supabase.from("comments").select("id, content, status, created_at, user_id, version_id").in("version_id", versionIds).is("parent_comment_id", null).order("created_at", { ascending: false }).limit(5),
+        ]);
+        openCommentsData = openRes.data || [];
+        recentCommentsData = recentRes.data || [];
+    }
+
+    // Open comments count per proof
+    const openCommentsMap = new Map<string, number>();
+    openCommentsData.forEach((c) => {
+        const pId = versionToProof.get(c.version_id);
+        if (pId) openCommentsMap.set(pId, (openCommentsMap.get(pId) || 0) + 1);
+    });
+
+    // ── Resolve comment authors (single batch) ──
+    let recentComments: RecentComment[] = [];
+    if (recentCommentsData.length > 0) {
+        const proofTitleMap = new Map(proofs.map((p) => [p.id, p.title]));
+        const userIds = [...new Set(recentCommentsData.map((c) => c.user_id))];
+        const { data: users } = await supabase.from("users").select("id, full_name, email").in("id", userIds);
+        const userMap = new Map((users || []).map((u) => [u.id, u]));
+
+        recentComments = recentCommentsData.map((c) => {
+            const commentUser = userMap.get(c.user_id);
+            const proofId = versionToProof.get(c.version_id);
+            return {
+                id: c.id,
+                content: (() => {
+                    const stripped = c.content.replace(/<[^>]*>/g, "").trim();
+                    return stripped.length > 80 ? stripped.slice(0, 80) + "…" : stripped;
+                })(),
+                authorName: commentUser?.full_name || commentUser?.email || "Anônimo",
+                proofTitle: proofId ? (proofTitleMap.get(proofId) || "Prova") : "Prova",
+                status: c.status,
+                createdAt: c.created_at,
+            };
+        });
+    }
+
+    // ── COMPUTE STATS (in-memory, no additional queries) ──
     const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 86400000);
     const weekFromNow = new Date(now.getTime() + 7 * 86400000);
 
-    // ── STATS ──
     const activeProofs = proofs.filter((p) => !["approved", "rejected", "not_relevant"].includes(p.status));
     const totalActive = activeProofs.length;
     const awaitingReview = proofs.filter((p) => p.status === "in_review").length;
@@ -153,13 +187,11 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
         return new Date(p.deadline) < now && !["approved", "rejected", "not_relevant"].includes(p.status);
     }).length;
 
-    // First version approval rate: proofs approved that only have 1 version
     const approvedProofs = proofs.filter((p) => p.status === "approved");
     const singleVersionApproved = approvedProofs.filter((p: any) => (versionCountMap.get(p.id) || 1) <= 1).length;
     const firstVersionApprovalRate = approvedProofs.length > 0
         ? Math.round((singleVersionApproved / approvedProofs.length) * 100) : 0;
 
-    // Avg turnaround
     const completedProofs = proofs.filter((p) => ["approved", "rejected"].includes(p.status));
     let avgTurnaroundDays: number | null = null;
     if (completedProofs.length > 0) {
@@ -169,47 +201,19 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
         avgTurnaroundDays = Math.round((totalDays / completedProofs.length) * 10) / 10;
     }
 
-    // ── OPEN COMMENTS COUNT (batch) ──
-    const openCommentsMap = new Map<string, number>();
-
-    if (proofIds.length > 0) {
-        const { data: versionRows } = await supabase
-            .from("versions")
-            .select("id, proof_id")
-            .in("proof_id", proofIds);
-        const versionIds = (versionRows || []).map((v) => v.id);
-        const versionToProof = new Map((versionRows || []).map((v) => [v.id, v.proof_id]));
-
-        if (versionIds.length > 0) {
-            const { data: openComments } = await supabase
-                .from("comments")
-                .select("id, version_id")
-                .in("version_id", versionIds)
-                .is("parent_comment_id", null)
-                .eq("status", "open");
-
-            (openComments || []).forEach((c) => {
-                const pId = versionToProof.get(c.version_id);
-                if (pId) openCommentsMap.set(pId, (openCommentsMap.get(pId) || 0) + 1);
-            });
-        }
-    }
-
-    // Helper: get client name for a proof
+    // Helpers
     const getClientName = (p: any): string => {
         const proj = projectMap.get(p.project_id);
         if (proj?.client_id) return clientMap.get(proj.client_id) || "Cliente";
         if (p.client_id) return clientMap.get(p.client_id) || "Cliente";
         return "Cliente";
     };
-
     const getProjectName = (p: any): string | null => {
         const proj = projectMap.get(p.project_id);
         return proj?.name || null;
     };
 
     // ── ATTENTION PROOFS ──
-    // Proofs that are overdue, have open comments, or have changes_requested
     const attentionProofs: AttentionProof[] = proofs
         .filter((p) => {
             const isOverdue = p.deadline && new Date(p.deadline) < now && !["approved", "rejected", "not_relevant"].includes(p.status);
@@ -218,7 +222,6 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
             return isOverdue || hasOpenComments || needsChanges;
         })
         .sort((a, b) => {
-            // Overdue first, then by deadline
             const aOverdue = a.deadline ? new Date(a.deadline) < now : false;
             const bOverdue = b.deadline ? new Date(b.deadline) < now : false;
             if (aOverdue && !bOverdue) return -1;
@@ -261,61 +264,8 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
             lastViewedAt: lastViewedMap.get(p.id) || null,
         }));
 
-    // ── RECENT COMMENTS ──
-    let recentComments: RecentComment[] = [];
-    if (proofIds.length > 0) {
-        const { data: versionRows } = await supabase
-            .from("versions")
-            .select("id, proof_id")
-            .in("proof_id", proofIds);
-        const versionIds = (versionRows || []).map((v) => v.id);
-        const versionToProof = new Map((versionRows || []).map((v) => [v.id, v.proof_id]));
-        const proofTitleMap = new Map(proofs.map((p) => [p.id, p.title]));
-
-        if (versionIds.length > 0) {
-            const { data: comments } = await supabase
-                .from("comments")
-                .select("id, content, status, created_at, user_id, version_id")
-                .in("version_id", versionIds)
-                .is("parent_comment_id", null)
-                .order("created_at", { ascending: false })
-                .limit(5);
-
-            if (comments && comments.length > 0) {
-                const userIds = [...new Set(comments.map((c) => c.user_id))];
-                const { data: users } = await supabase
-                    .from("users")
-                    .select("id, full_name, email")
-                    .in("id", userIds);
-                const userMap = new Map((users || []).map((u) => [u.id, u]));
-
-                recentComments = comments.map((c) => {
-                    const user = userMap.get(c.user_id);
-                    const proofId = versionToProof.get(c.version_id);
-                    return {
-                        id: c.id,
-                        content: (() => {
-                            const stripped = c.content.replace(/<[^>]*>/g, "").trim();
-                            return stripped.length > 80 ? stripped.slice(0, 80) + "…" : stripped;
-                        })(),
-                        authorName: user?.full_name || user?.email || "Anônimo",
-                        proofTitle: proofId ? (proofTitleMap.get(proofId) || "Prova") : "Prova",
-                        status: c.status,
-                        createdAt: c.created_at,
-                    };
-                });
-            }
-        }
-    }
-
     // ── RECENT ACTIVITY ──
-    const { data: recentProofs } = await supabase
-        .from("proofs")
-        .select("id, title, status, updated_at, project_id, client_id")
-        .in("client_id", clientIds)
-        .order("updated_at", { ascending: false })
-        .limit(5);
-
+    const recentProofs = recentProofsRes.data;
     let recentActivity: RecentActivity[] = [];
     if (recentProofs && recentProofs.length > 0) {
         recentActivity = recentProofs.map((p) => ({
@@ -327,7 +277,7 @@ export async function getDashboardData(): Promise<{ data: DashboardData | null; 
         }));
     }
 
-    // ── DAILY VOLUME (sparkline) ──
+    // ── DAILY VOLUME (sparkline — computed in-memory) ──
     const dailyVolume = Array.from({ length: 7 }, (_, i) => {
         const dayStart = new Date(now);
         dayStart.setHours(0, 0, 0, 0);
