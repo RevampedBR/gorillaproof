@@ -12,29 +12,37 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClientAction } from "@/lib/actions/clients";
+import { updateClient } from "@/lib/actions/clients";
 import { LogoCropper } from "@/components/ui/logo-cropper";
-import { createClient } from "@/utils/supabase/client";
+import { createClient as createSupabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
-interface CreateClientDialogProps {
+interface EditClientDialogProps {
     children: React.ReactNode;
+    client: {
+        id: string;
+        name: string;
+        description: string | null;
+        logo_url?: string | null;
+        contact_email: string | null;
+        contact_phone: string | null;
+        segment: string | null;
+    };
 }
 
-export function CreateClientDialog({ children }: CreateClientDialogProps) {
+export function EditClientDialog({ children, client }: EditClientDialogProps) {
     const [open, setOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [logoUrl, setLogoUrl] = useState<string | null>(null);
+    const [logoUrl, setLogoUrl] = useState<string | null>(client.logo_url || null);
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
     const handleLogoUpload = async (file: File) => {
         try {
-            const supabase = createClient();
+            const supabase = createSupabaseClient();
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Get org ID (needed for storage RLS path)
             const { data: membership } = await supabase
                 .from("organization_members")
                 .select("organization_id")
@@ -62,11 +70,11 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
         setError(null);
         const formData = new FormData(e.currentTarget);
         if (logoUrl) {
-            formData.append("logo_url", logoUrl);
+            formData.set("logo_url", logoUrl);
         }
 
         startTransition(async () => {
-            const result = await createClientAction(formData);
+            const result = await updateClient(client.id, formData);
             if (result?.error) {
                 setError(result.error);
             } else {
@@ -82,10 +90,10 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
             <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-zinc-800 text-zinc-100">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-bold text-zinc-100">
-                        Novo Cliente
+                        Editar Cliente
                     </DialogTitle>
                     <DialogDescription className="text-zinc-400">
-                        Adicione um novo cliente para organizar seus projetos e provas.
+                        Atualize as informações do cliente.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -96,18 +104,16 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
                         </div>
                     )}
 
-                    {/* Logo (centered, compact) */}
                     <LogoCropper onUpload={handleLogoUpload} currentLogoUrl={logoUrl} />
 
-                    {/* Nome */}
                     <div className="grid gap-2">
-                        <Label htmlFor="name" className="text-zinc-300 text-sm">
+                        <Label htmlFor="edit-name" className="text-zinc-300 text-sm">
                             Nome do cliente
                         </Label>
                         <Input
-                            id="name"
+                            id="edit-name"
                             name="name"
-                            placeholder="Ex: Marca XYZ, Empresa ABC..."
+                            defaultValue={client.name}
                             required
                             autoFocus
                             className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500"
@@ -115,12 +121,13 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="description" className="text-zinc-300 text-sm">
+                        <Label htmlFor="edit-description" className="text-zinc-300 text-sm">
                             Descrição (opcional)
                         </Label>
                         <textarea
-                            id="description"
+                            id="edit-description"
                             name="description"
+                            defaultValue={client.description || ""}
                             placeholder="Breve descrição sobre o cliente..."
                             rows={2}
                             className="flex min-h-[50px] w-full rounded-md border border-zinc-800/80 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 resize-none"
@@ -129,25 +136,27 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="grid gap-2">
-                            <Label htmlFor="contact_email" className="text-zinc-300 text-sm">
+                            <Label htmlFor="edit-contact_email" className="text-zinc-300 text-sm">
                                 E-mail de contato
                             </Label>
                             <Input
-                                id="contact_email"
+                                id="edit-contact_email"
                                 name="contact_email"
                                 type="email"
+                                defaultValue={client.contact_email || ""}
                                 placeholder="contato@cliente.com"
                                 className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500"
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="contact_phone" className="text-zinc-300 text-sm">
+                            <Label htmlFor="edit-contact_phone" className="text-zinc-300 text-sm">
                                 Telefone
                             </Label>
                             <Input
-                                id="contact_phone"
+                                id="edit-contact_phone"
                                 name="contact_phone"
                                 type="tel"
+                                defaultValue={client.contact_phone || ""}
                                 placeholder="(11) 99999-0000"
                                 className="bg-zinc-900/50 border-zinc-800/80 text-zinc-100 placeholder:text-zinc-600 focus-visible:ring-emerald-500"
                             />
@@ -155,12 +164,13 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="segment" className="text-zinc-300 text-sm">
+                        <Label htmlFor="edit-segment" className="text-zinc-300 text-sm">
                             Segmento
                         </Label>
                         <select
-                            id="segment"
+                            id="edit-segment"
                             name="segment"
+                            defaultValue={client.segment || ""}
                             className="flex h-10 w-full rounded-md border border-zinc-800/80 bg-zinc-900/50 px-3 py-2 text-sm text-zinc-100 outline-none focus:ring-1 focus:ring-emerald-500 appearance-none"
                         >
                             <option value="">Selecione...</option>
@@ -188,7 +198,7 @@ export function CreateClientDialog({ children }: CreateClientDialogProps) {
                             className="text-white font-medium"
                             style={{ backgroundColor: 'var(--brand)' }}
                         >
-                            {isPending ? "..." : "Criar Cliente"}
+                            {isPending ? "Salvando..." : "Salvar Alterações"}
                         </Button>
                     </div>
                 </form>

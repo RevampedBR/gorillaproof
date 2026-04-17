@@ -161,7 +161,8 @@ export function ProofingTab({ orgId, initialStatus, initialTheme, initialAutoLoc
                 <Button
                     onClick={handleSave}
                     disabled={saving}
-                    className="h-10 px-6 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold transition-colors disabled:opacity-50"
+                    className="h-10 px-6 rounded-lg text-white text-[13px] font-semibold transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--brand)' }}
                 >
                     {saving ? "Salvando..." : "Salvar Configurações de Provas"}
                 </Button>

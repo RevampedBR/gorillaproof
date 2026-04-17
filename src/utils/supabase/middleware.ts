@@ -54,10 +54,11 @@ export async function updateSession(request: NextRequest, response: NextResponse
     const cleanPath = pathWithoutLocale === "" ? "/" : pathWithoutLocale;
 
     const isPublicReviewRoute = cleanPath.startsWith("/review");
-    const isProtectRoute = (cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings")) && !isPublicReviewRoute;
+    const isPortalRoute = cleanPath.startsWith("/portal");
+    const isProtectRoute = (cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings") || isPortalRoute) && !isPublicReviewRoute;
     const isAuthRoute = cleanPath.startsWith("/login") || cleanPath.startsWith("/register") || cleanPath.startsWith("/forgot-password") || cleanPath.startsWith("/reset-password");
 
-    // Protect Dashboard
+    // Protect Dashboard + Portal
     if (isProtectRoute && !user) {
         const url = request.nextUrl.clone();
         url.pathname = '/pt/login';
@@ -65,10 +66,19 @@ export async function updateSession(request: NextRequest, response: NextResponse
     }
 
     // Prevent logged in users from seeing login pages
+    // Check if they're a client_user and redirect accordingly
     if (isAuthRoute && user) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/pt/dashboard';
-        return NextResponse.redirect(url);
+        // Check if user is a client portal user
+        try {
+            const { data } = await supabase.rpc('user_is_any_client_user');
+            const url = request.nextUrl.clone();
+            url.pathname = data ? '/pt/portal' : '/pt/dashboard';
+            return NextResponse.redirect(url);
+        } catch {
+            const url = request.nextUrl.clone();
+            url.pathname = '/pt/dashboard';
+            return NextResponse.redirect(url);
+        }
     }
 
     return supabaseResponse;

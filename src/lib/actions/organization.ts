@@ -41,7 +41,7 @@ export async function updateOrgSettings(orgId: string, updates: {
     if (!user) return { error: "Não autenticado" };
 
     try {
-        // Verify user is admin of this org
+        // Verify user is admin/owner of this org
         const { data: membership } = await supabase
             .from("organization_members")
             .select("role")
@@ -49,7 +49,9 @@ export async function updateOrgSettings(orgId: string, updates: {
             .eq("organization_id", orgId)
             .single();
 
-        if (!membership || membership.role !== "admin") return { error: "Apenas administradores podem atualizar configurações" };
+        if (!membership || !(["admin", "owner"].includes(membership.role))) {
+            return { error: "Apenas administradores podem atualizar configurações" };
+        }
 
         const { error } = await supabase
             .from("organizations")
@@ -133,7 +135,7 @@ export async function getSidebarData() {
     try {
         const { data: membership } = await supabase
             .from("organization_members")
-            .select("organization_id, role, organizations ( name, logo_url )")
+            .select("organization_id, role, organizations ( name, logo_url, brand_color )")
             .eq("user_id", user.id)
             .limit(1)
             .single();
@@ -147,6 +149,7 @@ export async function getSidebarData() {
                 userInitial: (user.user_metadata?.full_name || user.email || "U").charAt(0).toUpperCase(),
                 orgName: orgData?.name || "Minha Empresa",
                 orgLogoUrl: orgData?.logo_url || null,
+                brandColor: orgData?.brand_color || "#34d399",
                 role: membership?.role || "member",
             },
             error: null,
@@ -274,7 +277,10 @@ export async function inviteMember(
             targetUserId = existingUser.id;
         } else {
             // Invite via email (Mailtrap will send the invite)
-            const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail);
+            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+            const { data: invited, error: inviteErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
+                redirectTo: `${siteUrl}/auth/callback`,
+            });
             if (inviteErr || !invited?.user) {
                 return { error: inviteErr?.message || "Falha ao enviar convite" };
             }
@@ -310,5 +316,180 @@ export async function inviteMember(
         return { error: null };
     } catch (err: any) {
         return { error: err?.message || "Falha ao convidar membro" };
+    }
+}
+
+// ── Convites pendentes ──
+export async function getPendingInvites(orgId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { data: [], error: "Não autenticado" };
+
+    try {
+        // Verify caller is admin/owner
+        const { data: membership } = await supabase
+            .from("organization_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!membership || !["owner", "admin"].includes(membership.role)) {
+            return { data: [], error: "Apenas administradores podem ver convites pendentes" };
+        }
+
+        // Get all org members via admin (bypass RLS)
+        const { data: members, error } = await supabaseAdmin
+            .from("organization_members")
+            .select("id, user_id, role, created_at")
+            .eq("organization_id", orgId)
+            .order("created_at", { ascending: false });
+
+        if (error || !members) return { data: [], error: error?.message };
+
+        // Check each member's auth status — pending = never signed in
+        const pending: {
+            id: string;
+            user_id: string;
+            email: string;
+            role: string;
+            invited_at: string;
+        }[] = [];
+
+        for (const m of members) {
+            try {
+                const { data: userData } = await supabaseAdmin.auth.admin.getUserById(m.user_id);
+                if (userData?.user && !userData.user.last_sign_in_at) {
+                    pending.push({
+                        id: m.id,
+                        user_id: m.user_id,
+                        email: userData.user.email || "",
+                        role: m.role,
+                        invited_at: m.created_at,
+                    });
+                }
+            } catch {
+                // Skip users that can't be fetched
+            }
+        }
+
+        return { data: pending, error: null };
+    } catch {
+        return { data: [], error: "Falha ao buscar convites pendentes" };
+    }
+}
+
+export async function cancelInvite(orgId: string, memberId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Não autenticado" };
+
+    try {
+        // Verify caller is admin/owner
+        const { data: membership } = await supabase
+            .from("organization_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!membership || !["owner", "admin"].includes(membership.role)) {
+            return { error: "Apenas administradores podem cancelar convites" };
+        }
+
+        // Get the target member record
+        const { data: target } = await supabaseAdmin
+            .from("organization_members")
+            .select("user_id")
+            .eq("id", memberId)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!target) return { error: "Convite não encontrado" };
+
+        // Verify user never signed in (is actually pending)
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
+        if (userData?.user?.last_sign_in_at) {
+            return { error: "Este membro já aceitou o convite" };
+        }
+
+        // Remove from org
+        await supabaseAdmin
+            .from("organization_members")
+            .delete()
+            .eq("id", memberId);
+
+        // Also remove from any groups
+        await supabaseAdmin
+            .from("contact_group_members")
+            .delete()
+            .eq("user_id", target.user_id);
+
+        // Check if user belongs to any other org
+        const { data: otherOrgs } = await supabaseAdmin
+            .from("organization_members")
+            .select("id")
+            .eq("user_id", target.user_id)
+            .limit(1);
+
+        // If no other orgs, delete the auth user entirely
+        if (!otherOrgs || otherOrgs.length === 0) {
+            await supabaseAdmin.auth.admin.deleteUser(target.user_id);
+        }
+
+        revalidatePath("/members");
+        return { error: null };
+    } catch (err: any) {
+        return { error: err?.message || "Falha ao cancelar convite" };
+    }
+}
+
+export async function resendInvite(orgId: string, memberId: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Não autenticado" };
+
+    try {
+        // Verify caller is admin/owner
+        const { data: membership } = await supabase
+            .from("organization_members")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!membership || !["owner", "admin"].includes(membership.role)) {
+            return { error: "Apenas administradores podem reenviar convites" };
+        }
+
+        // Get the target member
+        const { data: target } = await supabaseAdmin
+            .from("organization_members")
+            .select("user_id")
+            .eq("id", memberId)
+            .eq("organization_id", orgId)
+            .single();
+
+        if (!target) return { error: "Convite não encontrado" };
+
+        // Get the user's email
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
+        if (!userData?.user?.email) return { error: "E-mail do convidado não encontrado" };
+
+        if (userData.user.last_sign_in_at) {
+            return { error: "Este membro já aceitou o convite" };
+        }
+
+        // Re-send the invitation
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+        const { error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+            userData.user.email,
+            { redirectTo: `${siteUrl}/auth/callback` }
+        );
+
+        if (invErr) return { error: invErr.message };
+        return { error: null };
+    } catch (err: any) {
+        return { error: err?.message || "Falha ao reenviar convite" };
     }
 }

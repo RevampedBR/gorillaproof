@@ -109,7 +109,8 @@ export function ProfileTab({ userEmail, userName, initialPrefs }: ProfileTabProp
                                 <Button
                                     onClick={handleSaveName}
                                     disabled={savingName || name === userName}
-                                    className="h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold transition-colors disabled:opacity-50"
+                                    className="h-10 px-4 rounded-lg text-white text-[12px] font-semibold transition-colors disabled:opacity-50"
+                                    style={{ backgroundColor: 'var(--brand)' }}
                                 >
                                     {savingName ? "..." : "Salvar"}
                                 </Button>
@@ -182,7 +183,8 @@ export function ProfileTab({ userEmail, userName, initialPrefs }: ProfileTabProp
                             <Button
                                 onClick={handleChangePassword}
                                 disabled={savingPassword || !newPassword || newPassword !== confirmPassword}
-                                className="h-10 px-5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold transition-colors disabled:opacity-50"
+                                className="h-10 px-5 rounded-lg text-white text-[13px] font-semibold transition-colors disabled:opacity-50"
+                                style={{ backgroundColor: 'var(--brand)' }}
                             >
                                 {savingPassword ? "Alterando..." : "Confirmar Alteração"}
                             </Button>

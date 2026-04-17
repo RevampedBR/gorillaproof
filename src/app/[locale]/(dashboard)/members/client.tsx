@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { getOrgMembers, inviteMember } from "@/lib/actions/organization";
+import { getOrgMembers, inviteMember, getPendingInvites, cancelInvite, resendInvite } from "@/lib/actions/organization";
 import {
     getGroups,
     createGroup,
@@ -72,6 +72,16 @@ const IconMail = ({ className = "h-4 w-4" }: { className?: string }) => (
 const IconSearch = ({ className = "h-4 w-4" }: { className?: string }) => (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+    </svg>
+);
+const IconClock = ({ className = "h-4 w-4" }: { className?: string }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+const IconRefresh = ({ className = "h-3.5 w-3.5" }: { className?: string }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182M2.985 19.644l3.181-3.183" />
     </svg>
 );
 
@@ -182,6 +192,11 @@ export function MembersClient({ orgId, userRole, userId }: MembersClientProps) {
     const [loadingMembers, setLoadingMembers] = useState(true);
     const [showInvite, setShowInvite] = useState(false);
 
+    // Pending invites state
+    const [pendingInvites, setPendingInvites] = useState<any[]>([]);
+    const [loadingPending, setLoadingPending] = useState(true);
+    const [actioningId, setActioningId] = useState<string | null>(null);
+
     // Groups state
     const [groups, setGroups] = useState<any[]>([]);
     const [loadingGroups, setLoadingGroups] = useState(true);
@@ -207,6 +222,13 @@ export function MembersClient({ orgId, userRole, userId }: MembersClientProps) {
         setLoadingMembers(false);
     }, [orgId]);
 
+    const fetchPending = useCallback(async () => {
+        if (!isAdmin) { setLoadingPending(false); return; }
+        const { data } = await getPendingInvites(orgId);
+        setPendingInvites(data || []);
+        setLoadingPending(false);
+    }, [orgId, isAdmin]);
+
     const fetchGroups = useCallback(async () => {
         const { data } = await getGroups(orgId);
         setGroups(data || []);
@@ -216,7 +238,33 @@ export function MembersClient({ orgId, userRole, userId }: MembersClientProps) {
     useEffect(() => {
         fetchMembers();
         fetchGroups();
-    }, [fetchMembers, fetchGroups]);
+        fetchPending();
+    }, [fetchMembers, fetchGroups, fetchPending]);
+
+    const handleCancelInvite = async (memberId: string) => {
+        if (!confirm("Cancelar este convite? O e-mail de convite será invalidado.")) return;
+        setActioningId(memberId);
+        const { error } = await cancelInvite(orgId, memberId);
+        setActioningId(null);
+        if (error) {
+            toast(error, "error");
+        } else {
+            toast("Convite cancelado.", "success");
+            fetchPending();
+            fetchMembers();
+        }
+    };
+
+    const handleResendInvite = async (memberId: string) => {
+        setActioningId(memberId);
+        const { error } = await resendInvite(orgId, memberId);
+        setActioningId(null);
+        if (error) {
+            toast(error, "error");
+        } else {
+            toast("Convite reenviado com sucesso.", "success");
+        }
+    };
 
     const handleCreateGroup = async () => {
         if (!newGroupName.trim()) return;
@@ -358,10 +406,67 @@ export function MembersClient({ orgId, userRole, userId }: MembersClientProps) {
                     {isAdmin && showInvite && (
                         <InviteForm
                             orgId={orgId}
-                            onDone={() => { setShowInvite(false); fetchMembers(); }}
+                            onDone={() => { setShowInvite(false); fetchMembers(); fetchPending(); }}
                             onCancel={() => setShowInvite(false)}
                         />
                     )}
+
+                    {/* ── Pending Invites Section ── */}
+                    {isAdmin && !loadingPending && pendingInvites.length > 0 && (
+                        <div className="bg-zinc-900/50 border border-amber-500/20 rounded-xl overflow-hidden">
+                            <div className="p-4 px-5 border-b border-amber-500/10 flex items-center gap-3">
+                                <div className="h-8 w-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                                    <IconClock className="h-4 w-4 text-amber-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-amber-300">Convites Pendentes</h3>
+                                    <p className="text-[11px] text-zinc-500">
+                                        {pendingInvites.length} convite{pendingInvites.length !== 1 ? "s" : ""} aguardando aceitação.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="divide-y divide-zinc-800/30">
+                                {pendingInvites.map(inv => (
+                                    <div key={inv.id} className="flex items-center justify-between p-3.5 px-5 hover:bg-zinc-800/20 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-9 w-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                                <IconMail className="h-3.5 w-3.5 text-amber-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[13px] font-medium text-zinc-300">{inv.email}</p>
+                                                <p className="text-[11px] text-zinc-600">
+                                                    Convidado em {new Date(inv.invited_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                                                    {" · "}
+                                                    <span className="capitalize">{ROLE_LABELS[inv.role] || inv.role}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <button
+                                                onClick={() => handleResendInvite(inv.id)}
+                                                disabled={actioningId === inv.id}
+                                                className="h-7 px-2.5 rounded-md flex items-center gap-1 text-[11px] font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+                                                title="Reenviar convite"
+                                            >
+                                                <IconRefresh />
+                                                Reenviar
+                                            </button>
+                                            <button
+                                                onClick={() => handleCancelInvite(inv.id)}
+                                                disabled={actioningId === inv.id}
+                                                className="h-7 px-2.5 rounded-md flex items-center gap-1 text-[11px] font-medium text-red-400/70 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-50"
+                                                title="Cancelar convite"
+                                            >
+                                                <IconTrash />
+                                                Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
 
                     <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl overflow-hidden">
                         <div className="p-5 border-b border-zinc-800/40 flex items-center justify-between">

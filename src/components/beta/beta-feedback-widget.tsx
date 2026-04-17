@@ -185,7 +185,7 @@ export function BetaFeedbackWidget() {
         <div id="beta-feedback-widget">
             {/* ═══ BETA BANNER ═══ */}
             {!bannerDismissed && (
-                <div className="fixed top-0 left-0 right-0 z-[9999] flex items-center justify-center gap-3 bg-gradient-to-r from-amber-600/90 via-amber-500/90 to-amber-600/90 px-4 py-1.5 text-[13px] font-medium text-amber-950 backdrop-blur-sm shadow-lg shadow-amber-500/20">
+                <div className="fixed top-0 lg:left-[220px] left-0 right-0 z-[50] flex items-center justify-center gap-3 bg-gradient-to-r from-amber-600/90 via-amber-500/90 to-amber-600/90 px-4 py-1.5 text-[13px] font-medium text-amber-950 backdrop-blur-sm shadow-lg shadow-amber-500/20">
                     <span className="flex items-center gap-1.5">
                         <span className="text-base">🧪</span>
                         <span className="font-semibold">BETA</span>

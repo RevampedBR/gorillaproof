@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { CreateProofDialog } from "@/components/proofs/create-proof-dialog";
+import { EditClientDialog } from "@/components/clients/edit-client-dialog";
+import { PortalLinkSection } from "@/components/clients/portal-link-section";
 import { getGradient } from "@/utils/gradient-utils";
 
 interface ClientDetailProps {
@@ -129,10 +131,22 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                             </div>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
+                            <EditClientDialog client={client}>
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    className="border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 text-[14px] h-11 w-11 p-0 rounded-xl font-semibold"
+                                >
+                                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                    </svg>
+                                </Button>
+                            </EditClientDialog>
                             <CreateProjectDialog clientId={client.id}>
                                 <Button
                                     size="lg"
-                                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[14px] h-11 px-6 rounded-xl shadow-lg shadow-emerald-500/20 font-semibold"
+                                    className="text-white text-[14px] h-11 px-6 rounded-xl shadow-lg font-semibold"
+                                    style={{ backgroundColor: 'var(--brand)' }}
                                 >
                                     <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -169,6 +183,11 @@ export function ClientDetailClient({ client }: ClientDetailProps) {
                                 <p className="text-[11px] text-zinc-400 font-medium uppercase tracking-wider">{stat.label}</p>
                             </div>
                         ))}
+                    </div>
+
+                    {/* Portal do Cliente */}
+                    <div className="mt-6">
+                        <PortalLinkSection clientId={client.id} clientName={client.name} />
                     </div>
                 </div>
             </div>

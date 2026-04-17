@@ -101,7 +101,8 @@ export function CreateProjectDialog({ children, clientId }: CreateProjectDialogP
                         <Button
                             type="submit"
                             disabled={isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                            className="text-white font-medium"
+                            style={{ backgroundColor: 'var(--brand)' }}
                         >
                             {isPending ? "..." : t("submit")}
                         </Button>

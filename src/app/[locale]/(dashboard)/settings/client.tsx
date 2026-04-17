@@ -113,9 +113,10 @@ export function SettingsClient({ orgId, userEmail, userName }: SettingsClientPro
                         key={t.key}
                         onClick={() => setTab(t.key)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer whitespace-nowrap ${tab === t.key
-                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                            ? "border shadow-sm"
                             : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 border border-transparent"
                             }`}
+                        style={tab === t.key ? { backgroundColor: 'var(--brand-soft)', borderColor: 'var(--brand-glow)', color: 'var(--brand)' } : undefined}
                     >
                         {t.icon}
                         {t.label}

@@ -313,7 +313,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
 
                             <div className="flex justify-end gap-2 pt-1">
                                 <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                <Button size="sm" onClick={handleClientNext} disabled={!selectedClientId} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5">Continuar</Button>
+                                <Button size="sm" onClick={handleClientNext} disabled={!selectedClientId} className="text-white px-5" style={{ backgroundColor: 'var(--brand)' }}>Continuar</Button>
                             </div>
                         </>
                     )}
@@ -369,7 +369,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
 
                             <div className="flex justify-end gap-2 pt-1">
                                 <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                <Button size="sm" onClick={handleClientCreate} disabled={isPending || !clientName.trim()} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 shadow-[0_0_15px_rgba(16,185,129,0.2)]">{isPending ? "Criando..." : "Criar e continuar"}</Button>
+                                <Button size="sm" onClick={handleClientCreate} disabled={isPending || !clientName.trim()} className="text-white px-5" style={{ backgroundColor: 'var(--brand)' }}>{isPending ? "Criando..." : "Criar e continuar"}</Button>
                             </div>
                         </>
                     )}
@@ -406,7 +406,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                 <Button variant="ghost" size="sm" onClick={() => setStep("client")} className="text-zinc-400 hover:text-zinc-200">Voltar</Button>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                    <Button size="sm" onClick={handleProjectNext} disabled={!selectedProjectId} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5">Continuar</Button>
+                                    <Button size="sm" onClick={handleProjectNext} disabled={!selectedProjectId} className="text-white px-5" style={{ backgroundColor: 'var(--brand)' }}>Continuar</Button>
                                 </div>
                             </div>
                         </>
@@ -439,7 +439,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                 <Button variant="ghost" size="sm" onClick={() => setStep("client")} className="text-zinc-400 hover:text-zinc-200">Voltar</Button>
                                 <div className="flex gap-2">
                                     <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                    <Button size="sm" onClick={handleProjectCreate} disabled={isPending || !projectName.trim()} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 shadow-[0_0_15px_rgba(16,185,129,0.2)]">{isPending ? "Criando..." : "Criar e continuar"}</Button>
+                                    <Button size="sm" onClick={handleProjectCreate} disabled={isPending || !projectName.trim()} className="text-white px-5" style={{ backgroundColor: 'var(--brand)' }}>{isPending ? "Criando..." : "Criar e continuar"}</Button>
                                 </div>
                             </div>
                         </>
@@ -569,7 +569,7 @@ export function NewProofModal({ open, onOpenChange }: NewProofModalProps) {
                                 <Button type="button" variant="ghost" size="sm" onClick={() => setStep("project")} className="text-zinc-400 hover:text-zinc-200">Voltar</Button>
                                 <div className="flex gap-2">
                                     <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-200">Cancelar</Button>
-                                    <Button type="submit" size="sm" disabled={isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 shadow-[0_0_15px_rgba(16,185,129,0.2)]">{isPending ? "Criando..." : "Criar Prova"}</Button>
+                                    <Button type="submit" size="sm" disabled={isPending} className="text-white px-5" style={{ backgroundColor: 'var(--brand)' }}>{isPending ? "Criando..." : "Criar Prova"}</Button>
                                 </div>
                             </div>
                         </form>
