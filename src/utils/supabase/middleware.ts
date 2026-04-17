@@ -2,7 +2,25 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest, response: NextResponse) {
-    let supabaseResponse = response; // Default is the response passed from next-intl middleware
+    const path = request.nextUrl.pathname;
+
+    // Strip locale prefix: /pt/dashboard → /dashboard
+    const pathWithoutLocale = path.replace(/^\/(pt)/, '');
+    const cleanPath = pathWithoutLocale === "" ? "/" : pathWithoutLocale;
+
+    // ── FAST PATH: Skip auth entirely for public routes ──
+    const isPublicReviewRoute = cleanPath.startsWith("/review");
+    const isPortalRoute = cleanPath.startsWith("/portal");
+    const isProtectRoute = (cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings") || isPortalRoute) && !isPublicReviewRoute;
+    const isAuthRoute = cleanPath.startsWith("/login") || cleanPath.startsWith("/register") || cleanPath.startsWith("/forgot-password") || cleanPath.startsWith("/reset-password");
+
+    // Public routes: no auth check needed, return immediately
+    if (!isProtectRoute && !isAuthRoute) {
+        return response;
+    }
+
+    // ── AUTH PATH: Only runs for protected + auth routes ──
+    let supabaseResponse = response;
 
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,16 +31,12 @@ export async function updateSession(request: NextRequest, response: NextResponse
                     return request.cookies.getAll();
                 },
                 setAll(cookiesToSet) {
-                    // If cookies need setting (e.g., token refresh), clone the request/response
-                    // to attach cookies securely.
-                    cookiesToSet.forEach(({ name, value, options }) => {
+                    cookiesToSet.forEach(({ name, value }) => {
                         request.cookies.set(name, value);
                     });
 
                     supabaseResponse = NextResponse.next({
-                        request: {
-                            headers: request.headers,
-                        },
+                        request: { headers: request.headers },
                     });
 
                     // Re-attach headers from the original response (esp next-intl cookies)
@@ -40,23 +54,10 @@ export async function updateSession(request: NextRequest, response: NextResponse
         }
     );
 
-    // refreshing the auth token
+    // Refresh auth token (single HTTP call to Supabase)
     const {
         data: { user },
     } = await supabase.auth.getUser();
-
-    // Redirect Logic based on path visibility
-    const path = request.nextUrl.pathname;
-
-    // We need to strip the locale prefix to match core paths securely
-    // e.g., /pt/dashboard becomes /dashboard
-    const pathWithoutLocale = path.replace(/^\/(pt)/, '');
-    const cleanPath = pathWithoutLocale === "" ? "/" : pathWithoutLocale;
-
-    const isPublicReviewRoute = cleanPath.startsWith("/review");
-    const isPortalRoute = cleanPath.startsWith("/portal");
-    const isProtectRoute = (cleanPath.startsWith("/dashboard") || cleanPath.startsWith("/admin") || cleanPath.startsWith("/proofs") || cleanPath.startsWith("/clients") || cleanPath.startsWith("/settings") || isPortalRoute) && !isPublicReviewRoute;
-    const isAuthRoute = cleanPath.startsWith("/login") || cleanPath.startsWith("/register") || cleanPath.startsWith("/forgot-password") || cleanPath.startsWith("/reset-password");
 
     // Protect Dashboard + Portal
     if (isProtectRoute && !user) {
@@ -65,8 +66,7 @@ export async function updateSession(request: NextRequest, response: NextResponse
         return NextResponse.redirect(url);
     }
 
-    // Prevent logged in users from seeing login pages
-    // Check if they're a client_user and redirect accordingly
+    // Prevent logged-in users from seeing login pages
     if (isAuthRoute && user) {
         // Check if user is a client portal user
         try {
