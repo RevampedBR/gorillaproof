@@ -8,6 +8,7 @@ import { UploadDropzone } from "@/components/upload/dropzone";
 import { getVersions, getVersionPages } from "@/lib/actions/versions";
 import { AnnotationCanvas, AnnotationShape } from "@/components/annotations/annotation-canvas";
 import { CommentPanel } from "@/components/annotations/comment-panel";
+import { CommentConnector } from "@/components/annotations/comment-connector";
 import { DrawingCanvas, DrawingCanvasHandle, DrawnShape } from "@/components/annotations/drawing-canvas";
 import { ConnectorLine } from "@/components/annotations/connector-line";
 import { PdfViewer } from "@/components/viewer/pdf-viewer";
@@ -2379,6 +2380,8 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
             <div className="h-6 flex items-center px-3 bg-[#15152a] border-t border-[#2a2a40] shrink-0">
                 <span className="text-[10px] text-zinc-600">Powered by GorillaProof®</span>
             </div>
+
+            <CommentConnector activeId={activePinId} />
 
             {/* Share Dialog */}
             <ShareDialog
