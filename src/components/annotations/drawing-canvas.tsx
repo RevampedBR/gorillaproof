@@ -50,7 +50,7 @@ interface DrawingCanvasProps {
 }
 
 function generateId() {
-    return `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return `s_${crypto.randomUUID()}`;
 }
 
 export const DrawingCanvas = forwardRef<DrawingCanvasHandle, DrawingCanvasProps>(

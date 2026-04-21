@@ -68,7 +68,7 @@ export async function signup(formData: FormData) {
                 slug:
                     (agencyName || "Minha Agência").toLowerCase().replace(/[^a-z0-9]+/g, "-") +
                     "-" +
-                    Math.random().toString(36).substring(2, 7),
+                    crypto.randomUUID().split("-")[0],
             })
             .select()
             .single();
