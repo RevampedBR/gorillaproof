@@ -841,11 +841,12 @@ export function ProofViewer({ proof, versions, initialComments, projectName, org
 
     // Build pins
     const rootComments = comments.filter((c: any) => !c.parent_comment_id && c.pos_x != null && c.pos_y != null);
+    const commentToIndex = new Map(rootComments.map((c: any, i) => [c.id, i]));
     const visibleRootComments = fileCategory === "video"
         ? rootComments.filter((c: any) => c.video_timestamp == null || Math.abs(c.video_timestamp - videoTime) < 1.0)
         : rootComments;
     const pins = visibleRootComments.map((c: any) => {
-        const absoluteIndex = rootComments.findIndex((rc: any) => rc.id === c.id);
+        const absoluteIndex = commentToIndex.get(c.id) ?? -1;
         return {
             id: c.id, number: absoluteIndex + 1, posX: c.pos_x, posY: c.pos_y,
             status: c.status as "open" | "resolved", preview: c.content.slice(0, 80),
